@@ -1,3 +1,7 @@
-#id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-#access.base.invoices.merge.automatic.wizard,access.base.invoices.merge.automatic.wizard,base_invoices_merge_automatic_wizard.model_base_invoices_merge_automatic_wizard,base.group_user,1,1,1,1
-#access.base.invoices.merge.line,access.base.invoices.merge.line,base_invoices_merge_line.model_base_invoices_merge_line,base.group_user,1,1,1,1
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access.base.invoices.merge.automatic.wizard,access.base.invoices.merge.automatic.wizard,eb_invoices_wizard.model_base_invoices_merge_automatic_wizard,base.group_user,1,1,1,1
+access.base.invoices.merge.line,access.base.invoices.merge.line,eb_invoices_wizard.model_base_invoices_merge_line,base.group_user,1,1,1,1
+access.project.task.work,access.project.task.work,eb_invoices_wizard.model_project_task_work,base.group_user,1,1,1,1
+access.project.task.work,access.project.task.work,eb_invoices_wizard.model_project_task_work,base.group_user,1,1,1,1
+access.link.line,access.link.line,eb_invoices_wizard.model_link_line,base.group_user,1,1,1,1
+

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <record id="action_affecter_ressources" model="ir.actions.server">
+            <field name="name">Affecter Ressources</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_project_task_work" />
+            <field name="binding_model_id" ref="model_project_task_work" />
+            <field name="state">code</field>
+            <field name="code">
+               action= records.action_affect_ressource()
+            </field>
+    </record>
+
+
+
     <record id="view_project_task_work_tree" model="ir.ui.view">
         <field name="name">project.task.work.tree</field>
         <field name="model">project.task.work</field>
@@ -24,6 +38,9 @@
             </tree>
         </field>
     </record>
+
+
+
     <record id="view_project_task_work_form" model="ir.ui.view">
         <field name="model">project.task.work</field>
         <field name="name">project.task.work.form</field>
@@ -63,32 +80,10 @@
         <!--            </p>-->
         <!--        </field>-->
     </record>
-    <record id="view_project_task_work_search" model="ir.ui.view">
-        <field name="name">project.task.work.search</field>
-        <field name="model">project.task.work</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="project_id" string="Projet"/>
-                <field name="name" string="Nom Taches/Kit"/>
-                <field name="product_id" string="T.S"/>
-                <field name="date_start" string="Date Start"/>
-                <field name="date_end" string="Date Fin"/>
-                <field name="color" string="Durée (Jours)"/>
-                <field name="hours" string="Durée (Heurs)"/>
-                <field name="uom_id" string="Unité"/>
-                <field name="gest_id" string="Superviseur"/>
 
-
-                <field name="employee_id" string="Intervenant"/>
-                <field name="state" string="Etat"/>
-                <field name="categ_id" string="Category"/>
-                <field name="task_id" string="Task id"/>
-            </search>
-        </field>
-    </record>
     <menuitem id="menu_views_project_task_work"
               name="Project Task Work"
-              parent="menu_invoices_master"
+              parent="menu_invoices_wizard"
               action="action_project_task_work"
               sequence="40"/>
 

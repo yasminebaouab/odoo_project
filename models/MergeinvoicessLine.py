@@ -5,7 +5,8 @@ from odoo.exceptions import ValidationError, UserError
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
-class MergeinvoicessLine(models.Model):
+
+class MergeInvoicesLine(models.Model):
     _name = 'base.invoices.merge.line'
     _order = 'min_id asc'
 
@@ -46,7 +47,7 @@ class MergeinvoicessLine(models.Model):
         ('pending', 'T. Suspendus'),
         ('close', 'Traité')
     ],
-        'Status', copy=False),
+        'Status', copy=False)
     note = fields.Text('Work summary')
     done = fields.Boolean('is done')
     color1 = fields.Integer('Nbdays')

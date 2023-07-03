@@ -21,13 +21,15 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'project', 'hr'],
+    'depends': ['base', 'project', 'hr', 'product'],
 
     # always loaded
     'data': [
-        # "'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
         'views/templates.xml',
-        'views/views.xml',
+        # 'views/views.xml',
+        'views/views_aff.xml',
+        'views/views_project.xml',
 
     ],
     # only loaded in demonstration mode
