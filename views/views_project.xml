@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_task_work_tree" model="ir.ui.view">
+        <field name="name">project.task.work.tree</field>
+        <field name="model">project.task.work</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="project_id" string="Projet"/>
+                <field name="name" string="Nom Taches/Kit"/>
+                <field name="product_id" string="T.S"/>
+                <field name="date_start" string="Date Start"/>
+                <field name="date_end" string="Date Fin"/>
+                <field name="color" string="Durée (Jours)"/>
+                <field name="hours" string="Durée (Heurs)"/>
+                <field name="uom_id" string="Unité"/>
+                <!-- <field name="poteau_t" string="Qté/Unité Prév." sum="Prev Hours"/>-->
+                <field name="gest_id" string="Superviseur" readonly="0"/>
+                <!--options="{'no_create': True, 'no_create_edit':True,'no_open':True}"-->
+
+                <field name="employee_id" string="Intervenant"/>
+                <field name="state" string="Etat" readonly="0"/>
+                <field name="categ_id" string="Category"/>
+                <field name="task_id" string="Task id"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_project_task_work_form" model="ir.ui.view">
+        <field name="model">project.task.work</field>
+        <field name="name">project.task.work.form</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="project_id" string="Projet"/>
+                        <field name="name" string="Nom Taches/Kit"/>
+                        <field name="product_id" string="T.S"/>
+                        <field name="date_start" string="Date Start" widget="date"/>
+                        <field name="date_end" string="Date Fin" widget="date"/>
+                        <field name="color" string="Durée (Jours)" sum="Total"/>
+                        <field name="hours" string="Durée (Heurs)"/>
+                        <field name="uom_id" string="Unité"/>
+                        <!--                                    <field name="poteau_t" string="Qté/Unité Prév." sum="Prev Hours"/>-->
+                        <field name="gest_id" string="Superviseur" readonly="0"/>
+                        <!--                                           options="{'no_create': True, 'no_create_edit':True,'no_open':True}"-->
+
+                        <field name="employee_id" string="Intervenant"/>
+                        <field name="state" string="Etat" readonly="0"/>
+                        <field name="categ_id" string="Category"/>
+                        <field name="task_id" string="Task id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_project_task_work" model="ir.actions.act_window">
+        <field name="name">Create project Task work</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">project.task.work</field>
+        <field name="view_mode">tree,form</field>
+        <!--        <field name="help" type="html">-->
+        <!--            <p class="o_view_nocontent_smiling_face">-->
+        <!--                Create your first project task work !-->
+        <!--            </p>-->
+        <!--        </field>-->
+    </record>
+    <record id="view_project_task_work_search" model="ir.ui.view">
+        <field name="name">project.task.work.search</field>
+        <field name="model">project.task.work</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="project_id" string="Projet"/>
+                <field name="name" string="Nom Taches/Kit"/>
+                <field name="product_id" string="T.S"/>
+                <field name="date_start" string="Date Start"/>
+                <field name="date_end" string="Date Fin"/>
+                <field name="color" string="Durée (Jours)"/>
+                <field name="hours" string="Durée (Heurs)"/>
+                <field name="uom_id" string="Unité"/>
+                <field name="gest_id" string="Superviseur"/>
+
+
+                <field name="employee_id" string="Intervenant"/>
+                <field name="state" string="Etat"/>
+                <field name="categ_id" string="Category"/>
+                <field name="task_id" string="Task id"/>
+            </search>
+        </field>
+    </record>
+    <menuitem id="menu_views_project_task_work"
+              name="Project Task Work"
+              parent="menu_invoices_master"
+              action="action_project_task_work"
+              sequence="40"/>
+
+
+</odoo>
+
