@@ -579,34 +579,30 @@ class EbMergeInvoices(models.Model):
                             'state': 'draft',
                         })
 
-                        work_obj.write({
-                            'affect_emp_list': wk.affect_emp_list.replace(str(this.employee_id2.user_id.id), ''),
-                            'affect_e_l': wk.affect_e_l.replace(str(this.employee_id2.user_id.login), ''),
-                            'affect_emp': wk.affect_emp.replace(str(this.employee_id2.name if this.employee_id2 else ''), ''),
+                        wk.update({
+                            'affect_emp_list': wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
+                            'affect_e_l': wk.affect_e_l.replace(str(this.employee_id2.user_id.login) + ',', ''),
+                            'affect_emp': wk.affect_emp.replace(str(this.employee_id2.name + ',' if this.employee_id2 else ''), ''),
 
                         })
-                        print('**************************')
-                        print('employee_id2 :', this.employee_id2.user_id.id),
-                        print('wk.affect_emp_list : ', wk.affect_emp_list),
-                        print('wk.state : ', wk.state)
 
                     else:
                         raise ValidationError(
                             _("Champs Intervenant vide ou employée n'existe pas dans liste des intervenants"))
                 elif this.types_affect == 'controle':
                     if this.employee_id2 and str(wk.affect_con).find(str(this.employee_id2.name)) != -1:
-                        work_obj.write({
-                            'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.id), ''),
-                            'affect_con': wk.affect_con.replace(str(this.employee_id2.name), ''),
+                        wk.update({
+                            'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.id) + ',', ''),
+                            'affect_con': wk.affect_con.replace(str(this.employee_id2.name) + ',', ''),
                         })
                     else:
                         raise ValidationError(
                             _("Champs Intervenant vide ou employée n'existe pas dans liste des controleurs"))
                 elif this.types_affect == 'correction':
                     if this.employee_id2 and str(wk.affect_cor).find(str(this.employee_id2.name)) != -1:
-                        work_obj.write({
-                            'affect_cor_list': wk.affect_cor_list.replace(str(this.employee_id2.id), ''),
-                            'affect_cor': wk.affect_cor.replace(str(this.employee_id2.name), ''),
+                        wk.write({
+                            'affect_cor_list': wk.affect_cor_list.replace(str(this.employee_id2.id) + ',', ''),
+                            'affect_cor': wk.affect_cor.replace(str(this.employee_id2.name) + ',', ''),
                         })
                     else:
                         raise ValidationError(
@@ -658,20 +654,21 @@ class EbMergeInvoices(models.Model):
         # this.state = 'draft'
         # self.env['email.template'].sudo().browse(33).send_mail(this.id, force_send=True)
         #
-        # line_obj.write({'state': 'draft'})
-        #
-        # view = self.env.ref('module_name.sh_message_sh_message_wizard')
-        # view_id = view and view.id or False
+        line_obj.write({'state': 'draft'})
+
+        view = self.env['sh.message.wizard']
+        view_id = view and view.id or False
 
         return {
-            'name': 'Affectation les Travaux',
+            'name': 'Annulataion d"affectation faite avec Succès',
             'type': 'ir.actions.act_window',
+            'view_type': 'form',
             'view_mode': 'form',
-            'res_model': 'base.invoices.merge.automatic.wizard',
-            'res_id': this.id,
-            'context': {'default_state': 'draft'},
+            'res_model': 'sh.message.wizard',
+            'views': [(view_id, 'form')],
+            'view_id': view_id,
             'target': 'new',
-            'domain': []
+
         }
 
     # def action_calendar(self, cr, uid, ids, context=None):
