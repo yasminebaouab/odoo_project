@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 {
     'name': "Project Custom",
 
@@ -18,14 +19,17 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'project', 'task_custom', 'task_work', 'employee_custom', 'product_custom', 'partner_custom'],
+    'depends': ['base', 'project', 'task_custom', 'task_work', 'employee_custom', 'product_custom', 'partner_custom', 'company_custom', 'country_custom', 'account'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
+        'data/account_tax.xml',
         'views/project.xml',
         'views/not_kit.xml',
+        'views/type.xml',
+        'views/menu.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

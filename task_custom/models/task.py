@@ -264,7 +264,7 @@ class TaskCustom(models.Model):
     secteur = fields.Integer(string='Secteur', readonly=True, states={'draft': [('readonly', False)]}, )
     categ_id = fields.Many2one('product.category', string='Département', readonly=True,
                                states={'draft': [('readonly', False)]}, )
-    color = fields.Integer(string='Durée(Jrs)', readonly=True, states={'draft': [('readonly', False)]}, )
+    color = fields.Integer(string='Durée(Jrs)', readonly=True)
     done = fields.Boolean(string='Color Index', readonly=True, states={'draft': [('readonly', False)]}, )
     ct = fields.Float(string='CT', readonly=True, states={'draft': [('readonly', False)]}, )
     cp = fields.Float(string='CP', readonly=True, states={'draft': [('readonly', False)]}, )

@@ -25,7 +25,7 @@ class ProjectCustom(models.Model):
     _inherits = {
         'mail.alias': 'alias_id',
     }
-    _rec_name = 'id'
+    _rec_name = 'npc'
     _order = "npc"
 
     # def _auto_init(self, cr, context=None):
@@ -529,13 +529,12 @@ class ProjectCustom(models.Model):
             for task in project.task_ids:
 
                 if project.date_s:
-
                     if not task.date_start:
-                        self.env['project.task'].write({'date_start': project.date_s})
+                        task.date_start = project.date_s
 
                 if project.date_e:
                     if not task.date_end:
-                        self.env['project.task'].write({'date_end': project.date_e})
+                        task.date_end = project.date_e
 
                 if not task.date_start or not task.date_end:
                     raise UserError(_('Erreur ! Vous devez avoir une date de début et une date de fin pour chaque '
@@ -731,6 +730,7 @@ class AgreementFees(models.Model):
 
 class ProjectTypeCustom(models.Model):
     _name = "project.type.custom"
+    name = fields.Char(string='Type du Projet')
 
 
 class ProjectIssue(models.Model):
@@ -740,15 +740,3 @@ class ProjectIssue(models.Model):
     task_id = fields.Char()
     work_id = fields.Char()
     state = fields.Char()
-
-
-class ResCountryState(models.Model):
-    _inherit = 'res.country.state'
-
-    region = fields.Char()
-
-
-class HrEmployee(models.Model):
-    _inherit = 'hr.employee'
-
-    is_resp = fields.Boolean(default=True)

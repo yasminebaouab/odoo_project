@@ -118,6 +118,10 @@ class GroupLineShowLine2(models.Model):
     color1 = fields.Integer('Nbdays', readonly=True, states={'draft': [('readonly', False)]})
     uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
                              states={'draft': [('readonly', False)]})
+
+    uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
+                             states={'draft': [('readonly', True)]})
+
     uom_id_r = fields.Many2one('product.uom', 'Unit of Measure', readonly=True,
                                states={'draft': [('readonly', False)]})
     project_id2 = fields.Many2one('project.project', 'Task', readonly=True, states={'draft': [('readonly', False)]})

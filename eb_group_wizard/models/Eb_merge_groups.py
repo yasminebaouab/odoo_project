@@ -34,7 +34,8 @@ class EbMergegroups(models.Model):
     coordin_id = fields.Many2one('hr.employee', string='Wizard')
     emp_id2 = fields.Many2one('hr.employee', string='Wizard')
     gest_id = fields.Many2one('hr.employee', string='Wizard')
-    bon_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
+    # bon_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
+    bon_id = fields.Integer(string='bon_id')
     work_ids = fields.Many2many('project.task.work', string='groups')
     dst_work_ids = fields.Many2one('project.task.work', string='Destination Task')
     dst_project = fields.Many2one('project.project', string="Project")
@@ -245,11 +246,11 @@ class EbMergegroups(models.Model):
                     proj.append(work.project_id.id)
 
                 if work.state == 'pending':
-                    raise UserError(_('Action impossible!'), _('Travaux Suspendus!'))
+                    raise UserError('Action impossible! ravaux Suspendus!')
                 if work.state == 'draft':
-                    raise UserError(_('Action impossible!'), _('Travaux Non Affectés!'))
+                    raise UserError('Action impossible! Travaux Non Affectés!')
                 if len(proj) > 1:
-                    raise UserError(_('Action impossible!'), _('Déclaration se fait uniquement sur un projet!'))
+                    raise UserError('Action impossible! Déclaration se fait uniquement sur un projet!')
                 if len(active_ids) > 1:
                     pref = '/'
 
@@ -290,7 +291,7 @@ class EbMergegroups(models.Model):
                     'gest_id2': gest_id2,
                     'emp_id2': emp_id2,
                 })
-                print('res  1 :', res)
+                # print('res  1 :', res)
                 poteau = 0
                 tt = self.env['project.task.work'].search([
                     ('project_id', '=', work.project_id.id),
@@ -298,7 +299,7 @@ class EbMergegroups(models.Model):
                     # ('name', 'ilike', 'qualit'),
                     ('etape', '=', work.etape)
                 ]).ids
-                print('tt :', tt)
+                # print('tt :', tt)
                 for ji in tt:
                     work = self.env['project.task.work'].browse(ji)
                     move_line1 = {
@@ -321,7 +322,7 @@ class EbMergegroups(models.Model):
                     }
                     if tt:
                         list1.append((0, 0, move_line1))
-                        print('list1 :', list1)
+                        # print('list1 :', list1)
                 for task in active_ids:
                     work = self.env['project.task.work'].browse(task)
                     res_user = self.env['res.users'].browse(self.env.uid)
@@ -336,8 +337,8 @@ class EbMergegroups(models.Model):
                     #                     _('Vous n''etes pas autorisé à exécuter cette action sur un département externe'))
 
             res['work_ids'] = list1
-            print('res :', res)
-            print('work_ids :', self.work_ids)
+            # print('res :', res)
+            # print('work_ids :', self.work_ids)
         return res
 
     def _compute_done2(self):
@@ -392,10 +393,8 @@ class EbMergegroups(models.Model):
     def _disponible1(self):
         print('def _disponible1')
         user_id = self.env.user.id
-        print('self.work_ids :', self.work_ids)
         for book in self:
             # to_change_to_6_or_7 [1 is the default]
-            print("1")
             if self.work_ids:
 
                 if user_id == 1 or book.employee_id.user_id.id == user_id or str(user_id) in (
@@ -578,14 +577,14 @@ class EbMergegroups(models.Model):
                     res = super(EbMergegroups, self).fields_view_get(
                         view_id=self.env.ref('eb_group_wizard.declaration²_de_bon_correction_form').id,
                         view_type=view_type, toolbar=toolbar, submenu=submenu)
-                    print('-1 ------------------- -1 ')
+                    # print('-1 ------------------- -1 ')
                 elif (work.affect_con_list != '' and (str(user.id) in (work.affect_con_list or ' '))) and (
                         str(user.id) not in (work.affect_cor_list or ' ')) and (
                         str(user.id) not in (work.affect_emp_list or ' ')):
                     res = super(EbMergegroups, self).fields_view_get(
                         view_id=self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
                         view_type=view_type, toolbar=toolbar, submenu=submenu)
-                    print('0 ------------------- 0 ')
+                    # print('0 ------------------- 0 ')
                 elif ((work.affect_emp_list != '' and (str(user.id) in (work.affect_emp_list or ' ')))
                       or work.current_emp.user_id.id == user) and (
                         str(user.id) not in (work.affect_con_list or ' ')) and (
@@ -593,7 +592,7 @@ class EbMergegroups(models.Model):
                     res = super(EbMergegroups, self).fields_view_get(
                         view_id=self.env.ref('eb_group_wizard.declaration_bons_form').id,
                         view_type=view_type, toolbar=toolbar, submenu=submenu)
-                    print('1 -------------------1 ')
+                    # print('1 -------------------1 ')
 
                 elif ((str(user.id) not in (work.affect_emp_list or ' ')) or work.current_emp.user_id.id == user) and (
                         str(user.id) not in (work.affect_con_list or ' ')) and (
@@ -606,10 +605,10 @@ class EbMergegroups(models.Model):
                         view_id=self.env.ref('eb_group_wizard.declaration_bons_form').id,
                         view_type=view_type,
                         toolbar=toolbar, submenu=submenu)
-                    print('2  -------------------2')
+                    # print('2  -------------------2')
                 return res
         elif self.env.context['active_model'] == 'base.group.merge.automatic.wizard':
-            print('here 3')
+            # print('here 3')
             return res
         else:
             return res
@@ -1336,8 +1335,9 @@ class EbMergegroups(models.Model):
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
             'res_model': 'base.invoices.merge.automatic.wizard',
-            'view_id': self.env.ref('module_yasmine.affectation_controle_view_id').id,
-            'target': 'popup',
+            'view_id': self.env.ref('eb_invoices_wizard.action_affecter_ressources').id,
+            # action_affecter_ressources-contrle
+            'target': 'new',
             'context': {
                 'default_group_id': self.ids[0],  # this.id
                 'default_types_affect': 'control',
@@ -1458,7 +1458,7 @@ class EbMergegroups(models.Model):
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'popup',
+            'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
             'res_id': self.ids[0],
             'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
@@ -1487,7 +1487,7 @@ class EbMergegroups(models.Model):
         }
 
     def action_open2(self):
-        print("action_open2")
+        # print("action_open2")
         if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
             self.write({'done': True})
 
@@ -1631,16 +1631,16 @@ class EbMergegroups(models.Model):
             raise UserError(_('Error !'), _('Bon deja cloturé'))
 
         for tt in self.ids:
-            print("button_import 2")
+            # print("button_import 2")
             line = line_obj.browse(tt)
             # found = False
             cnt = 0
             gest = self.env.user.employee_id.id
             work = line.work_ids[0]
 
-            print('work :', work)
+            # print('work :', work)
             if work.kit_id:
-                print("button_import 3")
+                # print("button_import 3")
                 found = False
                 for hh in work.kit_id.type_id.ids:
                     pr = self.env['product.product'].browse(hh)
@@ -1648,7 +1648,7 @@ class EbMergegroups(models.Model):
                         found = True
                         break
                 if found:
-                    print("button_import 3.1")
+                    # print("button_import 3.1")
                     tt = self.env['project.task.work'].search(
                         [('project_id', '=', work.project_id.id), ('categ_id', '=', work.categ_id.id),
                          ('product_id.default_code', '=', '421-PP'), ('zone', '=', work.zone),
@@ -1684,7 +1684,7 @@ class EbMergegroups(models.Model):
                          ('secteur', '=', work.secteur), ('is_copy', '=', False)])
 
             else:
-                print("button_import 4")
+                # print("button_import 4")
                 if work.product_id.default_code == '420-PP':
                     tt = self.env['project.task.work'].search(
                         [('project_id', '=', work.project_id.id), ('categ_id', '=', work.categ_id.id),
@@ -1709,7 +1709,7 @@ class EbMergegroups(models.Model):
             ##    raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
             ##  raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
             if tt:
-                print("button_import 5")
+                # print("button_import 5")
                 ji = tt[0]
                 work1 = self.env['project.task.work'].browse(ji)
                 cnt += 1
@@ -1731,12 +1731,17 @@ class EbMergegroups(models.Model):
                     'uom_id_r': work1.product_id.uom_id.id,
                     'zone': work1.zone,
                     'secteur': work1.secteur,
+
+                    # 'group_id': line.id,  #added
                 }
 
                 if tt:
-                    print("button_import 6")
+                    # print("button_import 6")
                     one = show_.create(move_line1)
                     show_.write(one, {'group_id': line.id})
+
+                # if tt:
+                #     one = show_.create(move_line1)
 
             self.write({'employee_id': gest})
 
@@ -1770,17 +1775,17 @@ class EbMergegroups(models.Model):
             raise UserError(_('Error!'), _('Action possible qu"en statut brouillon.'))
         if self.state3 != 'draft':
             raise UserError(_('Error!'), _('Bon deja cloturé'))
-        print('1')
+        # print('1')
         gest = self.env.user.employee_id.id
         for tt in self.ids:
             line = line_obj.browse(tt)
             cnt = 0
-            print('2')
+            # print('2')
             for kk in line.work_ids.ids:
                 work = work_.browse(kk)
-                print('3')
+                # print('3')
                 if work.kit_id:
-                    print('4')
+                    # print('4')
                     tt = work_.search([('project_id', '=', work.project_id.id),
                                        ('categ_id', '=', work.categ_id.id),
                                        # ('product_id.name', 'ilike', 'contr'),
@@ -1795,12 +1800,12 @@ class EbMergegroups(models.Model):
                                        ('secteur', '=', work.secteur),
                                        ('is_copy', '=', False)
                                        ])
-                    print('tt', tt)
                 for ji in tt:
                     cnt += 1
-                    print('6')
                     work1 = work_.browse(ji.id)
                     print('work1', work1)
+                    print('work1.product_id.uom_id.id,', work1.product_id.uom_id.id)
+                    print('work1.product_id.uom_id,', work1.product_id.uom_id)
                     move_line1 = {
                         'product_id': work1.product_id.id,
                         'employee_id': gest,
@@ -1816,25 +1821,20 @@ class EbMergegroups(models.Model):
                         'project_id': work1.task_id.project_id.id,
                         'gest_id': gest,
                         'uom_id': work1.product_id.uom_id.id,
+                        # 'uom_id':1, # to delete
                         'uom_id_r': work1.product_id.uom_id.id,
                         'zone': work1.zone,
                         'secteur': work1.secteur,
                         'group_id': line.id
                     }
-                    print('8')
+                    # print('8')
                     if tt:
-                        print('9')
-                        bon_show = self.env['bon.show']
-                        bon_show.create({'group_id': line.id})  # to delete
-
-                        # move_line1['group_id'] = line.id
                         one = show_.create(move_line1)
-                        # one.write({'group_id': line.id})
 
-        self.write({'mail_send': '', 'employee_id': gest})
+        # self.write({'mail_send': '', 'employee_id': gest})
         for ww in self.work_ids:
             ww.write({'state': 'tovalidcorrec'})
-            print('10')
+            # print('10')
         return {
             'name': 'Declaration des Bons',
             'type': 'ir.actions.act_window',
@@ -1900,10 +1900,6 @@ class EbMergegroups(models.Model):
         for iterator_work_id in self.work_ids:
             work_.write({'current_emp': iterator_work_id.employee_id.id})
 
-        # line_obj1 = self.env['hr.employee'].search([])
-        # for obj1 in line_obj1:
-        #     print('ici:', obj1.id)
-        # print ('sate1', self.state1, 'done_', self.done1_, 'state', self.state)
         return {
             'name': 'Déclaration des Bons',
             'type': 'ir.actions.act_window',
@@ -1912,7 +1908,7 @@ class EbMergegroups(models.Model):
             'target': 'new',
             'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
             'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],  # self.ids[0],  # ids[0],
+            'res_id': self.ids[0],
             'context': {},
             'domain': []
         }
@@ -1929,11 +1925,16 @@ class EbMergegroups(models.Model):
 
         for tt in self:
             line = line_obj.browse(tt.id)
-
+            print('line', line)
             if not line.line_ids:
                 raise UserError('Action impossible! Vous devez avoir au moins une ligne à déclarer!')
-
+            print('self.line_ids', self.line_ids)
             for jj in self.line_ids:
+
+                print('jj', jj.id)
+                # print('jj.date_start :', jj.id.date_start)
+                # print('jj.date_start_r :', jj.date_start_r)
+
                 list_ = []
                 if not jj.date_start_r and not self.date_s1:
                     raise UserError('Action impossible! "La date de début est obligatoire!')
@@ -1960,14 +1961,17 @@ class EbMergegroups(models.Model):
                         })
                 for kk in line.line_ids.ids:
                     line_w = line_obj1.browse(kk)
+                    print('kk :', kk)
+                    print('line_w :', line_w)
                     if line_w:
+                        print('group_id2 :', line.id)
                         move_line = {
                             'product_id': line_w.work_id.product_id.id,
                             'employee_id': line_w.employee_id.id,
                             'state': 'draft',
                             'work_id': line_w.work_id.id,
                             'task_id': line_w.work_id.task_id.id,
-                            # 'group_id2': line.id,
+                            'group_id2': line.id,
                             'ftp': line_w.ftp,
                             'sequence': line_w.work_id.sequence,
                             'categ_id': line_w.work_id.categ_id.id,
@@ -1988,8 +1992,10 @@ class EbMergegroups(models.Model):
                             'zone': line_w.work_id.zone,
                             'secteur': line_w.work_id.secteur,
                         }
+
                         one = work_line.create(move_line)
-                        line_obj1.write({'id': kk, 'line_id': one.id})
+                        line_obj1.browse(kk).write({'line_id': one.id})
+                        # line_obj1.write(kk, {'line_id': one.id})
         # the code bellow must be reviewed
         for ww in self.work_ids:
             if ww.state == 'affect':
@@ -2087,7 +2093,7 @@ class EbMergegroups(models.Model):
 
         for tt in self.line_ids2:
             if tt.date_end_r:
-                print('tt.date_end_r', tt.date_end_r)
+                # print('tt.date_end_r', tt.date_end_r)
                 if tt.date_end_r > fields.Date.today():
                     raise UserError('Warning! La date de fin doit être antérieure à la date d\'aujourd\'hui')
 
@@ -2188,7 +2194,7 @@ class EbMergegroups(models.Model):
 
         for tt in self.line_ids3:
             if tt.date_end_r:
-                print('tt.date_end_r', tt.date_end_r)
+                # print('tt.date_end_r', tt.date_end_r)
                 if tt.date_end_r > fields.Date.today():
                     raise UserError("Warning! Date fin doit etre antérieur au date d'aujourd'hui")
             if not tt.date_start_r:
@@ -2291,9 +2297,13 @@ class EbMergegroups(models.Model):
 
         for tt in self.line_ids:
             self_line = line_obj1.browse(tt.id)
+            line_obj1.browse(tt.id).write({'state': 'valid', 'bon_id': self.id})
+            print('self_line.line_id.id :', self_line.line_id.id)
 
-            line_obj1.write(tt.id, {'state': 'valid', 'bon_id': self.id})
-            task_obj_line.write(self_line.line_id.id, {'state': 'valid', 'done3': True})
+            # line_obj1.browse(kk).write({'line_id': one.id})
+            task_obj_line.browse(self_line.line_id.id).write({'state': 'valid', 'done3': True})
+
+            # task_obj_line.write(self_line.line_id.id, {'state': 'valid', 'done3': True})
 
             if tt.total_part == 'total' and tt.work_id.affect_emp_list:
                 tt.work_id.write({
@@ -2307,6 +2317,7 @@ class EbMergegroups(models.Model):
                     'current_emp': False,
                 })
         self.write({'state': 'valid', 'done': False})
+        # task_obj.browse(tt.id).write({'state': 'valid'})
         return {
             'name': 'Déclaration des Bons',
             'type': 'ir.actions.act_window',
@@ -2353,7 +2364,7 @@ class EbMergegroups(models.Model):
         }
 
     def button_switch(self):
-        print('button_switch')
+        # print('button_switch')
         hr_payslip = self.env['hr.payslip']
         hr_payslip_line = self.env['hr.payslip.line']
         line_obj = self.env['base.group.merge.automatic.wizard']

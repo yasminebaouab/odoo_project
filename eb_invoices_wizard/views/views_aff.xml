@@ -24,9 +24,9 @@
                                        attrs="{'readonly': ['|',('group_id','!=',False),('state','=','draft')]}"/>
                             </group>
                             <group>
-                                <field name="time_ch" widget="odoo_timepicker"
-                                       options="{'step': 5, 'minTime': '00:00', 'maxTime': '10:00','timeFormat':'H:i'}"
-                                       required="1"/>
+                                <field name="time_ch" widget=""
+                                       options="{'round_off': True , 'timeFormat': 'HH:mm'}" required="1"/>
+                                <!--                                options="{'step': 5, 'minTime': '00:00', 'maxTime': '10:00','timeFormat':'H:i'}"-->
                             </group>
                         </group>
                         <notebook>

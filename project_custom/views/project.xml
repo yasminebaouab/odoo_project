@@ -214,6 +214,7 @@
                                     <field name="paylist_id" string="Facture"
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
                                            invisible="1"/>
+                                    <field name="r_id" string="Risk" invisible="1"/>
                                     <field name="done" string="Libellé " readonly="1" invisible="1"/>
                                     <field name="done1" string="Libellé " readonly="1" invisible="1"/>
                                     <field name="done2" string="Libellé " readonly="1" invisible="1"/>
@@ -370,8 +371,6 @@
                 (0, 0, {'view_mode': 'tree', 'view_id': ref('project_custom.view_custom_project_tree')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('project_custom.view_custom_project_form')})]"/>
         </record>
-
-        <menuitem id="menu_project" name="Projets" sequence="-1000" action="action_project"/>
 
     </data>
 </odoo>

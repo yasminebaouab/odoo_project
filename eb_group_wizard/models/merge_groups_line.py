@@ -15,6 +15,8 @@ class MergegroupsLine(models.Model):
     _description = 'base group merge line'
     # _order = 'min_id asc'
 
+    #bon_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
+
     wizard_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
     wiz_id = fields.Integer(string='Wizard')
     kit_id = fields.Many2one('product.kit', string='Kit')

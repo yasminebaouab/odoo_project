@@ -689,8 +689,8 @@ class BonShow(models.Model):
 
     def button_approve_s(self):
 
-        hr_payslip = self.env['hr.payslip']
-        hr_payslip_line = self.env['hr.payslip.line']
+        # hr_payslip = self.env['hr.payslip']
+        # hr_payslip_line = self.env['hr.payslip.line']
         bgl_obj = self.env['base.group.merge.line']
         line_obj1 = self.env['bon.show.line2']
         work_line = self.env['project.task.work.line']
@@ -706,24 +706,24 @@ class BonShow(models.Model):
         else:
             name = 'Facture'
 
-        self.env.cr.execute(
-            "select cast(substr(number, 6, 8) as integer) from hr_payslip where number is not Null and name=%s and EXTRACT(YEAR FROM date_from)=%s  order by number desc limit 1",
-            (name, this.date_from.year))
-        q3 = self.env.cr.fetchone()
-        if q3:
-            res1 = q3[0] + 1
-        else:
-            res1 = '001'
-
-        pay_id = hr_payslip.create({'employee_id': line,
-                                    'date_from': this.date_from,
-                                    'date_to': this.date_to,
-                                    'contract_id': this.employee_id.contract_id.id,
-                                    'name': name,
-                                    'number': str(str(this.date_from[:4]) + '-' + str(str(res1).zfill(3))),
-                                    'struct_id': 1,
-                                    'currency_id': 5,
-                                    })
+        # self.env.cr.execute(
+        #     "select cast(substr(number, 6, 8) as integer) from hr_payslip where number is not Null and name=%s and EXTRACT(YEAR FROM date_from)=%s  order by number desc limit 1",
+        #     (name, this.date_from.year))
+        # q3 = self.env.cr.fetchone()
+        # if q3:
+        #     res1 = q3[0] + 1
+        # else:
+        #     res1 = '001'
+        #
+        # pay_id = hr_payslip.create({'employee_id': line,
+        #                             'date_from': this.date_from,
+        #                             'date_to': this.date_to,
+        #                             'contract_id': this.employee_id.contract_id.id,
+        #                             'name': name,
+        #                             'number': str(str(this.date_from[:4]) + '-' + str(str(res1).zfill(3))),
+        #                             'struct_id': 1,
+        #                             'currency_id': 5,
+        #                             })
 
         for tt in this.line_ids2:
 
@@ -736,19 +736,19 @@ class BonShow(models.Model):
                 name = tt.product_id.name
                 code = tt.product_id.default_code
                 unit = tt.uom_id_r.id
-            hr_payslip_line.create({'employee_id': this.employee_id.id,
-                                    'contract_id': this.employee_id.contract_id.id,
-                                    'name': name,
-                                    'code': code,
-                                    'category_id': 1,
-                                    'quantity': tt.hours_r,
-                                    'slip_id': pay_id,
-                                    'rate': 100,
-                                    'work_id': tt.work_id.id,
-                                    'uom_id': unit,
-                                    'salary_rule_id': 1,
-                                    'amount': tt.wage,
-                                    })
+            # hr_payslip_line.create({'employee_id': this.employee_id.id,
+            #                         'contract_id': this.employee_id.contract_id.id,
+            #                         'name': name,
+            #                         'code': code,
+            #                         'category_id': 1,
+            #                         'quantity': tt.hours_r,
+            #                         'slip_id': pay_id,
+            #                         'rate': 100,
+            #                         'work_id': tt.work_id.id,
+            #                         'uom_id': unit,
+            #                         'salary_rule_id': 1,
+            #                         'amount': tt.wage,
+            #                         })
             if this_line.send is False:
                 work_line.create({'employee_id': this.employee_id.id,
                                   'name': name,
@@ -771,16 +771,17 @@ class BonShow(models.Model):
                                   })
 
             task_obj_line.write(this_line.line_id.id,
-                                {'state': 'valid', 'paylist_id': pay_id, 'done1': True, 'group_id': this.id})
+                                {'state': 'valid', 'done1': True, 'group_id': this.id})
+            # 'paylist_id': pay_id,
             if task_obj_line.browse(this_line.line_id.id).group_id2:
                 tt = bgl_obj.search([('line_id', '=', this_line.line_id.id)])
                 if tt:
                     self.env.cr.execute('update base_group_merge_automatic_wizard set  state=%s where id=%s', (
                         'invoiced', task_obj_line.browse(this_line.line_id.id).group_id2.id), )
-        if empl.job_id.id == 1:
-            self.env['email.template'].send_mail(32, force_send=True)
+        # if empl.job_id.id == 1:
+        #     self.env['email.template'].send_mail(32, force_send=True)
 
-        self.write({'state': 'close', 'pay_id': pay_id})
+        self.write({'state': 'close'}) # , 'pay_id': pay_id
 
         return True
 
@@ -1087,7 +1088,7 @@ class BonShowLine2(models.Model):
         vals = {}
 
         if self.product_id:
-            prod = product_obj.browse(self.product_id)
+            prod = product_obj.browse(self.product_id.id)
             vals.update({'categ_id': prod.categ_id.id, 'uom_id_r': prod.uos_id.id, 'uom_id': prod.uos_id.id})
 
         return {'value': vals}
