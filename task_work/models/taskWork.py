@@ -216,82 +216,82 @@ class TaskWork(models.Model):
 
         for book in self:
             book.is_intervenant = False
-            if book.line_ids:
-                tt = []
-                for kk in book.line_ids.ids:
-                    rec_line = self.env['project.task.work.line'].browse(kk)
-                    if rec_line.group_id2:
-                        if rec_line.group_id2.id not in tt:
-                            tt.append(rec_line.group_id2.id)
-                if tt:
-                    print('tt :', tt)
-                    for kk in tt:
-                        print('kk :', kk)
-
-                        self.env.cr.execute(
-                            'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
-                            (self._uid, kk))
-                    test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-                        'state', '<>', 'draft')])
-                    if test:
-                        book.is_intervenant = True
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #     if tt:
+            #         print('tt :', tt)
+            #         for kk in tt:
+            #             print('kk :', kk)
+            #
+            #             self.env.cr.execute(
+            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
+            #                 (self._uid, kk))
+            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
+            #             'state', '<>', 'draft')])
+            #         if test:
+            #             book.is_intervenant = True
 
     def _iscontrol(self):
 
         for book in self:
             book.is_control = False
-            if book.line_ids:
-                tt = []
-                for kk in book.line_ids.ids:
-                    rec_line = self.env['project.task.work.line'].browse(kk)
-                    if rec_line.group_id2:
-                        if rec_line.group_id2.id not in tt:
-                            tt.append(rec_line.group_id2.id)
-                            print('tt :', tt)
-                if tt:
-                    test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-                        'state1', '<>', 'draft')])
-
-                    if test:
-                        book.is_control = True
-
-                    test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
-                    if test1:
-                        for jj in test1:
-                            rec_line = self.env['project.task.work.line'].browse(jj)
-                            if rec_line.group_id2:
-                                if rec_line.group_id2.id not in tt:
-                                    tt.append(rec_line.group_id2.id)
-                        book.is_control = True
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #                 print('tt :', tt)
+            #     if tt:
+            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
+            #             'state1', '<>', 'draft')])
+            #
+            #         if test:
+            #             book.is_control = True
+            #
+            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
+            #         if test1:
+            #             for jj in test1:
+            #                 rec_line = self.env['project.task.work.line'].browse(jj)
+            #                 if rec_line.group_id2:
+            #                     if rec_line.group_id2.id not in tt:
+            #                         tt.append(rec_line.group_id2.id)
+            #             book.is_control = True
 
     def _iscorr(self):
 
         for book in self:
             book.is_correction = False
-            if book.line_ids:
-                tt = []
-                for kk in book.line_ids.ids:
-                    rec_line = self.env['project.task.work.line'].browse(kk)
-                    if rec_line.group_id2:
-                        if rec_line.group_id2.id not in tt:
-                            tt.append(rec_line.group_id2.id)
-                if tt:
-                    for kk in tt:
-                        self.env.cr.execute(
-                            'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
-                            (self._uid, kk))
-                    test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-                        'state2', '<>', 'draft')])
-                    if test:
-                        book.is_correction = True
-                    test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
-                    if test1:
-                        for jj in test1:
-                            rec_line = self.env['project.task.work.line'].browse(jj)
-                            if rec_line.group_id2:
-                                if rec_line.group_id2.id not in tt:
-                                    tt.append(rec_line.group_id2.id)
-                        book.is_correction = True
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #     if tt:
+            #         for kk in tt:
+            #             self.env.cr.execute(
+            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
+            #                 (self._uid, kk))
+            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
+            #             'state2', '<>', 'draft')])
+            #         if test:
+            #             book.is_correction = True
+            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
+            #         if test1:
+            #             for jj in test1:
+            #                 rec_line = self.env['project.task.work.line'].browse(jj)
+            #                 if rec_line.group_id2:
+            #                     if rec_line.group_id2.id not in tt:
+            #                         tt.append(rec_line.group_id2.id)
+            #             book.is_correction = True
 
     def _get_progress(self):
 

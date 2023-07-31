@@ -202,8 +202,11 @@ class EbMergegroups(models.Model):
 
     @api.model
     def default_get(self, fields_list):
-
+        print('default_get')
         res = super().default_get(fields_list)
+        # if not self._context.get('default_values'):
+        #     # Return an empty dictionary to prevent default values
+        #     return {}
         active_ids = self.env.context.get('active_ids')
         if self.env.context.get('active_model') == 'project.task.work' and active_ids:
             vv = []
@@ -239,16 +242,18 @@ class EbMergegroups(models.Model):
             gest_id2 = False
             emp_id2 = False
             for jj in active_ids:
+                print('jj', jj)
                 work = self.env['project.task.work'].browse(jj)
                 user = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1).id
                 user1 = self.env.uid
                 if work.project_id.id not in proj:
                     proj.append(work.project_id.id)
+                print('default_get  3',  work.state)
 
                 if work.state == 'pending':
                     raise UserError('Action impossible! ravaux Suspendus!')
                 if work.state == 'draft':
-                    raise UserError('Action impossible! Travaux Non Affectés!')
+                    raise UserError('Action impossible! Travaux Non Affectés!!!!!')
                 if len(proj) > 1:
                     raise UserError('Action impossible! Déclaration se fait uniquement sur un projet!')
                 if len(active_ids) > 1:

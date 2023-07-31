@@ -195,7 +195,7 @@ class EbMergeInvoices(models.Model):
         if self.env.context.get('active_model') == 'project.task.work':
             active_ids = self.env.context.get('active_ids')
             tt = self.env['project.task.work'].browse(active_ids)
-
+            print('*********default get a.2 *************')
             for work in tt:
                 if 'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name:
                     raise UserError(
@@ -214,6 +214,7 @@ class EbMergeInvoices(models.Model):
                         ('product_id.name', 'not ilike', '%gestion client%')
                     ])
                     for kit_work in kit_list:
+
                         if not work.is_copy and not kit_work.is_copy:
                             vv.append(kit_work.id)
                         elif kit_work.is_copy and work.rank == kit_work.rank:
@@ -232,7 +233,7 @@ class EbMergeInvoices(models.Model):
 
         if self.env.context.get('active_model') == 'project.task.work' and active_ids:
             # active_ids = self.env.context.get('active_ids')
-
+            print('*********default get a.3 *************')
             for hh in active_ids:
                 work = self.env['project.task.work'].browse(hh)
                 print(work)
@@ -248,13 +249,17 @@ class EbMergeInvoices(models.Model):
                         ('product_id.name', 'not ilike', '%cont%'),
                         ('product_id.name', 'not ilike', '%gestion client%')
                     ])
+
+                    print('************************')
                     for kit_work in kit_list:
+
                         if not work.is_copy and not kit_work.is_copy:
                             vv.append(kit_work.id)
                         elif kit_work.is_copy and work.rank == kit_work.rank:
                             vv.append(kit_work.id)
 
                     res['work_ids'] = vv
+                    print('vv : ', vv)
                 else:
                     print("2.1")
                     res['work_ids'] = active_ids
@@ -395,7 +400,9 @@ class EbMergeInvoices(models.Model):
     to = fields.Char(string='char')
     cc = fields.Char(string='char')
     cci = fields.Char(string='char')
-    mail_send = fields.Selection([('yes', 'Oui'), ('no', 'Non')])
+    mail_send = fields.Selection([('yes', 'Oui'),
+                                   ('no', 'Non')],
+                                  default='no')
     employee_ids = fields.Many2many('hr.employee', 'base_invoices_merge_automatic_wizard_hr_employee_rel',
                                     'base_invoices_merge_automatic_wizard_id', 'hr_employee_id', string='Legumes')
     employee_ids1 = fields.Many2many('hr.employee', 'base_invoices_merge_automatic_wizard_hr_employee_rel1',
@@ -830,8 +837,12 @@ class EbMergeInvoices(models.Model):
         emp_obj = self.env['hr.employee']
         res_user = self.env['res.users'].browse(self.env.uid)
         this = self
+        print('work_ids : ', this.work_ids)
         for line in this.work_ids:
+
             line = self.env['project.task.work'].browse(line.id)
+            print('line : ', line)
+            print('line.ids : ', line.ids)
             if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
                 line.write({'state': 'affect'})
 
@@ -1038,74 +1049,75 @@ class EbMergeInvoices(models.Model):
             total = hours + minutes
 
             res_user = self.env['res.users'].browse(self._uid)
-            if self.work_ids:
-                for rec in self.work_ids[0]:
-                    print("base.group")
-                    base_group = self.env['base.group.merge.automatic.wizard'].create({
-                        'create_date': fields.Date.today(),
-                        'date_start_r': fields.Date.today(),
-                        'project_id': rec.project_id.id,
-                        'zo': rec.zone,
-                        'sect': rec.secteur,
-                        'gest_id': rec.gest_id.id,
-                        'state': 'valid',
-                        'active': True,
-                        'name': 'gestion affectation'
-                    })
-                    base_group_id = base_group.id
+        if self.work_ids:
+            for rec in self.work_ids:
+                base_group = self.env['base.group.merge.automatic.wizard'].create({
+                    'create_date': fields.Date.today(),
+                    'date_start_r': fields.Date.today(),
+                    'project_id': rec.project_id.id,
+                    'zo': rec.zone,
+                    'sect': rec.secteur,
+                    'gest_id': rec.gest_id.id,
+                    'state': 'valid',
+                    'active': True,
+                    'name': 'gestion affectation'
+                })
+                print("base.group 2")
 
-                    product = 80  # Default value
-                    if rec.categ_id.id == 3:
-                        product = 156
-                    elif rec.categ_id.id == 1:
-                        product = 80
-                    elif rec.categ_id.id == 4:
-                        product = 218
-                    elif rec.categ_id.id == 6:
-                        product = 174
-                    elif rec.categ_id.id == 7:
-                        product = 197
-                    elif rec.categ_id.id == 8:
-                        product = 132
-                    elif rec.categ_id.id == 5:
-                        product = 132
+                base_group_id = base_group.id
 
-                    print("product : ", product)
-                    self.env['base.group.merge.line'].create({
-                        'create_date': fields.Date.today(),
-                        'date_start_r': fields.Date.today(),
-                        'date_end_r': fields.Date.today(),
-                        'product_id': product,
-                        'project_id': rec.project_id.id,
-                        'hours_r': total,
-                        'uom_id_r': 5,
-                        'uom_id': 5,
-                        'wizard_id': base_group_id,
-                        'color1': 1,
-                        'employee_id': res_user.employee_id.id,
-                        'categ_id': rec.categ_id.id,
-                        'zone': rec.zone or 0,
-                        'secteur': rec.secteur or 0
-                    })
+                product = 80  # Default value
+                if rec.categ_id.id == 3:
+                    product = 156
+                elif rec.categ_id.id == 1:
+                    product = 80
+                elif rec.categ_id.id == 4:
+                    product = 218
+                elif rec.categ_id.id == 6:
+                    product = 174
+                elif rec.categ_id.id == 7:
+                    product = 197
+                elif rec.categ_id.id == 8:
+                    product = 132
+                elif rec.categ_id.id == 5:
+                    product = 132
 
-                    move_line = {
-                        'employee_id': res_user.employee_id.id,
-                        'state': 'valid',
-                        'work_id': rec.id,
-                        'task_id': rec.task_id.id,
-                        'sequence': rec.sequence,
-                        'uom_id': 5,
-                        'date_start_r': fields.Date.today(),
-                        'date_end_r': fields.Date.today(),
-                        'categ_id': rec.categ_id.id,
-                        'hours_r': total,
-                        'color1': 1,
-                        'project_id': rec.project_id.id,
-                        'gest_id': rec.gest_id.id,
-                        'zone': rec.zone,
-                        'secteur': rec.secteur,
-                    }
-                    self.env['base.invoices.merge.automatic.wizard'].create(move_line)
+                print("product : ", product)
+                self.env['base.group.merge.line'].create({
+                    'create_date': fields.Date.today(),
+                    'date_start_r': fields.Date.today(),
+                    'date_end_r': fields.Date.today(),
+                    'product_id': product,
+                    'project_id': rec.project_id.id,
+                    'hours_r': total,
+                    'uom_id_r': 5,
+                    'uom_id': 5,
+                    'wizard_id': base_group_id,
+                    'color1': 1,
+                    'employee_id': res_user.employee_id.id,
+                    'categ_id': rec.categ_id.id,
+                    'zone': rec.zone or 0,
+                    'secteur': rec.secteur or 0
+                })
+
+                move_line = {
+                    'employee_id': res_user.employee_id.id,
+                    'state': 'valid',
+                    'work_id': rec.id,
+                    'task_id': rec.task_id.id,
+                    'sequence': rec.sequence,
+                    'uom_id': 5,
+                    'date_start_r': fields.Date.today(),
+                    'date_end_r': fields.Date.today(),
+                    'categ_id': rec.categ_id.id,
+                    'hours_r': total,
+                    'color1': 1,
+                    'project_id': rec.project_id.id,
+                    'gest_id': rec.gest_id.id,
+                    'zone': rec.zone,
+                    'secteur': rec.secteur,
+                }
+                self.env['base.invoices.merge.automatic.wizard'].create(move_line)
 
             # if self.mail_send == 'yes':
             #     if not self.note:
@@ -1154,7 +1166,7 @@ class EbMergeInvoices(models.Model):
             #             'id_record': self.id
             #         })
 
-            return {
+        return{
                 'name': 'Affectation les Travaux',
                 'type': 'ir.actions.act_window',
                 'view_mode': 'form',
