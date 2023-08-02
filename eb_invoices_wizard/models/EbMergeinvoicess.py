@@ -318,11 +318,9 @@ class EbMergeInvoices(models.Model):
                     'state': state,
                     'dep': r,
 
-
                 })
                 if cat == 1:
                     res.update({'name': str(str(datetime.today().year) + str(str(res1).zfill(3)))})
-
 
         print('res: ', res)
         return res
@@ -406,8 +404,8 @@ class EbMergeInvoices(models.Model):
     cc = fields.Char(string='char')
     cci = fields.Char(string='char')
     mail_send = fields.Selection([('yes', 'Oui'),
-                                   ('no', 'Non')],
-                                  default='no')
+                                  ('no', 'Non')],
+                                 default='no')
     employee_ids = fields.Many2many('hr.employee', 'base_invoices_merge_automatic_wizard_hr_employee_rel',
                                     'base_invoices_merge_automatic_wizard_id', 'hr_employee_id', string='Legumes')
     employee_ids1 = fields.Many2many('hr.employee', 'base_invoices_merge_automatic_wizard_hr_employee_rel1',
@@ -424,8 +422,8 @@ class EbMergeInvoices(models.Model):
     intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
     time = fields.Float(string='Temps de gestion')
     time_ch = fields.Char(string='Temps de gestion')
-    # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
 
+    # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
 
     def _compute_done2(self):
         print('_compute_done2')
@@ -594,11 +592,12 @@ class EbMergeInvoices(models.Model):
                             'employee_id': False,
                             'state': 'draft',
                         })
-
+                        print('debug', wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
                         wk.update({
                             'affect_emp_list': wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
                             'affect_e_l': wk.affect_e_l.replace(str(this.employee_id2.user_id.login) + ',', ''),
-                            'affect_emp': wk.affect_emp.replace(str(this.employee_id2.name + ',' if this.employee_id2 else ''), ''),
+                            'affect_emp': wk.affect_emp.replace(
+                                str(this.employee_id2.name + ',' if this.employee_id2 else ''), ''),
 
                         })
 
@@ -865,21 +864,20 @@ class EbMergeInvoices(models.Model):
                 wk2 = ''
                 wk3 = ''
                 wk111 = ''
-
-                if wk.affect_emp is False:
+                if wk.affect_emp == '' or not wk.affect_emp:
                     wk1 = ''
                 else:
                     wk1 = wk.affect_emp or '' + ', '
                     wk11 = wk.affect_emp_list or '' + ', '
                     wk111 = wk.affect_e_l or '' + ', '
 
-                if wk.affect_con is False:
+                if wk.affect_con == '' or not wk.affect_con:
                     wk2 = ''
                 else:
                     wk2 = wk.affect_con or '' + ', '
                     wk21 = wk.affect_con_list or '' + ', '
 
-                if wk.affect_cor is False:
+                if wk.affect_cor == '' or not wk.affect_cor:
                     wk3 = ''
                 else:
                     wk3 = wk.affect_cor or '' + ', '
@@ -888,7 +886,6 @@ class EbMergeInvoices(models.Model):
                 if this.employee_id2 and this.types_affect == 'intervenant':
                     if wk.state == 'draft':
                         wk.write({'state': 'affect'})
-                    print("wk11 + str :", wk11 + str(this.employee_id2.user_id.id))
                     wk.write({
                         'affect_emp': wk1 + this.employee_id2.name + ',',
                         'affect_emp_list': wk11 + str(this.employee_id2.user_id.id) + ',',
@@ -897,7 +894,6 @@ class EbMergeInvoices(models.Model):
                         'employee_id': this.employee_id2.id,
                         'display': True
                     })
-                    print('wk:', wk)
                     if wk_histo:
                         if len(wk_histo) == 1:
                             wk_histo_id = wk_histo.id
@@ -1046,8 +1042,6 @@ class EbMergeInvoices(models.Model):
                 if wk.employee_id:
                     self._cr.execute('update project_task_work set current_emp =%s where id=%s ',
                                      (wk.employee_id.id, wk.id))
-                    result = {}
-
             self.write({'state': 'affect'})
 
             vals = self.time_ch.split(':')
@@ -1071,7 +1065,6 @@ class EbMergeInvoices(models.Model):
                     'active': True,
                     'name': 'gestion affectation'
                 })
-                print("base.group 2")
 
                 base_group_id = base_group.id
 
@@ -1091,7 +1084,6 @@ class EbMergeInvoices(models.Model):
                 elif rec.categ_id.id == 5:
                     product = 132
 
-                print("product : ", product)
                 self.env['base.group.merge.line'].create({
                     'create_date': fields.Date.today(),
                     'date_start_r': fields.Date.today(),
@@ -1189,8 +1181,6 @@ class EbMergeInvoices(models.Model):
 
         }
 
-
-
         # result= {
         #     'name': 'Affectation les Travaux',
         #     'type': 'ir.actions.act_window',
@@ -1214,8 +1204,6 @@ class EbMergeInvoices(models.Model):
         #         'res_id': self.id,
         #         'context': {'default_state': 'affect'},
         #     }
-
-
 
 
 class ProjectTaskWorkLine(models.Model):
