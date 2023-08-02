@@ -10,7 +10,7 @@
                         <button name="action_open" type="object" string="Consulter Ces Taches" class="btn-primary"
                                 icon="gtk-save"/>
                         <button name="button_approve" type="object" string="Valider l'Affectation" class="oe_highlight"
-                                confirm="Confirmer L'affectation?"/>
+                                confirm="Confirmer L'affectation?"  />
                         <button name="button_cancel" type="object" string="Annuler l'Affectation" class="oe_highlight"
                                 confirm="Annuler l'Affectation?" states='affect'/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,affect"

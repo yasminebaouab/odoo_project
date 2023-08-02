@@ -196,6 +196,7 @@ class EbMergeInvoices(models.Model):
             active_ids = self.env.context.get('active_ids')
             tt = self.env['project.task.work'].browse(active_ids)
             print('*********default get a.2 *************')
+            print('tt:', tt)
             for work in tt:
                 if 'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name:
                     raise UserError(
@@ -316,10 +317,14 @@ class EbMergeInvoices(models.Model):
                     'secteur': work.secteur,
                     'state': state,
                     'dep': r,
+
+
                 })
                 if cat == 1:
                     res.update({'name': str(str(datetime.today().year) + str(str(res1).zfill(3)))})
 
+
+        print('res: ', res)
         return res
 
     def _amount_all(self):
@@ -419,6 +424,8 @@ class EbMergeInvoices(models.Model):
     intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
     time = fields.Float(string='Temps de gestion')
     time_ch = fields.Char(string='Temps de gestion')
+    # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
+
 
     def _compute_done2(self):
         print('_compute_done2')
@@ -546,6 +553,7 @@ class EbMergeInvoices(models.Model):
         work_ids = []
         for tt in self.work_ids.ids:
             work_ids.append(tt)
+        butt_valider = False
         return {
             'name': 'Taches Affectées',
             'type': 'ir.actions.act_window',
@@ -556,6 +564,7 @@ class EbMergeInvoices(models.Model):
             'context': {
                 'default_active_ids': work_ids,
                 'default_ids': work_ids,
+                'default_butt_valider': butt_valider,
             },
             'domain': [('id', 'in', work_ids)],
         }
@@ -865,13 +874,13 @@ class EbMergeInvoices(models.Model):
                     wk111 = wk.affect_e_l or '' + ', '
 
                 if wk.affect_con is False:
-                    wk2 = '0,'
+                    wk2 = ''
                 else:
                     wk2 = wk.affect_con or '' + ', '
                     wk21 = wk.affect_con_list or '' + ', '
 
                 if wk.affect_cor is False:
-                    wk3 = '0, '
+                    wk3 = ''
                 else:
                     wk3 = wk.affect_cor or '' + ', '
                     wk31 = wk.affect_cor_list or '' + ', '
@@ -1165,16 +1174,48 @@ class EbMergeInvoices(models.Model):
             #             'source': 'affectation',
             #             'id_record': self.id
             #         })
+        view = self.env['sh.message.wizard']
+        view_id = view and view.id or False
+        return {
+            'name': 'Affectation faite avec Succès',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sh.message.wizard',
+            'views': [(view_id, 'form')],
+            'view_id': view_id,
+            'target': 'new',
+            'context': {'default_state': 'affect'},
 
-        return{
-                'name': 'Affectation les Travaux',
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_model': 'base.invoices.merge.automatic.wizard',
-                'res_id': self.id,
-                'context': {'default_state': 'affect'},
-            }
+        }
+
+
+
+        # result= {
+        #     'name': 'Affectation les Travaux',
+        #     'type': 'ir.actions.act_window',
+        #     'view_mode': 'form',
+        #     'target': 'new',
+        #     'res_model': 'base.invoices.merge.automatic.wizard',
+        #     'res_id': self.id,
+        #     'context': {
+        #         'default_state': 'affect',
+        #     },
+        # }
+        # print('result: ', result)  # Afficher le contenu du dictionnaire 'result' dans la console (log)
+        # return result
+
+        # return{
+        #         'name': 'Affectation les Travaux',
+        #         'type': 'ir.actions.act_window',
+        #         'view_mode': 'form',
+        #         'target': 'new',
+        #         'res_model': 'base.invoices.merge.automatic.wizard',
+        #         'res_id': self.id,
+        #         'context': {'default_state': 'affect'},
+        #     }
+
+
 
 
 class ProjectTaskWorkLine(models.Model):
