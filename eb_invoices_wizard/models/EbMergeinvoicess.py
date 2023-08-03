@@ -580,9 +580,7 @@ class EbMergeInvoices(models.Model):
             for msg_id in tt.ids:
                 wk = work_obj.browse(msg_id)
                 if this.types_affect == 'intervenant':
-                    print('employee_id2 :', this.employee_id2.user_id.id)
-                    print('wk.affect_emp_list : ', wk.affect_emp_list)
-                    print('wk.state : ', wk.state)
+
                     if this.employee_id2 and str(wk.affect_emp_list).find(
                             str(this.employee_id2.user_id.id)) != -1 and wk.state == 'affect':
                         work_line.write({'state': 'draft'})
@@ -606,8 +604,9 @@ class EbMergeInvoices(models.Model):
                             _("Champs Intervenant vide ou employée n'existe pas dans liste des intervenants"))
                 elif this.types_affect == 'controle':
                     if this.employee_id2 and str(wk.affect_con).find(str(this.employee_id2.name)) != -1:
+                        print('affect_con_list', wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
                         wk.update({
-                            'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.id) + ',', ''),
+                            'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
                             'affect_con': wk.affect_con.replace(str(this.employee_id2.name) + ',', ''),
                         })
                     else:
@@ -934,8 +933,8 @@ class EbMergeInvoices(models.Model):
                         wk.write({'state': 'tovalidcont'})
 
                     wk.write({
-                        'affect_con': wk2 + this.employee_id2.name,
-                        'affect_con_list': wk21 + str(this.employee_id2.user_id.id),
+                        'affect_con': wk2 + this.employee_id2.name + ',',
+                        'affect_con_list': wk21 + str(this.employee_id2.user_id.id) + ',',
                     })
 
                     if this.group_id:
@@ -979,8 +978,8 @@ class EbMergeInvoices(models.Model):
                 elif this.employee_id2 and this.types_affect == 'correction':
                     wk.write({
                         'state': 'affect_corr',
-                        'affect_cor': wk3 + this.employee_id2.name,
-                        'affect_cor_list': wk31 + str(this.employee_id2.user_id.id),
+                        'affect_cor': wk3 + this.employee_id2.name + ',',
+                        'affect_cor_list': wk31 + str(this.employee_id2.user_id.id) + ',',
                     })
 
                     if this.group_id:
