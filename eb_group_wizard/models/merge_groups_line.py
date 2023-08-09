@@ -15,7 +15,7 @@ class MergegroupsLine(models.Model):
     _description = 'base group merge line'
     # _order = 'min_id asc'
 
-    #bon_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
+    bon_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
 
     wizard_id = fields.Many2one('base.group.merge.automatic.wizard', string='Wizard')
     wiz_id = fields.Integer(string='Wizard')
@@ -89,6 +89,7 @@ class MergegroupsLine(models.Model):
     link_id = fields.Many2one('project.task', string='Wizard')
     uom_id_r = fields.Many2one('product.uom', string='Wizard')
     is_display = fields.Boolean(string='Ids')
+    EbMergegroups_id = fields.Many2one('base.group.merge.automatic.wizard', string="base.group.merge.automatic.wizard")
 
     def onchange_product_id(self, product_id, context=None):
         product_obj = self.env['product.product']
@@ -100,57 +101,59 @@ class MergegroupsLine(models.Model):
         return {'value': vals}
 
     def kit_open(self):
-        line_obj = self.env['base.group.merge.line']
-        parent = line_obj.browse(self.ids[0])
+        self.ensure_one()
         return {
             'name': 'Consultation Kit',
             'type': 'ir.actions.act_window',
+            'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
             'res_model': 'product.kit',
-            'res_id': parent.kit_id.id,
+            'res_id': self.kit_id.id,
             'context': {},
             'domain': []
         }
 
-    #
-    def onchange_date_to_(self, date_to, date_from, employee_id):
+    @api.onchange('date_start_r', 'date_end_r', 'employee_id')
+    def onchange_date_to_(self, date_to, date_from, employee_id, ):
         """
         Update the number_of_days.
         """
-        result = {'value': {}}
-        if date_to:
-            if str(date_to) > str(fields.Date.today()):
-                raise UserError('Date fin doit etre antérieur au date d\'aujourd\'hui')
-        # date_to has to be greater than date_from
-        if date_from and date_to and date_from > date_to:
-            raise UserError('The start date must be anterior to the end date.')
-
-        holiday_obj = self.env['hr.holidays']
-        hours_obj = self.env['training.holiday.year']
-        this = self.env['base.group.merge.line']
-        employee = self.env['hr.employee'].browse(employee_id)
-
-        # Compute and update the number of days
-
-        if date_to and date_from and date_from <= date_to:
-            DATETIME_FORMAT = "%Y-%m-%d"
-            from_dt = fields.Datetime.from_string(date_from)
-            to_dt = fields.Datetime.from_string(date_to)
-            timedelta = to_dt - from_dt
-            diff_day = holiday_obj._get_number_of_days(date_from, date_to)
-            year = hours_obj.search([('year', '=', str(date_from.year))])
-            if year:
-                hr = hours_obj.browse(year[0]).hours
-            else:
-                hr = 7
-            result['value']['color1'] = round(math.floor(diff_day)) + 1
-        else:
-            result['value']['color1'] = 0
-            result['value']['total_r'] = 0
-            result['value']['amount_line'] = 0
-
-        return result
+        print('onchange_date_to_')
+        # result = {'value': {}}
+        # if date_to:
+        #     if str(date_to) > str(fields.Date.today()):
+        #         raise UserError('Date fin doit etre antérieur au date d\'aujourd\'hui')
+        # # date_to has to be greater than date_from
+        # if date_from and date_to and date_from > date_to:
+        #     raise UserError('La date de début doit être antérieure à la date de fin.')
+        #
+        # holiday_obj = self.env['hr.holidays']
+        # hours_obj = self.env['training.holiday.year']
+        # this = self.env['base.group.merge.line']
+        # employee = self.env['hr.employee'].browse(employee_id)
+        #
+        # # Compute and update the number of days
+        #
+        # if date_to and date_from and date_from <= date_to:
+        #
+        #     DATETIME_FORMAT = "%Y-%m-%d"
+        #     from_dt = fields.Datetime.from_string(date_from)
+        #     to_dt = fields.Datetime.from_string(date_to)
+        #     timedelta = to_dt - from_dt
+        #     diff_day = holiday_obj._get_number_of_days(date_from, date_to)
+        #     year = hours_obj.search([('year', '=', str(date_from.year))])
+        #     if year:
+        #         hr = hours_obj.browse(year[0]).hours
+        #     else:
+        #         hr = 7
+        #     result['value']['color1'] = round(math.floor(diff_day)) + 1
+        # else:
+        #     result['value']['color1'] = 0
+        #     result['value']['total_r'] = 0
+        #     result['value']['amount_line'] = 0
+        #
+        # return result
 
     def onchange_qty_(self, hours_r, employee_id, categ_id, product_id, uom_id, poteau_r):
         """

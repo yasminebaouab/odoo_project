@@ -36,11 +36,14 @@
                        readonly="1"/>
                 <field name="coordin_id1"
                        string="Coord1" options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
+                       invisible="1"
                        readonly="1"/>
                 <field name="coordin_id2"
                        string="Coord2" options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
+                       invisible="1"
                        readonly="1"/>
                 <field name="coordin_id3"
+                       invisible="1"
                        string="Coord3" options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
                        readonly="1"/>
                 <field name="employee_id" string="Ressource affectée" invisible="1"/>
@@ -90,6 +93,8 @@
 
                 <button name="action_open_group" string="Consulter la F.T/Facture" type="object" icon="fa:indent"
                         attrs="{'invisible': [('done2','=', False)]}"/>
+
+                <button name="lister_intervenant" string="list intervenant"  type="object" />
 
                 <!--                <button name="move_next" string="Taches Suivantes" type="object" icon="fa:angle-double-right"-->
                 <!--                        attrs="{'invisible': [('done33','=', False)]}"/>-->

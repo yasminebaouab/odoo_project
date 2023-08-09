@@ -30,8 +30,6 @@
         'views/inherit.xml',
 
     ],
-    # only loaded in demonstration mode
-    'demo': [],
 
     'application': True,
     'auto_install': False,

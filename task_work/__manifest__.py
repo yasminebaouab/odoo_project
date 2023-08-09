@@ -23,7 +23,7 @@
                 'hr',
                 'product_custom',
                 'link_line',
-                'risk_management'
+                'risk_management',
                 ],
 
     # always loaded
@@ -31,6 +31,7 @@
         'security/ir.model.access.csv',
         'views/work.xml',
         'views/status.xml',
+        'views/employes_intervenant_prod.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

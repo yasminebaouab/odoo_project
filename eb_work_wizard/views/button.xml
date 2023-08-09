@@ -6,6 +6,7 @@
         <field name="binding_model_id" ref="task_work.model_project_task_work"/>
         <field name="binding_view_types">list</field>
         <field name="state">code</field>
+        <field name="sequence" eval="0"/>
         <field name="code">
             action = records.action_duplicate()
         </field>

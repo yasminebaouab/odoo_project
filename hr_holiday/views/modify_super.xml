@@ -1,0 +1,41 @@
+<odoo>
+
+    <record id="view_holidays_modify_super_tree" model="ir.ui.view">
+        <field name="name">hr.holidays.modify.super.tree</field>
+        <field name="model">hr.holidays</field>
+        <field name="arch" type="xml">
+            <tree>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_holidays_modify_super_form" model="ir.ui.view">
+        <field name="name">hr.holidays.modify.super.form</field>
+        <field name="model">hr.holidays</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,pending"/>
+                </header>
+                <sheet>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="action_holidays_modify_super" model="ir.actions.act_window">
+        <field name="name">Traitement Modification</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">hr.holidays</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('hr_holiday.view_holidays_modify_super_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('hr_holiday.view_holidays_modify_super_form')})]"/>
+    </record>
+
+    <menuitem id="menu_holidays_modify_super" name="Traitement Modification" parent="project_custom.menu_gest_cong" sequence="10"
+              action="action_holidays_modify_super"/>
+
+</odoo>

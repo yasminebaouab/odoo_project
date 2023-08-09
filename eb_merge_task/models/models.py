@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import date, timedelta
+from multiprocessing import connection
 
 from odoo import models, fields, api, _, exceptions
 from odoo.exceptions import ValidationError, UserError
@@ -130,6 +131,11 @@ class EbMergeTasks(models.Model):
     _description = 'Merge Tasks'
     _rec_name = 'name'
 
+    """
+            Action that shows the list of (non-draft) account moves from
+            the selected journals and periods, so the user can review
+            the renumbered account moves.
+            """
 
     def show_results(self):
 
@@ -138,53 +144,75 @@ class EbMergeTasks(models.Model):
         the selected journals and periods, so the user can review
         the renumbered account moves.
         """
+        # Récupérer l'objet "current" qui est le premier enregistrement du modèle courant
         current = self[0]
+        # Supprimer toutes les lignes associées à l'enregistrement "current" dans la table "base_group_merge_line2"
         self.env.cr.execute("delete from base_group_merge_line2 where wiz_id=%s", (current.id,))
+        # Initialiser les listes "res_cpt" et "list"
         res_cpt = []
+        list = []
+        # Vérifier si un projet est sélectionné (current.project_id)
         if current.project_id:
+            # Vérifier si le type de projet est égal à '1'
             if current.type == '1':
+                # Vérifier si des tâches sont sélectionnées (current.task_ids)
                 if not current.task_ids:
                     raise UserError(_('Action impossible!\nVous devez sélectionner les étapes/kits concernées!'))
+                # Vérifier si des lignes sont présentes (current.line_ids)
                 if not current.line_ids:
                     raise UserError(_('Action impossible!\nVous devez Mentionner les Zones et Secteurs!'))
+                # Initialiser les listes "l" et "v"
                 l = []
                 v = []
+                # Parcourir les tâches sélectionnées (current.task_ids.ids)
                 for tt in current.task_ids.ids:
+                    # Récupérer l'objet "this_p" qui est une instance de la tâche actuelle
                     this_p = self.env['project.task'].browse(tt)
+                    # Si la tâche a un "kit_id", ajouter son ID à la liste "v", sinon ajouter le nom de la tâche à la liste "l"
                     if this_p.kit_id:
                         v.append(this_p.kit_id.id)
                     else:
                         l.append(this_p.name)
+                        # Vérifier si la liste "v" contient des éléments
                 if len(v) > 0:
+                    # Effectuer une requête pour récupérer les identifiants des travaux de tâches qui correspondent aux critères
                     self.env.cr.execute(
                         'select id from project_task_work where project_id= %s and state in %s and kit_id in %s and active=True and is_copy=False',
                         (current.project_id.id, ('draft', 'affect'), tuple(v)))
                     ll = self.env.cr.fetchall()
                 else:
+                    # Effectuer une requête pour récupérer les identifiants des travaux de tâches qui correspondent aux critères
                     self.env.cr.execute(
                         'select id from project_task_work where project_id= %s and state in %s and etape in %s',
                         (current.project_id.id, ('draft', 'affect'), tuple(l)))
 
                     ll = self.env.cr.fetchall()
+                    # Vérifier si la liste "l" contient des éléments
                 if len(l) > 0:
+                    # Effectuer une requête pour récupérer les identifiants des travaux de tâches associés à l'enregistrement actuel dans la table de relation
                     self.env.cr.execute(
                         'select project_task_work_id  from base_task_merge_automatic_wizard_project_task_work_rel where base_task_merge_automatic_wizard_id = %s ',
                         (current.id,))
                     ll1 = self.env.cr.fetchall()
+                    # Vérifier si la liste "ll1" est vide
                     if not ll1:
-                        raise UserError(_('Action impossible!\nMerci de sauvegarder le document avant!'))
+                        raise UserError(_('Action impossible!'), _("Merci de sauvegarder le document avant!"))
                     else:
-
+                        # Parcourir les identifiants récupérés de la table de relation et ajouter les travaux de tâches correspondants à la liste "res_cpt"
                         for nn in ll1:
                             wrk = self.env['project.task.work'].browse(nn)
                             res_cpt.append(wrk.id)
-
+                        # Créer une intersection entre la liste "ll" et la liste "res_cpt" pour obtenir les identifiants des travaux de tâches à conserver
+                    pp = set(ll).intersection(res_cpt)
                 else:
+                    # Si la liste "l" est vide, définir directement la liste "res_cpt" avec les identifiants récupérés
                     res_cpt = ll
+                    # À ce stade, la liste "res_cpt" contient les identifiants des travaux de tâches à afficher dans le résultat
             elif current.type == '2':
                 l = []
                 v = []
                 for tt in current.task_ids.ids:
+                    ##raise osv.except_osv(_('Transfert impossible!'),_("Pas de Stock suffisant pour l'article %s  !")%tt )
                     this_p = self.env['project.task'].browse(tt)
                     if this_p.kit_id:
                         v.append(this_p.kit_id.id)
@@ -207,16 +235,18 @@ class EbMergeTasks(models.Model):
                         (current.id,))
                     ll1 = self.env.cr.fetchall()
                     if not ll1:
-                        raise UserError(_('Action impossible!\nMerci de sauvegarder le document avant!'))
+                        raise UserError(_("Action impossible!'\nMerci de sauvegarder le document avant!"))
                     else:
 
                         for nn in ll1:
                             wrk = self.env['project.task.work'].browse(nn)
                             res_cpt.append(wrk.id)
 
+                    pp = set(ll).intersection(res_cpt)
                 else:
                     res_cpt = ll
 
+            ##   raise osv.except_osv(_('Transfert impossible!'),_("Pas de Stock suffisant pour l'article %s  !")%ll)
             for kk in res_cpt:
                 if kk:
                     s2 = self.env['project.task.work'].browse(kk)
@@ -229,12 +259,11 @@ class EbMergeTasks(models.Model):
                     for jj in current.line_ids:
                         if jj.secteur > jj.secteur_to:
                             raise UserError(
-                                _('Action impossible!\nLe secteur de départ doit etre plus petit que le secteur de fin!'))
+                                _("Action impossible!\n Le secteur de départ doit etre plus petit que le secteur de fin!"))
                     for jj in current.line_ids:
 
                         if jj.zone == 0 and jj.secteur > 0:
                             for hh in range(jj.secteur, jj.secteur_to + 1):
-
                                 ##sequence_w=sequence_w+1
                                 if jj.employee_id:
                                     employee = jj.employee_id.id
@@ -256,36 +285,28 @@ class EbMergeTasks(models.Model):
                                     is_display = True
                                 else:
                                     is_display = False
-                                self.env['base.group.merge.line2'].create({
-                                    'task_id': s2.task_id.id,
-                                    'categ_id': s2.categ_id.id,
-                                    'product_id': s2.product_id.id,
-                                    'name': s2.name.replace(' - Secteur ' + str(s2.secteur), '') + ' - Secteur ' + str(
-                                        hh),
-                                    'date_start': date_from,
-                                    'date_end': date_to,
-                                    'poteau_i': s2.poteau_t,
-                                    'poteau_t': poteau_t,
-                                    'color': s2.color,
-                                    'total_t': s2.total_t,  ##*work.employee_id.contract_id.wage
-                                    'project_id': s2.project_id.id,
-                                    'etape': s2.etape,
-                                    # 'bon_id': current.id,
-                                    'gest_id': s2.gest_id.id or False,
-                                    'employee_id': employee,
-                                    'uom_id': s2.uom_id.id,
-                                    'uom_id_r': s2.uom_id.id,
-                                    'ftp': s2.ftp,
-                                    'state': s2.state,
-                                    'work_id': s2.id,
-                                    'sequence': res[0] + 1,
-                                    'zone': 0,
-                                    'zo': str(jj.zone),
-                                    'secteur': hh,
-                                    'wiz_id': current.id,
-                                    'is_display': is_display
+                                sql = """
+                                            INSERT INTO base_group_merge_line2 (task_id, categ_id, product_id, name, date_start, date_end, 
+                                                                               poteau_i, poteau_t, color, total_t, project_id, etape, 
+                                                                               gest_id, employee_id, uom_id, uom_id_r, ftp, state, work_id, 
+                                                                               sequence, zone, zo, secteur, wiz_id, is_display)
+                                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                        """
 
-                                })
+                                self.env.cr.execute(sql, (s2.task_id.id, s2.categ_id.id, s2.product_id.id,
+                                                          s2.name.replace(' - Secteur ' + str(s2.secteur),
+                                                                          '') + ' - Secteur ' + str(
+                                                              hh),
+                                                          date_from, date_to, s2.poteau_t, poteau_t, s2.color,
+                                                          s2.total_t,
+                                                          s2.project_id.id or None, s2.etape, s2.gest_id.id or None,
+                                                          employee,
+                                                          s2.uom_id.id or None, s2.uom_id.id or None, s2.ftp, s2.state,
+                                                          s2.id, res[0] + 1,
+                                                          0, str(jj.zone), hh, current.id, is_display))
+
+
+
                         elif jj.zone > 0 and jj.secteur > 0:
                             for hh in range(jj.zone, jj.zone + 1):
                                 for vv in range(jj.secteur, jj.secteur_to + 1):
@@ -310,36 +331,28 @@ class EbMergeTasks(models.Model):
                                     else:
                                         is_display = False
                                     sequence_w = sequence_w + 1
-                                    self.env['base.group.merge.line2'].create({
-                                        'task_id': s2.task_id.id,
-                                        'categ_id': s2.categ_id.id,
-                                        'product_id': s2.product_id.id,
-                                        'name': s2.name.replace(' - Secteur ' + str(s2.secteur), '') + ' - Zone ' + str(
-                                            hh) + ' - Secteur ' + str(vv),
-                                        'date_start': date_from,
-                                        'date_end': date_to,
-                                        'poteau_i': s2.poteau_t,
-                                        'poteau_t': poteau_t,
-                                        'color': s2.color,
-                                        'total_t': s2.total_t,  ##*work.employee_id.contract_id.wage
-                                        'project_id': s2.project_id.id,
-                                        # 'bon_id': current.id,
-                                        'gest_id': s2.gest_id.id or False,
-                                        'employee_id': employee,
-                                        'uom_id': s2.uom_id.id,
-                                        'uom_id_r': s2.uom_id.id,
-                                        'ftp': s2.ftp,
-                                        'state': s2.state,
-                                        'work_id': s2.id,
-                                        'zone': hh,
-                                        'secteur': vv,
-                                        'wiz_id': current.id,
-                                        'sequence': res[0] + 1,
-                                        'etape': s2.etape,
-                                        'zo': str(hh),
-                                        'is_display': is_display
+                                    sql = """
+                                                INSERT INTO base_group_merge_line2 (task_id, categ_id, product_id, name, date_start, date_end, 
+                                                                                   poteau_i, poteau_t, color, total_t, project_id, 
+                                                                                   gest_id, employee_id, uom_id, uom_id_r, ftp, state, work_id, 
+                                                                                   zone, secteur, wiz_id, sequence, etape, zo, is_display)
+                                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                            """
 
-                                    })
+                                    self.env.cr.execute(sql, (s2.task_id.id, s2.categ_id.id, s2.product_id.id,
+                                                              s2.name.replace(' - Secteur ' + str(s2.secteur),
+                                                                              '') + ' - Zone ' + str(
+                                                                  hh) + ' - Secteur ' + str(vv),
+                                                              date_from, date_to, s2.poteau_t, poteau_t, s2.color,
+                                                              s2.total_t,
+                                                              s2.project_id.id or None, s2.gest_id.id or None, employee,
+                                                              s2.uom_id.id or None, s2.uom_id.id or None, s2.ftp,
+                                                              s2.state, s2.id,
+                                                              hh, vv, current.id, res[0] + 1, s2.etape, str(hh),
+                                                              is_display))
+
+
+
                         elif jj.zone > 0 and jj.secteur == 0:
                             for hh in range(jj.zone, jj.zone + 1):
                                 if jj.employee_id:
@@ -363,78 +376,25 @@ class EbMergeTasks(models.Model):
                                 else:
                                     is_display = False
                                 sequence_w = sequence_w + 1
-                                self.env['base.group.merge.line2'].create({
-                                    'task_id': s2.task_id.id,
-                                    'categ_id': s2.categ_id.id,
-                                    'product_id': s2.product_id.id,
-                                    'name': s2.name + ' - Zone ' + str(hh),
-                                    'date_start': date_from,
-                                    'date_end': date_to,
-                                    'poteau_i': s2.poteau_t,
-                                    'poteau_t': poteau_t,
-                                    'color': s2.color,
-                                    'total_t': s2.total_t,  ##*work.employee_id.contract_id.wage
-                                    'project_id': s2.project_id.id,
-                                    # 'bon_id': current.id,
-                                    'gest_id': s2.gest_id.id or False,
-                                    'employee_id': employee,
-                                    'uom_id': s2.uom_id.id,
-                                    'uom_id_r': s2.uom_id.id,
-                                    'ftp': s2.ftp,
-                                    'state': s2.state,
-                                    'work_id': s2.id,
-                                    'zone': hh,
-                                    'zo': str(jj.hh),
-                                    'secteur': 0,
-                                    'wiz_id': current.id,
-                                    'sequence': res[0] + 1,
-                                    'etape': s2.etape,
-                                    'is_display': is_display
+                                sql = """
+                                            INSERT INTO base_group_merge_line2 (task_id, categ_id, product_id, name, date_start, date_end, 
+                                                                               poteau_i, poteau_t, color, total_t, project_id, 
+                                                                               gest_id, employee_id, uom_id, uom_id_r, ftp, state, work_id, 
+                                                                               zone, zo, secteur, wiz_id, sequence, etape, is_display)
+                                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                        """
 
-                                })
+                                self.env.cr.execute(sql, (s2.task_id.id, s2.categ_id.id, s2.product_id.id,
+                                                          s2.name + ' - Zone ' + str(hh),
+                                                          date_from, date_to, s2.poteau_t, poteau_t, s2.color,
+                                                          s2.total_t,
+                                                          s2.project_id.id or None, s2.gest_id.id or None, employee,
+                                                          s2.uom_id.id or None, s2.uom_id.id or None, s2.ftp, s2.state,
+                                                          s2.id,
+                                                          hh, str(jj.hh), 0, current.id, res[0] + 1, s2.etape,
+                                                          is_display))
 
         return True
-
-    # def button_import2(self):
-    #     current = self
-    #     work_ = self.env['project.task.work']
-    #     task_line_show_line2 = self.env['task_line.show.line2']
-    #
-    #     task_line_show_line2.search([('wizard_id', '=', current.id)]).unlink()
-    #
-    #     list1 = []
-    #     for task in current.task_ids:
-    #         tt = work_.search([('project_id', '=', task.project_id.id), ('etape', 'ilike', task.product_id.name),
-    #                            ('is_copy', '=', False)], order='sequence asc').ids
-    #         for ss in tt:
-    #             ki = work_.browse(ss)
-    #             if ki.task_id.id not in list1:
-    #                 list1.append(ki.id)
-    #
-    #     for ji in list1:
-    #         kk = work_.browse(ji)
-    #         task_line_show_line2.create({
-    #             'product_id': kk.product_id.id,
-    #             'gest_id': kk.gest_id.id,
-    #             'state': 'draft',
-    #             'color': kk.color,
-    #             'task_id': kk.task_id.id,
-    #             'categ_id': kk.categ_id.id,
-    #             'etape': kk.etape,
-    #             'date_start_r': kk.date_start_r,
-    #             'date_end_r': kk.date_end_r,
-    #             'date_start': kk.date_start,
-    #             'date_end': kk.date_end,
-    #             'poteau_t': kk.poteau_t,
-    #             'sequence': kk.sequence,
-    #             'work_id': kk.id,
-    #             'project_id': kk.project_id.id,
-    #             'uom_id': kk.uom_id.id,
-    #             'uom_id_r': kk.uom_id.id,
-    #             'wizard_id': current.id,
-    #         })
-    #
-    #     return True
 
     def apply_(self):
         current = self
@@ -547,7 +507,7 @@ class EbMergeTasks(models.Model):
                         'partner_id': int(s2.project_id.partner_id.id),
                         'work_orig': int(s2.id),
                     }
-                    self.env['project.task.work'].create(task_work_vals)
+                    task_work = self.env['project.task.work'].create(task_work_vals)
 
                     sql_result = self.env['project.task.work'].search([('project_id', '=', s2.project_id.id),
                                                                        ('task_id', '=', s2.task_id.id),
@@ -617,85 +577,85 @@ class EbMergeTasks(models.Model):
 
                     for kk in res_cpt:
                         if current.type == '1':
-                            self.env['project.task.work'].write(kk, {'active': False, 'w_id': current.id})
+                            self.env['project.task.work'].browse(kk).write({'active': False, 'w_id': current.id})
                         else:
                             if current.choix == '2':
-                                self.env['project.task.work'].write(kk, {'active': False, 'w_id': current.id})
+                                self.env['project.task.work'].browse(kk).write({'active': False, 'w_id': current.id})
                             else:
-                                self.env['project.task.work'].write(kk, {'w_id': current.id})
+                                self.env['project.task.work'].browse(kk).write({'w_id': current.id})
 
-        current.state = 'open'
+                current.write({'state': 'open'})
 
-        # Create records in the 'app_entity_26' and 'app_entity_26_values' tables
-        view = self.env.ref(
-            'sh_message.sh_message_wizard')  # Replace 'module_name' with your actual module name
-        # for jj in res_cpt:
-        #     s2 = self.env['project.task.work'].browse(jj)
-        #     vals = {
-        #         'date_added': int(
-        #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
-        #         'date_updated': int(
-        #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
-        #         'created_by': 1,
-        #         'parent_item_id': s2.project_id.id,
-        #         'field_243': s2.name.encode('ascii', 'ignore').decode().replace("'", "\\'"),
-        #         'field_253': s2.project_id.id,
-        #         'field_255': s2.project_id.partner_id.id,
-        #         'field_256': s2.product_id.name.encode('ascii', 'ignore').decode().replace("'", "\\'") or '',
-        #         'field_260': s2.categ_id.name.encode('ascii', 'ignore').decode().replace("'", "\\'") or '',
-        #         'field_261': str(s2.task_id.coordin_id.id) or '',
-        #         'field_259': str(s2.gest_id.id) or '',
-        #         'field_258': s2.poteau_t or 0,
-        #         'field_264': int(
-        #             datetime.strptime(s2.date_start_r or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
-        #         'field_271': int(
-        #             datetime.strptime(s2.date_end_r or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
-        #         'field_272': str(s2.task_id.id) or '',
-        #         'field_268': '72',
-        #         'field_244': int(
-        #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
-        #         'field_250': int(datetime.strptime(s2.date_end or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
-        #         'field_251': str(s2.employee_id.id) if s2.employee_id else '',
-        #         'field_269': str(s2.uom_id.id) or '',
-        #         'field_263': str(s2.zone) or '',
-        #         'field_287': str(s2.secteur) or '',
-        #         'field_273': 0,
-        #         'field_274': 0,
-        #     }
-        #     entity_26 = self.env['app_entity_26'].create(vals)
-        #
-        #     field_values = [
-        #         {'fields_id': 244, 'value': '72'},
-        #         {'fields_id': 253, 'value': s2.project_id.id},
-        #         {'fields_id': 256, 'value': s2.project_id.partner_id.id},
-        #         {'fields_id': 268, 'value': s2.task_id.id}
-        #     ]
-        #     if s2.gest_id:
-        #         field_values.append({'fields_id': 258, 'value': s2.gest_id.id})
-        #     if s2.task_id.coordin_id3:
-        #         field_values.append({'fields_id': 259, 'value': s2.task_id.coordin_id3.id})
-        #     if s2.employee_id:
-        #         field_values.append({'fields_id': 269, 'value': s2.employee_id.id})
-        #
-        #     for fval in field_values:
-        #         self.env['app_entity_26_values'].create({
-        #             'items_id': entity_26.id,
-        #             'fields_id': fval['fields_id'],
-        #             'value': fval['value'],
-        #         })
+                # Create records in the 'app_entity_26' and 'app_entity_26_values' tables
+                view = self.env.ref(
+                    'sh_message.sh_message_wizard')  # Replace 'module_name' with your actual module name
+                # for jj in res_cpt:
+                #     s2 = self.env['project.task.work'].browse(jj)
+                #     vals = {
+                #         'date_added': int(
+                #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
+                #         'date_updated': int(
+                #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
+                #         'created_by': 1,
+                #         'parent_item_id': s2.project_id.id,
+                #         'field_243': s2.name.encode('ascii', 'ignore').decode().replace("'", "\\'"),
+                #         'field_253': s2.project_id.id,
+                #         'field_255': s2.project_id.partner_id.id,
+                #         'field_256': s2.product_id.name.encode('ascii', 'ignore').decode().replace("'", "\\'") or '',
+                #         'field_260': s2.categ_id.name.encode('ascii', 'ignore').decode().replace("'", "\\'") or '',
+                #         'field_261': str(s2.task_id.coordin_id.id) or '',
+                #         'field_259': str(s2.gest_id.id) or '',
+                #         'field_258': s2.poteau_t or 0,
+                #         'field_264': int(
+                #             datetime.strptime(s2.date_start_r or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
+                #         'field_271': int(
+                #             datetime.strptime(s2.date_end_r or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
+                #         'field_272': str(s2.task_id.id) or '',
+                #         'field_268': '72',
+                #         'field_244': int(
+                #             datetime.strptime(s2.date_start or s2.create_date[:10], '%Y-%m-%d').timestamp()) or '',
+                #         'field_250': int(datetime.strptime(s2.date_end or '2000-01-01', '%Y-%m-%d').timestamp()) or '',
+                #         'field_251': str(s2.employee_id.id) if s2.employee_id else '',
+                #         'field_269': str(s2.uom_id.id) or '',
+                #         'field_263': str(s2.zone) or '',
+                #         'field_287': str(s2.secteur) or '',
+                #         'field_273': 0,
+                #         'field_274': 0,
+                #     }
+                #     entity_26 = self.env['app_entity_26'].create(vals)
+                #
+                #     field_values = [
+                #         {'fields_id': 244, 'value': '72'},
+                #         {'fields_id': 253, 'value': s2.project_id.id},
+                #         {'fields_id': 256, 'value': s2.project_id.partner_id.id},
+                #         {'fields_id': 268, 'value': s2.task_id.id}
+                #     ]
+                #     if s2.gest_id:
+                #         field_values.append({'fields_id': 258, 'value': s2.gest_id.id})
+                #     if s2.task_id.coordin_id3:
+                #         field_values.append({'fields_id': 259, 'value': s2.task_id.coordin_id3.id})
+                #     if s2.employee_id:
+                #         field_values.append({'fields_id': 269, 'value': s2.employee_id.id})
+                #
+                #     for fval in field_values:
+                #         self.env['app_entity_26_values'].create({
+                #             'items_id': entity_26.id,
+                #             'fields_id': fval['fields_id'],
+                #             'value': fval['value'],
+                #         })
 
-        view_id = view and view.id or False
-        return {
-            'name': 'Taches générées avec Succès',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'sh.message.wizard',
-            'views': [(view_id, 'form')],
-            'view_id': view_id,
-            'target': 'new',
-            'context': self.env.context
-        }
+                view_id = view and view.id or False
+                return {
+                    'name': 'Taches générées avec Succès',
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_model': 'sh.message.wizard',
+                    'views': [(view_id, 'form')],
+                    'view_id': view_id,
+                    'target': 'new',
+                    'context': self.env.context
+                }
 
     def cancel_(self):
         current = self
@@ -927,6 +887,7 @@ class EbMergeTasks(models.Model):
 
     @api.onchange('year_no', 'week_no')
     def onchange_week_(self):
+
         # The result variable is no longer used since the method directly assigns values to the fields.
         if self.year_no and self.week_no:  # The method now uses the self parameter to access the field values.
             d = date(self.year_no, 1, 1)
@@ -943,6 +904,7 @@ class EbMergeTasks(models.Model):
 
     @api.onchange('project_id')
     def onchange_project_id(self):
+
         if self.project_id:
             self.task_ids = False
             self.work_ids = False
@@ -957,6 +919,7 @@ class EbMergeTasks(models.Model):
 
     @api.onchange('project_id', 'task_ids')
     def onchange_project_id(self):
+
         ltask1 = []
         ltask2 = []
         zz = []
@@ -978,6 +941,7 @@ class EbMergeTasks(models.Model):
 
     @api.onchange('project_id', 'task_ids', 'zone', 'secteur', 'keep', 'type')
     def onchange_categ_id(self):
+
         list_ = []
         list1 = []
         list2 = []

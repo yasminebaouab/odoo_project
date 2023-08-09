@@ -355,7 +355,7 @@ class EbMergeInvoices(models.Model):
     line_ids = fields.One2many(
         'base.invoices.merge.line', 'wizard_id', string="Role lines", copy=True,
         readonly=True, states={'draft': [('readonly', False)]})
-    # link_ids = fields.One2many('link.line', 'affect_id', string="Work done")
+    link_ids = fields.One2many('link.line', 'affect_id', string="Work done")
     project_id = fields.Many2one('project.project', string='Wizard', readonly=True,
                                  states={'draft': [('readonly', False)]})
     task_id = fields.Many2one('project.task', string='Wizard', readonly=True, states={'draft': [('readonly', False)]})
@@ -366,7 +366,7 @@ class EbMergeInvoices(models.Model):
     date_end_r = fields.Date(string='Assigned')
     employee_id = fields.Many2one('hr.employee', string='Assigned',
                                   readonly=True, states={'draft': [('readonly', False)]})
-    employee_id2 = fields.Many2one('hr.employee', string='Assigned')
+    employee_id2 = fields.Many2one('hr.employee', string='Intervenant', required=True)
     hours_r = fields.Float(string='Assigned')
     total_t = fields.Float(string='Assigned')
     total_r = fields.Float(string='Assigned')
@@ -380,7 +380,7 @@ class EbMergeInvoices(models.Model):
     state = fields.Selection([
         ('draft', 'Planif. Trav.'),
         ('affect', 'Travaux Affectés'),
-        ('tovalid', 'Validation Super.'),
+        ('tovalid', 'Validaion Super.'),
         ('valid', 'Factures Br.'),
         ('paid', 'Factures Val.'),
         ('cancel', 'T. Annulés'),
@@ -422,6 +422,7 @@ class EbMergeInvoices(models.Model):
     intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
     time = fields.Float(string='Temps de gestion')
     time_ch = fields.Char(string='Temps de gestion')
+    # intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
 
     # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
 
@@ -580,36 +581,31 @@ class EbMergeInvoices(models.Model):
             for msg_id in tt.ids:
                 wk = work_obj.browse(msg_id)
                 if this.types_affect == 'intervenant':
-                    if wk.state != 'affect':
-                        raise ValidationError(
-                            _("Vous ne pouvez pas faire cette action  "))
+
+                    if this.employee_id2 and str(wk.affect_emp_list).find(
+                            str(this.employee_id2.user_id.id)) != -1 and wk.state == 'affect':
+                        work_line.write({'state': 'draft'})
+                        work_line.write({
+                            'job': '',
+                            'current_emp': False,
+                            'employee_id': False,
+                            'state': 'draft',
+                        })
+                        print('debug', wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
+                        wk.update({
+                            'affect_emp_list': wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
+                            'affect_e_l': wk.affect_e_l.replace(str(this.employee_id2.user_id.login) + ',', ''),
+                            'affect_emp': wk.affect_emp.replace(
+                                str(this.employee_id2.name + ',' if this.employee_id2 else ''), ''),
+
+                        })
+
                     else:
-                        if this.employee_id2 and str(wk.affect_emp_list).find(
-                                str(this.employee_id2.user_id.id)) != -1 and wk.state == 'affect':
-                            work_line.write({'state': 'draft'})
-                            work_line.write({
-                                'job': '',
-                                'current_emp': False,
-                                'employee_id': False,
-                                'state': 'draft',
-                            })
-                            print('debug', wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
-                            wk.update({
-                                'affect_emp_list': wk.affect_emp_list.replace(str(this.employee_id2.user_id.id) + ',',
-                                                                              ''),
-                                'affect_e_l': wk.affect_e_l.replace(str(this.employee_id2.user_id.login) + ',', ''),
-                                'affect_emp': wk.affect_emp.replace(
-                                    str(this.employee_id2.name + ',' if this.employee_id2 else ''), ''),
-
-                            })
-
-                        else:
-                            raise ValidationError(
-                                _("Champs Intervenant vide ou employée n'existe pas dans liste des intervenants"))
+                        raise ValidationError(
+                            _("Champs Intervenant vide ou employée n'existe pas dans liste des intervenants"))
                 elif this.types_affect == 'controle':
                     if this.employee_id2 and str(wk.affect_con).find(str(this.employee_id2.name)) != -1:
-                        print('affect_con_list',
-                              wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
+                        print('affect_con_list', wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
                         wk.update({
                             'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
                             'affect_con': wk.affect_con.replace(str(this.employee_id2.name) + ',', ''),
@@ -673,13 +669,13 @@ class EbMergeInvoices(models.Model):
         # this.state = 'draft'
         # self.env['email.template'].sudo().browse(33).send_mail(this.id, force_send=True)
         #
-        # line_obj.write({'state': 'draft'})
+        line_obj.write({'state': 'draft'})
 
         view = self.env['sh.message.wizard']
         view_id = view and view.id or False
 
         return {
-            'name': 'Annulation d"affectation faite avec Succès',
+            'name': 'Annulataion d"affectation faite avec Succès',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -849,22 +845,17 @@ class EbMergeInvoices(models.Model):
         emp_obj = self.env['hr.employee']
         res_user = self.env['res.users'].browse(self.env.uid)
         this = self
+
+        intervenants_affect_production = self.env['intervenants.affect.production']
+
         print('work_ids : ', this.work_ids)
         for line in this.work_ids:
 
             line = self.env['project.task.work'].browse(line.id)
-            # print('line : ', line)
-            # print('line.ids : ', line.ids)
+            print('line : ', line)
+            print('line.ids : ', line.ids)
             if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
-                line_obj1.write({'state': 'affect'})
-
-            if not this.employee_id2:
-                raise ValidationError(_('Erreur ! Vous devez sélectionner un intervenant.'))
-
-            # if this.employee_id2 and this.types_affect == 'correction':
-            #     line_obj1.create({'work_id': line.id,
-            #                       'wizard_id': self.id,
-            #                       'state': 'affect'})
+                line.write({'state': 'affect'})
 
             for msg_id in line.ids:
                 wk = self.env['project.task.work'].browse(msg_id)
@@ -898,6 +889,15 @@ class EbMergeInvoices(models.Model):
                 if this.employee_id2 and this.types_affect == 'intervenant':
                     if wk.state == 'draft':
                         wk.write({'state': 'affect'})
+
+                    intervenant_affect_production_id = intervenants_affect_production.create({
+
+                        'name': this.employee_id2.name,
+                        'employee_id': this.employee_id2.id,
+                        'state': 'non_traité',
+                        'date_affectation': fields.Date.today(),
+                        'task_work_id': wk.id
+                    })
                     wk.write({
                         'affect_emp': wk1 + this.employee_id2.name + ',',
                         'affect_emp_list': wk11 + str(this.employee_id2.user_id.id) + ',',
@@ -1054,16 +1054,16 @@ class EbMergeInvoices(models.Model):
                 if wk.employee_id:
                     self._cr.execute('update project_task_work set current_emp =%s where id=%s ',
                                      (wk.employee_id.id, wk.id))
+            self.write({'state': 'affect'})
 
-        line_obj.browse(this.id).write({'state': 'affect'})
-        vals = self.time_ch.split(':')
-        t, hours = divmod(float(vals[0]), 24)
-        t, minutes = divmod(float(vals[1]), 60)
-        minutes = minutes / 60.0
+            vals = self.time_ch.split(':')
+            t, hours = divmod(float(vals[0]), 24)
+            t, minutes = divmod(float(vals[1]), 60)
+            minutes = minutes / 60.0
 
-        total = hours + minutes
+            total = hours + minutes
 
-        res_user = self.env['res.users'].browse(self._uid)
+            res_user = self.env['res.users'].browse(self._uid)
         if self.work_ids:
             for rec in self.work_ids:
                 base_group = self.env['base.group.merge.automatic.wizard'].create({
@@ -1118,10 +1118,7 @@ class EbMergeInvoices(models.Model):
                     'state': 'valid',
                     'work_id': rec.id,
                     'task_id': rec.task_id.id,
-                    'group_id2': base_group_id,
                     'sequence': rec.sequence,
-                    'done3': True,
-                    'date': date.today(),
                     'uom_id': 5,
                     'date_start_r': fields.Date.today(),
                     'date_end_r': fields.Date.today(),
@@ -1129,14 +1126,11 @@ class EbMergeInvoices(models.Model):
                     'hours_r': total,
                     'color1': 1,
                     'project_id': rec.project_id.id,
-                    'product_id': product,
                     'gest_id': rec.gest_id.id,
                     'zone': rec.zone,
                     'secteur': rec.secteur,
                 }
-                print('move_line', move_line)
-                one = wl.create(move_line)
-                # self.env['base.invoices.merge.automatic.wizard'].create(move_line)
+                self.env['base.invoices.merge.automatic.wizard'].create(move_line)
 
             # if self.mail_send == 'yes':
             #     if not self.note:
@@ -1174,16 +1168,16 @@ class EbMergeInvoices(models.Model):
             # elif self.employee_id2 and self.types_affect == 'correction' and not self.group_id:
             #     self.env['mail.template'].sudo().browse(35).send_mail(self.id, force_send=True)
             #
-            # for rec in self.work_ids:
-            #     for line in self.link_ids:
-            #         self.env['link.line'].create({
-            #             'ftp': line.ftp,
-            #             'name': line.name,
-            #             'work_id': rec.id,
-            #             'affect_id': line.id,
-            #             'source': 'affectation',
-            #             'id_record': self.id
-            #         })
+            for rec in self.work_ids:
+                for line in self.link_ids:
+                    self.env['link.line'].create({
+                        'ftp': line.ftp,
+                        'name': line.name,
+                        'work_id': rec.id,
+                        'affect_id': line.id,
+                        'source': 'affectation',
+                        'id_record': self.id
+                    })
         view = self.env['sh.message.wizard']
         view_id = view and view.id or False
         return {
@@ -1228,3 +1222,9 @@ class ProjectTaskWorkLine(models.Model):
     _inherit = 'project.task.work.line'
 
     wizard_id = fields.Many2one('base.invoices.merge.automatic.wizard', string='Event')
+
+
+class LinkLine(models.Model):
+    _inherit = 'link.line'
+
+    affect_id = fields.Many2one('base.invoices.merge.automatic.wizard', string='link')

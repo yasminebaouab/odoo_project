@@ -18,23 +18,31 @@
 
     <!--    ***** menu_gest_data submenus-->
 
-    <menuitem id="menu_product_category" name="Liste de Départements" parent="menu_gest_data" sequence="10"
-              action="product_custom.action_product_category"/>
-    <menuitem id="menu_kit" name="Liste des Kits" parent="menu_gest_data" sequence="20"
-              action="product_custom.action_kit"/>
-    <menuitem id="menu_product" name="Liste de services" parent="menu_gest_data" sequence="30"
-              action="product_custom.action_product"/>
-    <menuitem id="menu_project_type" name="Type de Projet" parent="menu_gest_data" sequence="35"
-              action="project_custom.action_project_type"/>
-    <menuitem id="menu_project_status" name="Type de Permis" sequence="40" parent="menu_gest_data"
-              action="task_work.action_project_status"/>
-    <menuitem id="menu_employee" name="Liste des Employés" parent="menu_gest_data" sequence="50"
-              action="employee_custom.action_employee"/>
-    <menuitem id="menu_remuneration_av" name="Affectation Avancée Rémunération" parent="menu_gest_data" sequence="60"
-              action="employee_custom.action_remuneration_av"/>
-    <menuitem id="menu_localisation" name="Localisation" parent="menu_gest_data" sequence="70"/>
+    <menuitem id="menu_gest_data_general" name="Général" parent="menu_gest_data" sequence="0"/>
+    <menuitem id="menu_gest_data_project" name="Project" parent="menu_gest_data" sequence="10"/>
+    <menuitem id="menu_gest_data_sale" name="Vente" parent="menu_gest_data" sequence="20"/>
+    <menuitem id="menu_gest_data_purchase" name="Achats" parent="menu_gest_data" sequence="30"/>
+    <menuitem id="menu_gest_data_rh" name="RH" parent="menu_gest_data" sequence="40"/>
+    <menuitem id="menu_gest_data_tb" name="Tableaux de Bord" parent="menu_gest_data" sequence="50"/>
 
-    <!--    ********* menu_localisation submenus-->
+    <!--    ********** menu_gest_data_general submenus-->
+
+    <menuitem id="menu_product_category" name="Liste de Départements" parent="menu_gest_data_general" sequence="0"
+              action="product_custom.action_product_category"/>
+    <menuitem id="menu_localisation" name="Localisation" parent="menu_gest_data_general" sequence="10"/>
+
+    <!--    ********** menu_gest_data_project submenus-->
+
+    <menuitem id="menu_kit" name="Liste des Kits" parent="menu_gest_data_project" sequence="0"
+              action="product_custom.action_kit"/>
+    <menuitem id="menu_product" name="Liste de services" parent="menu_gest_data_project" sequence="10"
+              action="product_custom.action_product"/>
+    <menuitem id="menu_project_type" name="Type de Projet" parent="menu_gest_data_project" sequence="50"
+              action="project_custom.action_project_type"/>
+    <menuitem id="menu_project_status" name="Type de Permis" parent="menu_gest_data_project" sequence="60"
+              action="task_work.action_project_status"/>
+
+    <!--    *************** menu_localisation submenus-->
 
     <menuitem id="menu_group" name="Régions" parent="menu_localisation" sequence="0"
               action="country_custom.action_group"/>
@@ -42,6 +50,16 @@
               action="country_custom.action_region"/>
     <menuitem id="menu_country" name="Pays" parent="menu_localisation" sequence="20"
               action="country_custom.action_country"/>
+
+    <!--    ********** menu_gest_data_rh submenus-->
+
+    <menuitem id="menu_employee" name="Liste des Employés" parent="menu_gest_data_rh" sequence="0"
+              action="employee_custom.action_employee"/>
+    <menuitem id="menu_remuneration_av" name="Affectation Avancée Rémunération" parent="menu_gest_data_rh" sequence="50"
+              action="employee_custom.action_remuneration_av"/>
+    <menuitem id="menu_gest_weekend" name="Gestion des Weekends" parent="menu_gest_data_rh" sequence="80"/>
+
+    <!--    *************** menu_gest_weekend submenus-->
 
     <!--    menu_project submenus-->
 
@@ -54,11 +72,25 @@
 
     <!--    menu_sale submenus-->
 
-    <menuitem id="menu_partner" name="Gestion des Clients" sequence="10" parent="menu_sale"
-              action="partner_custom.action_partner"/>
+    <menuitem id="menu_customer" name="Gestion des Clients" sequence="0" parent="menu_sale"
+              action="partner_custom.action_customer"/>
+
+    <!--    menu_purchase submenus-->
+
+    <menuitem id="menu_supplier" name="Gestion Fournisseurs" sequence="0" parent="menu_purchase"
+              action="partner_custom.action_supplier"/>
 
     <!--    menu_rh submenus-->
 
+    <menuitem id="menu_employee_b" name="Liste des Employés" parent="menu_rh" sequence="0"
+              action="employee_custom.action_employee"/>
+    <menuitem id="menu_cong" name="Congés" parent="menu_rh" sequence="30"/>
+    <menuitem id="menu_gest_cong" name="Traitement Congés" parent="menu_rh" sequence="40"/>
+
+    <!--    ***** menu_gest_cong submenus-->
+
+    <menuitem id="menu_sol_holiday" name="Solde Employés" parent="menu_gest_cong" sequence="40"
+              action="employee_custom.action_sol_holiday"/>
 
     <!--    menu_stat submenus-->
 

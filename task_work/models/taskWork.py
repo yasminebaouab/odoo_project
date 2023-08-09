@@ -12,356 +12,12 @@ class TaskWork(models.Model):
     _description = 'Project Task Work'
     _rec_name = 'id'
 
+    intervenant_affect_production_ids = fields.One2many('intervenants.affect.production', 'task_work_id',
+                                                        'Intervenants Production')
     work_id = fields.Char(string='work ID')
     work_id2 = fields.Char(string='work ID')
-
-    def _default_done(self):
-
-        for rec in self:
-            if self.env.cr.dbname == 'TEST95':
-
-                if rec.product_id.is_gantt is True:
-
-                    sql = ("select field_250 from app_entity_26 WHERE id = %s")
-                    self.env.cr.execute(sql, (rec.id,))
-                    datas = self.env.cr.fetchone()
-
-                    if datas and datas[0] > 1:
-                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
-                        temp = dt.fromtimestamp(int(datas[0])).strftime('%Y-%m-%d')
-
-                        self.env.cr.execute('update project_task_work set date_start=%s where id=%s', (temp, rec.id))
-                        ##cr.execute('update project_task_work set  date_start=%s where  id = %s ' , (date_start,ids[0]))
-                    sql1 = ("select field_251 from app_entity_26 WHERE id = %s")
-                    self.env.cr.execute(sql1, (rec.id,))
-                    datas1 = self.env.cr.fetchone()
-
-                    if datas1 and datas1[0] > 1:
-                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
-                        temp1 = dt.fromtimestamp(int(datas1[0])).strftime('%Y-%m-%d')
-                        ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
-                        self.env.cr.execute('update project_task_work set date_end=%s where id=%s', (temp1, rec.id))
-                    sql2 = ("select field_269 from app_entity_26 WHERE id = %s")
-                    self.env.cr.execute(sql2, (rec.id,))
-                    datas2 = self.env.cr.fetchone()
-
-                    if datas2 and datas2[0] > 1:
-
-                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
-                        if datas2 != '':
-                            temp2 = datas2[0]
-                            ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
-                            self.env.cr.execute('update project_task_work set employee_id=%s where id=%s',
-                                                (temp2 or None, rec.id))
-
-            if rec.line_ids:
-
-                for kk in rec.line_ids.ids:
-                    # do we keep browse here ?
-                    rec_line = self.env['project.task.work.line']
-                    if rec_line.done is True:
-                        rec.done = 1
-                        break
-                    else:
-                        rec.done = 0
-            else:
-                rec.done = 0
-
-    def _default_done1(self):
-
-        for rec in self:
-            if rec.line_ids:
-
-                for kk in rec.line_ids.ids:
-
-                    rec_line = self.env['project.task.work.line']
-                    if rec_line.done1 is True:
-                        rec.done1 = 1
-                        break
-                    else:
-                        rec.done1 = 0
-            else:
-                rec.done1 = 0
-
-    def _default_done2(self):
-
-        for rec in self:
-            if rec.line_ids:
-
-                for kk in rec.line_ids.ids:
-
-                    rec_line = self.env['project.task.work.line']
-                    if rec_line.group_id:
-                        rec.done2 = 1
-                        break
-
-                    else:
-                        rec.done2 = 0
-            else:
-                rec.done2 = 0
-
-    def _default_done3(self):
-
-        for rec in self:
-            if rec.line_ids:
-
-                for kk in rec.line_ids.ids:
-
-                    rec_line = self.env['project.task.work.line']
-                    if rec_line.group_id2:
-                        rec.done3 = 1
-                        break
-
-                    else:
-                        rec.done3 = 0
-            else:
-                rec.done3 = 0
-
-    def _default_flow(self):
-
-        for rec in self:
-            self.env.cr.execute('select id from base_flow_merge_line where work_id= %s', (rec.id,))
-            work_ids = self.env.cr.fetchone()
-            if work_ids:
-                rec.done4 = 1
-            else:
-                rec.done4 = 0
-
-    def _check_color(self):
-
-        for record in self:
-            color = 0
-            if record.statut in ('Soumise', 'A l''étude', 'Envoyé'):
-                color = 9
-            elif record.statut in (u'Approuvé Partiel', u'Approuvé'):
-                color = 5
-            elif record.statut in ('Refus Partiel', u'Refusé'):
-                color = 2
-            elif record.statut == u'Incomplet':
-                color = 3
-            elif record.statut in ('9032', u'Déviation', u'En résiliation'):
-                color = 7
-            elif record.statut in ('Encours', '', 'Sans valeur'):
-                color = 6
-            elif record.statut in ('Non requis', 'Annulé'):
-                color = 1
-            elif record.statut == u'Travaux Prép.':
-                color = 8
-
-            record.kanban_color = color
-
-    def _get_planned(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-        for rec in self:
-            rec.hours_r = hours.get(rec.id, 0.0)
-
-    def _get_sum(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(total_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-        for rec in self:
-            rec.total_r = hours.get(rec.id, 0.0)
-
-    def _get_qty(self):
-        result = {}
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-        for rec in self:
-            rec.poteau_r = hours.get(rec.id, 0.0)
-
-    def _get_qty_r_affect(self):
-
-        for record in self:
-            self.env.cr.execute(
-                "select COALESCE(SUM(poteau_t), 0.0) from project_task_work where task_id=%s and cast(zone as varchar) =%s and cast(secteur as varchar) =%s and state in ('affect','tovalid','valid')",
-                (record.task_id.id, str(record.zone), str(record.secteur)))
-            q3 = self.env.cr.fetchone()
-            if q3:
-                record.poteau_ra = record.poteau_i - q3[0]
-            else:
-                record.poteau_ra = record.poteau_i
-
-    def _get_qty_affect(self):
-
-        for record in self:
-            self.env.cr.execute(
-                "select COALESCE(SUM(poteau_t), 0.0) from project_task_work where task_id=%s and cast(zone as varchar) =%s and cast(secteur as varchar) =%s and state in ('affect','tovalid','valid')",
-                (record.task_id.id, str(record.zone), str(record.secteur)))
-            q3 = self.env.cr.fetchone()
-            if q3:
-                record.poteau_da = q3[0]
-            else:
-                record.poteau_da = 0
-
-    def _disponible(self):
-
-        for book in self:
-            if book.gest_id and book.gest_id.user_id:
-                if book.gest_id.user_id.id == self.env.user.id or self.env.user.id == 1 or 100 in book.gest_id.user_id.groups_id.ids:
-                    book.done33 = True
-                else:
-                    book.done33 = False
-            else:
-                book.done33 = False
-
-    def _isinter(self):
-
-        for book in self:
-            book.is_intervenant = False
-            # if book.line_ids:
-            #     tt = []
-            #     for kk in book.line_ids.ids:
-            #         rec_line = self.env['project.task.work.line'].browse(kk)
-            #         if rec_line.group_id2:
-            #             if rec_line.group_id2.id not in tt:
-            #                 tt.append(rec_line.group_id2.id)
-            #     if tt:
-            #         print('tt :', tt)
-            #         for kk in tt:
-            #             print('kk :', kk)
-            #
-            #             self.env.cr.execute(
-            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
-            #                 (self._uid, kk))
-            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-            #             'state', '<>', 'draft')])
-            #         if test:
-            #             book.is_intervenant = True
-
-    def _iscontrol(self):
-
-        for book in self:
-            book.is_control = False
-            # if book.line_ids:
-            #     tt = []
-            #     for kk in book.line_ids.ids:
-            #         rec_line = self.env['project.task.work.line'].browse(kk)
-            #         if rec_line.group_id2:
-            #             if rec_line.group_id2.id not in tt:
-            #                 tt.append(rec_line.group_id2.id)
-            #                 print('tt :', tt)
-            #     if tt:
-            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-            #             'state1', '<>', 'draft')])
-            #
-            #         if test:
-            #             book.is_control = True
-            #
-            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
-            #         if test1:
-            #             for jj in test1:
-            #                 rec_line = self.env['project.task.work.line'].browse(jj)
-            #                 if rec_line.group_id2:
-            #                     if rec_line.group_id2.id not in tt:
-            #                         tt.append(rec_line.group_id2.id)
-            #             book.is_control = True
-
-    def _iscorr(self):
-
-        for book in self:
-            book.is_correction = False
-            # if book.line_ids:
-            #     tt = []
-            #     for kk in book.line_ids.ids:
-            #         rec_line = self.env['project.task.work.line'].browse(kk)
-            #         if rec_line.group_id2:
-            #             if rec_line.group_id2.id not in tt:
-            #                 tt.append(rec_line.group_id2.id)
-            #     if tt:
-            #         for kk in tt:
-            #             self.env.cr.execute(
-            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
-            #                 (self._uid, kk))
-            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
-            #             'state2', '<>', 'draft')])
-            #         if test:
-            #             book.is_correction = True
-            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
-            #         if test1:
-            #             for jj in test1:
-            #                 rec_line = self.env['project.task.work.line'].browse(jj)
-            #                 if rec_line.group_id2:
-            #                     if rec_line.group_id2.id not in tt:
-            #                         tt.append(rec_line.group_id2.id)
-            #             book.is_correction = True
-
-    def _get_progress(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-
-        for rec in self:
-            if rec.hours > 0:
-                ratio = hours.get(rec.id, 0.0) / rec.hours
-            else:
-                ratio = hours.get(rec.id, 0.0)
-            rec.progress_me = round(min(100.0 * ratio, 100), 2)
-
-    def _get_progress_qty(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-
-        for rec in self:
-            if rec.poteau_t > 0:
-                ratio = hours.get(rec.id, 0.0) / rec.poteau_t
-            else:
-                ratio = hours.get(rec.id, 0.0)
-            rec.progress_qty = round(min(100.0 * ratio, 100), 2)
-
-    def _get_progress_amount(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(total_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-
-        for rec in self:
-            if rec.total_t > 0:
-                ratio = hours.get(rec.id, 0.0) / rec.total_t
-            else:
-                ratio = hours.get(rec.id, 0.0)
-            rec.progress_amount = round(min(100.0 * ratio, 100), 2)
-
-    def _get_risk(self):
-
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
-            (tuple(self.ids),))
-        amount = dict(self.env.cr.fetchall())
-        self.env.cr.execute(
-            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
-            (tuple(self.ids),))
-        hours = dict(self.env.cr.fetchall())
-        ratio = 'N.D'
-        for rec in self:
-            if rec.hours > 0 and rec.poteau_t > 0:
-                if ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 50:
-                    ratio = 'Très Critique'
-                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 30:
-                    ratio = 'Critique'
-                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 10:
-                    ratio = 'Retard'
-                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > -10:
-                    ratio = 'Normal'
-                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > -30:
-                    ratio = 'En Avance'
-                else:
-                    ratio = 'Très en Avance'
-
-            rec.risk = ratio
+    group_id2 = fields.Many2one('base.group.merge.automatic.wizard', string='group 2 ID', select="1", readonly=True,
+                                states={'draft': [('readonly', False)]}, )
 
     name = fields.Char(string='Libellé Travaux', readonly=True, states={'draft': [('readonly', False)]}, )
     ftp = fields.Char(string='Lien FTP', readonly=True, states={'draft': [('readonly', False)]}, )
@@ -565,6 +221,362 @@ class TaskWork(models.Model):
     r_id = fields.Many2one('risk.management.category', string='r ID', readonly=True,
                            states={'draft': [('readonly', False)]}, )
     dep = fields.Char(string='dep', )
+
+    def _default_done(self):
+
+        for rec in self:
+            if self.env.cr.dbname == 'TEST95':
+
+                if rec.product_id.is_gantt is True:
+
+                    sql = "select field_250 from app_entity_26 WHERE id = %s"
+                    self.env.cr.execute(sql, (rec.id,))
+                    datas = self.env.cr.fetchone()
+
+                    if datas and datas[0] > 1:
+                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
+                        temp = dt.fromtimestamp(int(datas[0])).strftime('%Y-%m-%d')
+
+                        self.env.cr.execute('update project_task_work set date_start=%s where id=%s', (temp, rec.id))
+                        ##cr.execute('update project_task_work set  date_start=%s where  id = %s ' , (date_start,ids[0]))
+                    sql1 = ("select field_251 from app_entity_26 WHERE id = %s")
+                    self.env.cr.execute(sql1, (rec.id,))
+                    datas1 = self.env.cr.fetchone()
+
+                    if datas1 and datas1[0] > 1:
+                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
+                        temp1 = dt.fromtimestamp(int(datas1[0])).strftime('%Y-%m-%d')
+                        ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
+                        self.env.cr.execute('update project_task_work set date_end=%s where id=%s', (temp1, rec.id))
+                    sql2 = ("select field_269 from app_entity_26 WHERE id = %s")
+                    self.env.cr.execute(sql2, (rec.id,))
+                    datas2 = self.env.cr.fetchone()
+
+                    if datas2 and datas2[0] > 1:
+
+                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
+                        if datas2 != '':
+                            temp2 = datas2[0]
+                            ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
+                            self.env.cr.execute('update project_task_work set employee_id=%s where id=%s',
+                                                (temp2 or None, rec.id))
+
+            if rec.line_ids:
+
+                for kk in rec.line_ids.ids:
+                    # do we keep browse here ?
+                    rec_line = self.env['project.task.work.line']
+                    if rec_line.done is True:
+                        rec.done = 1
+                        break
+                    else:
+                        rec.done = 0
+            else:
+                rec.done = 0
+
+    def _default_done1(self):
+
+        for rec in self:
+            if rec.line_ids:
+
+                for kk in rec.line_ids.ids:
+
+                    rec_line = self.env['project.task.work.line']
+                    if rec_line.done1 is True:
+                        rec.done1 = 1
+                        break
+                    else:
+                        rec.done1 = 0
+            else:
+                rec.done1 = 0
+
+    def _default_done2(self):
+
+        for rec in self:
+            if rec.line_ids:
+
+                for kk in rec.line_ids.ids:
+
+                    rec_line = self.env['project.task.work.line']
+                    if rec_line.group_id:
+                        rec.done2 = 1
+                        break
+
+                    else:
+                        rec.done2 = 0
+            else:
+                rec.done2 = 0
+
+    def _default_done3(self):
+
+        for rec in self:
+            if rec.line_ids:
+
+                for kk in rec.line_ids.ids:
+
+                    rec_line = self.env['project.task.work.line']
+                    if rec_line.group_id2:
+                        rec.done3 = 1
+                        break
+
+                    else:
+                        rec.done3 = 0
+            else:
+                rec.done3 = 0
+
+    def _default_flow(self):
+
+        for rec in self:
+            self.env.cr.execute('select id from base_flow_merge_line where work_id= %s', (rec.id,))
+            work_ids = self.env.cr.fetchone()
+            if work_ids:
+                rec.done4 = 1
+            else:
+                rec.done4 = 0
+
+    def _check_color(self):
+
+        for record in self:
+            color = 0
+            if record.statut in ('Soumise', 'A l''étude', 'Envoyé'):
+                color = 9
+            elif record.statut in (u'Approuvé Partiel', u'Approuvé'):
+                color = 5
+            elif record.statut in ('Refus Partiel', u'Refusé'):
+                color = 2
+            elif record.statut == u'Incomplet':
+                color = 3
+            elif record.statut in ('9032', u'Déviation', u'En résiliation'):
+                color = 7
+            elif record.statut in ('Encours', '', 'Sans valeur'):
+                color = 6
+            elif record.statut in ('Non requis', 'Annulé'):
+                color = 1
+            elif record.statut == u'Travaux Prép.':
+                color = 8
+
+            record.kanban_color = color
+
+    def _get_planned(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+        for rec in self:
+            rec.hours_r = hours.get(rec.id, 0.0)
+
+    def _get_sum(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(total_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+        for rec in self:
+            rec.total_r = hours.get(rec.id, 0.0)
+
+    def _get_qty(self):
+        result = {}
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+        for rec in self:
+            rec.poteau_r = hours.get(rec.id, 0.0)
+
+    def _get_qty_r_affect(self):
+
+        for record in self:
+            self.env.cr.execute(
+                "select COALESCE(SUM(poteau_t), 0.0) from project_task_work where task_id=%s and cast(zone as varchar) =%s and cast(secteur as varchar) =%s and state in ('affect','tovalid','valid')",
+                (record.task_id.id, str(record.zone), str(record.secteur)))
+            q3 = self.env.cr.fetchone()
+            if q3:
+                record.poteau_ra = record.poteau_i - q3[0]
+            else:
+                record.poteau_ra = record.poteau_i
+
+    def _get_qty_affect(self):
+
+        for record in self:
+            self.env.cr.execute(
+                "select COALESCE(SUM(poteau_t), 0.0) from project_task_work where task_id=%s and cast(zone as varchar) =%s and cast(secteur as varchar) =%s and state in ('affect','tovalid','valid')",
+                (record.task_id.id, str(record.zone), str(record.secteur)))
+            q3 = self.env.cr.fetchone()
+            if q3:
+                record.poteau_da = q3[0]
+            else:
+                record.poteau_da = 0
+
+    def _disponible(self):
+
+        for book in self:
+            if book.gest_id and book.gest_id.user_id:
+                if book.gest_id.user_id.id == self.env.user.id or self.env.user.id == 1 or 100 in book.gest_id.user_id.groups_id.ids:
+                    book.done33 = True
+                else:
+                    book.done33 = False
+            else:
+                book.done33 = False
+
+    def _isinter(self):
+        print('_isinter ')
+        for book in self:
+            book.is_intervenant = True
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #     if tt:
+            #         for kk in tt:
+            #             self.env.cr.execute(
+            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
+            #                 (self._uid, kk))
+            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
+            #             'state', '<>', 'draft')])
+            #         if test:
+            #             book.is_intervenant = True
+
+    #
+    def _iscontrol(self):
+        print('_iscontrol ')
+        for book in self:
+            book.is_control = False
+
+    #         if book.line_ids:
+    #             tt = []
+    #             for kk in book.line_ids.ids:
+    #                 rec_line = self.env['project.task.work.line'].browse(kk)
+    #                 if rec_line.group_id2:
+    #                     if rec_line.group_id2.id not in tt:
+    #                         tt.append(rec_line.group_id2.id)
+    #             print('tt:', tt)
+    #             if tt:
+    #                 test = self.env['base.group.merge.automatic.wizard'].search(
+    #                     [('id', 'in', tt), ('state1', '!=', 'draft')])
+    #                 # [('id', 'in', tt), ('state1', '!=', 'draft')])
+    #                 if test:
+    #                     print('test:', test)
+    #                     book.is_control = True
+    #
+    #                 test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
+    #                 # test1 = self.env['project.task.work.line'].search(
+    #                 #     ['|', ('work_id2', '=', book.id), ('work_id2', '=', False)])
+    #
+    #                 print('test1:', test1)
+    #
+    #                 if test1:
+    #                     for jj in test1:
+    #                         rec_line = self.env['project.task.work.line'].browse(jj)
+    #                         if rec_line.group_id2:
+    #                             if rec_line.group_id2.id not in tt:
+    #                                 tt.append(rec_line.group_id2.id)
+    #                     book.is_control = True
+    #
+    #         print('book.is_control', book.is_control)
+
+    def _iscorr(self):
+        self.is_correction = False
+        for book in self:
+            book.is_correction = False
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #     if tt:
+            #         for kk in tt:
+            #             self.env.cr.execute(
+            #                 'update base_group_merge_automatic_wizard set create_uid= %s where id = %s',
+            #                 (self._uid, kk))
+            #         test = self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt), (
+            #             'state2', '<>', 'draft')])
+            #         if test:
+            #             book.is_correction = True
+            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
+            #         if test1:
+            #             for jj in test1:
+            #                 rec_line = self.env['project.task.work.line'].browse(jj)
+            #                 if rec_line.group_id2:
+            #                     if rec_line.group_id2.id not in tt:
+            #                         tt.append(rec_line.group_id2.id)
+            #             book.is_correction = True
+
+    def _get_progress(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+
+        for rec in self:
+            if rec.hours > 0:
+                ratio = hours.get(rec.id, 0.0) / rec.hours
+            else:
+                ratio = hours.get(rec.id, 0.0)
+            rec.progress_me = round(min(100.0 * ratio, 100), 2)
+
+    def _get_progress_qty(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+
+        for rec in self:
+            if rec.poteau_t > 0:
+                ratio = hours.get(rec.id, 0.0) / rec.poteau_t
+            else:
+                ratio = hours.get(rec.id, 0.0)
+            rec.progress_qty = round(min(100.0 * ratio, 100), 2)
+
+    def _get_progress_amount(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(total_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+
+        for rec in self:
+            if rec.total_t > 0:
+                ratio = hours.get(rec.id, 0.0) / rec.total_t
+            else:
+                ratio = hours.get(rec.id, 0.0)
+            rec.progress_amount = round(min(100.0 * ratio, 100), 2)
+
+    def _get_risk(self):
+
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(poteau_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
+            (tuple(self.ids),))
+        amount = dict(self.env.cr.fetchall())
+        self.env.cr.execute(
+            "SELECT work_id, COALESCE(SUM(hours_r), 0.0) FROM project_task_work_line WHERE project_task_work_line.work_id IN %s and state in ('valid','paid') GROUP BY work_id",
+            (tuple(self.ids),))
+        hours = dict(self.env.cr.fetchall())
+        ratio = 'N.D'
+        for rec in self:
+            if rec.hours > 0 and rec.poteau_t > 0:
+                if ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 50:
+                    ratio = 'Très Critique'
+                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 30:
+                    ratio = 'Critique'
+                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > 10:
+                    ratio = 'Retard'
+                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > -10:
+                    ratio = 'Normal'
+                elif ((hours.get(rec.id, 0.0) / rec.hours) - (amount.get(rec.id, 0.0) / rec.poteau_t)) * 100 > -30:
+                    ratio = 'En Avance'
+                else:
+                    ratio = 'Très en Avance'
+
+            rec.risk = ratio
 
     def action_affect(self):
 
@@ -874,52 +886,40 @@ class TaskWork(models.Model):
             'domain': [('id', 'in', list_ids)]
         }
 
-    def action_open_flow_wizard(self):
-        current = self.ids[0]
-        l = []
-        this = self.browse(current)
-        if this.line_ids:
-            for tt in this.line_ids.ids:
-                l.append(tt)
-
-        return {
-            'name': 'Taches Concernées',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.flow.merge.automatic.wizard',
-
-            'context': {'active_ids': self.ids,
-                        'active_model': self._name},
-            'domain': []
-        }
-
     def action_open_group2(self):
+        print('action_open_group2')
         tt = []
+        # group_id2.ids instead
         if self.line_ids:
             for rec_line in self.line_ids:
                 if rec_line.group_id2:
                     if rec_line.group_id2.id not in tt:
                         tt.append(rec_line.group_id2.id)
-
         if tt:
             for kk in tt:
                 self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
                     {'create_uid': self.env.uid})
-
+                # self.env['base.group.merge.automatic.wizard'].search([('id', 'in', kk)]).write({'create_uid': self.env.uid}) #correct
+        # correct
+        # if tt:
+        #     self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
+        #         {'create_uid': self.env.uid})
         return {
             'name': 'Consultation Travaux Validés',
             'type': 'ir.actions.act_window',
             'view_mode': 'tree',
-            'view_id': self.env.ref('eb_group_wizard.retour_bons_production').id,
+            'views': [[self.env.ref('eb_group_wizard.retour_bons_production').id, 'tree']],
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'context': {},
+            'context': {
+                'code': 'fedback'
+            },
             'domain': [('id', 'in', tt)]
         }
 
     def action_open_group3(self):
+        print('action_open_group3')
+
         tt = []
 
         for current in self:
@@ -929,29 +929,37 @@ class TaskWork(models.Model):
                     if rec_line.group_id2:
                         if rec_line.group_id2.ids not in tt:
                             tt.append(rec_line.group_id2.ids)
-
+            # group_id2.ids instead
             if current.line_ids:
                 for rec_line in current.line_ids:
-                    if rec_line.group_id2:
+                    if rec_line.group_id2s:
                         if rec_line.group_id2.ids not in tt:
                             tt.append(rec_line.group_id2.ids)
 
-        if tt:
-            self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt)]).write({'create_uid': self.env.uid})
+            # if tt:
+            #     for kk in tt:
+            #         self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
+            #             {'create_uid': self.env.uid})
+            #     correct
+            print(tt)
+            if tt:
+                self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt)]).write(
+                    {'create_uid': self.env.uid})
 
         return {
             'name': 'Consultation Travaux Validés',
             'type': 'ir.actions.act_window',
             'view_mode': 'tree',
-            'views': self.env.ref('eb_group_wizard.retour_bons_control').id,
+            'views': [[self.env.ref('eb_group_wizard.retour_bons_production').id, 'tree']],
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'context': {},
+            'context': {'code': 'fedback'},
             'domain': [('id', 'in', tt), ('state1', '!=', 'draft')]
-
         }
 
     def action_open_group4(self):
+        print('action_open_group4')
+
         tt = []
 
         for current in self:
@@ -1118,10 +1126,9 @@ class TaskWork(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            # 'res_id': self.id,
-            # 'res_id': self.id,
             'context': {'active_ids': self.ids,
                         'active_model': self._name,
+                        'code': 'DEC'
                         },
             'domain': [],
         }
@@ -1134,6 +1141,44 @@ class TaskWork(models.Model):
             return self.browse(self.env.context['active_ids'])[0]
         else:
             return super(TaskWork, self).create(values)
+
+    def lister_intervenant(self):
+        print('lister_intervenant')
+        tt = []
+        # group_id2.ids instead
+        if self.ids:
+            print('line_ids 2', self.ids)
+            for rec_line in self.ids:
+                tt.append(rec_line)
+
+        print('tt :', tt)
+        # if rec_line.group_id2:
+        #     if rec_line.group_id2.id not in tt:
+        #         tt.append(rec_line.group_id2.id)
+        # if tt:
+        #     for kk in tt:
+        #         self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
+        #             {'create_uid': self.env.uid})
+        # self.env['base.group.merge.automatic.wizard'].search([('id', 'in', kk)]).write({'create_uid': self.env.uid}) #correct
+        # correct
+        # if tt:
+        #     self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
+        #         {'create_uid': self.env.uid})
+
+        view_id = self.env.ref('task_work.view_employes_intervenant_prod').id
+
+        return {
+            'name': 'Employes intervenants',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'target': 'new',
+            'res_model': 'intervenants.affect.production',
+            'context': {},
+            'views': [(view_id, 'tree')],
+            'view_id': view_id,
+            'domain': [('task_work_id', 'in', tt)]
+        }
 
 
 class TaskWorkLine(models.Model):
@@ -1214,6 +1259,7 @@ class TaskWorkLine(models.Model):
     # added
     group_id2 = fields.Many2one('base.group.merge.automatic.wizard', 'Done by', select="1", readonly=True,
                                 states={'affect': [('readonly', False)]}, )
+
     facture = fields.Boolean(string='Facture', readonly=True, states={'affect': [('readonly', False)]}, )
     date_inv = fields.Date(string='Date', select="1")
     num = fields.Char(string='Work summary', readonly=True, states={'affect': [('readonly', False)]}, )

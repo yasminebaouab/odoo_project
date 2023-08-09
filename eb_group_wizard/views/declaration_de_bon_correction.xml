@@ -15,7 +15,7 @@
                             <button name="button_approve_s2" type="object" string="Valider Corrections(S)"
                                     class="oe_highlight" confirm="Valider les Traitements?"
                                     attrs="{'invisible': ['|', ('state2', 'not in', ('tovalid')), ('done', '=', False)]}"/>
-                            <button name="button_reopen2" type="object" string="Annuler Dde" class="oe_highlight"
+                            <button name="annuler_bon_corr" type="object" string="Annuler Dde" class="oe_highlight"
                                     confirm="Annuler Les Bons?"
                                     attrs="{'invisible': ['|', ('state2', 'not in', ('tovalid')), ('done', '=', False)]}"/>
                             <button name="affecter_bon_controle" type="object" string="Affecter Controle"
@@ -131,7 +131,7 @@
                         <group string="Informations Bons">
                             <newline/>
                             <group>
-                                <button name="button_save_" type="object" string="" icon="gtk-floppy" nolabel="1"
+                                <button name="button_save_" type="object" string="Save" icon="gtk-floppy" nolabel="1"
                                         class="btn-primary"/>
 
                             </group>
@@ -168,12 +168,11 @@
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
                                     <field name="state" string="line" invisible="1"/>
                                     <field name="line_id" string="line" invisible="1"/>
-                                    <!--                                    <field name="facturable" string="Fact?" bg_color="thistle:work_id!=True;"/>-->
-                                    <!--                                    <field name="project_id2" string="Sous Projet?"-->
-                                    <!--                                           domain="[('parent_id1','=',project_id)]"-->
-                                    <!--                                           options="{'no_create': True, 'no_create_edit':True,'no_open':True}"-->
-                                    <!--                                           attrs="{'required':[('facturable', '=', 'facturable')]}"/>-->
-                                    <!--                                    <field name="total_part_corr" string="Type"/>-->
+                                    <field name="facturable" string="Fact?" bg_color="thistle:work_id!=True;"/>
+                                    <field name="project_id2" string="Sous Projet?"
+                                           options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
+                                           attrs="{'required':[('facturable', '=', 'facturable')]}"/>
+                                    <field name="total_part_corr" string="Type"/>
                                     <field name="ftp" string="Lien FTP" invisible="0"/>
                                     <field name="employee_id" string="Interv." readonly="1"/>
                                     <!--                                    <field name="b1" string="Inj." invisible="1"-->

@@ -26,6 +26,7 @@
         'views/contract.xml',
         'views/employee.xml',
         'views/remuneration_av.xml',
+        'views/sol_holiday.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

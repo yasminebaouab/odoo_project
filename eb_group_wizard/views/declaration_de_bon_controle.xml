@@ -16,7 +16,7 @@
                                     class="oe_highlight" confirm="Valider les Traitements?"
                                     attrs="{'invisible':[ '|',('state1','not in',('tovalid')),('done_','=',False)]}"/>
 
-                            <button name="button_reopen1" type="object" string="Annuler Dde" class="oe_highlight"
+                            <button name="annuler_bon_contr" type="object" string="Annuler Dde" class="oe_highlight"
                                     confirm="Annuler Les Bons?"
                                     attrs="{'invisible':[ '|',('state1','not in',('tovalid')),('done_','=',False)]}"/>
 
@@ -57,7 +57,7 @@
                                     <field name="gest_id" string="super" invisible="1"/>
                                     <field name="kit_id" string="kit" invisible="1"/>
                                     <field name="date_start_r" string="Date"
-                                           on_change="onchange_date_from(categ_id,date_start_r)"
+                                           onchange="onchange_date_from(categ_id,date_start_r)"
                                            readonly="1"/>
                                     <field name="project_id" string="Project" readonly="1"
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
@@ -68,8 +68,8 @@
                             </group>
                             <group string="Informations Mails">
                                 <field name="obj" string="Objet Mail"/>
-                                <field name="zo" string="zo" invisible="0"/>
-                                <field name="sect" string="sect" invisible="0"/>
+                                <field name="zo" string="zo" invisible="1"/>
+                                <field name="sect" string="sect" invisible="1"/>
                                 <field name="mail_send1" string="Envoi Email?"
                                        attrs="{'readonly':[('state1', 'not in', ['draft'])]}"/>
                                 <field name="employee_ids3" string="A" widget="many2many_tags"
@@ -134,8 +134,8 @@
                                     <field name="employee_id" string="Intervenant" readonly="1"
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
                                     <field name="state" string="Etat" readonly="1"/>
-                                    <!--                                    <button name="action_open_histo" string="Consulter Historique Tache" type="object"-->
-                                    <!--                                            icon="gtk-dnd"/>-->
+                                    <button name="action_open_histo" string="Consulter Historique Tache" type="object"
+                                            icon="gtk-dnd"/>
 
                                 </tree>
                             </field>
@@ -160,25 +160,31 @@
                             <newline/>
                             <field name="line_ids2" nolabel="1"
                                    attrs="{'readonly':[('state1', 'not in', ('draft','tovalid'))]}">
-                                <tree editable="bottom" create="0">
-                                    <!-- domain="[('product_id.name', 'ilike', 'qualit')]">-->
-<!--                                    <field name="sequence" string="Ordre"/>-->
+                                <tree editable="bottom" create="0"
+                                      domain="[('product_id.name', 'ilike', 'qualit')]">
+                                    <field name="sequence" string="Ordre"/>
                                     <field name="work_id" string="Travaux"/>
                                     <field name="name" string="Nom Taches/Kit"/>
                                     <field name="product_id" string="T.S"/>
                                     <field name="project_id" string="name" invisible="1"/>
                                     <field name="employee_id" string="min_id" invisible="1"/>
+
+
                                     <field name="date_start_r" string="D. Début" widget="date"
-                                           on_change="onchange_date_to_(date_end_r,date_start_r,employee_id)"
+                                           onchange="onchange_date_to_(date_end_r,date_start_r,employee_id)"
                                            bg_color="thistle:work_id!=True;"/>
+
                                     <field name="date_end_r" string="D. Fin" widget="date"
-                                           on_change="onchange_date_to_(date_end_r,date_start_r,employee_id)"/>
+                                           onchange="onchange_date_to_(date_end_r,date_start_r,employee_id)"
+                                    />
+
+
                                     <field name="categ_id" string="min_id" invisible="1"/>
                                     <field name="color1" string="Jrs" sum="Prev Hours"/>
                                     <field name="hours_r" string="Hrs" widget="float_time" sum="Prev Hours"
                                            bg_color="thistle:work_id!=True;"/>
-                                    <!--                                      <field name="poteau_r" string="Qté/Unité" sum="Prev Hours" widget="char"-->
-                                    <!--                                        bg_color="thistle:work_id!=True;"/>-->
+                                    <field name="poteau_r" string="Qté/Unité" sum="Prev Hours" widget="char"
+                                           bg_color="thistle:work_id!=True;"/>
                                     <field name="uom_id_r" string="Unité"
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
                                     <field name="state" string="line" invisible="1"/>
@@ -201,15 +207,11 @@
             </field>
         </record>
 
-                <record id="action_declaration_de_bon_controle" model="ir.actions.act_window">
-                    <field name="type">ir.actions.act_window</field>
-                    <field name="name">Declaration des bon de conrole</field>
-                    <field name="res_model">base.group.merge.automatic.wizard</field>
-                </record>
+        <record id="action_declaration_de_bon_controle" model="ir.actions.act_window">
+            <field name="type">ir.actions.act_window</field>
+            <field name="name">Declaration des bon de conrole</field>
+            <field name="res_model">base.group.merge.automatic.wizard</field>
+        </record>
     </data>
-    <!--    <menuitem id="menu_declaration_de_bon_controle"-->
-    <!--              name="Declaration de bon de contrôle"-->
-    <!--              parent="menu_declaration_de_bon_controle_master"-->
-    <!--              action="action_declaration_de_bon_controle"-->
-    <!--              sequence="10"/>-->
+
 </odoo>

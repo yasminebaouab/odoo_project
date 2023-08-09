@@ -125,13 +125,19 @@
                                 <group string="Données Contractuelles" name="active_group">
                                     <field name="contract_id" string="Contrat"/>
                                 </group>
-                                <group string="Leaves">
-                                    <!--                                    <label for="remaining_leaves"/>-->
-                                    <!--                                    <div>-->
-                                    <!--                                        <field name="remaining_leaves" class="oe_inline"/>-->
-                                    <!--                                        days-->
-                                    <!--                                    </div>-->
-                                </group>
+                            </group>
+                        </page>
+                        <page string="Congés">
+                            <group>
+                                <field name="holiday_ids"
+                                       options="{'no_create': True, 'no_create_edit':True,'no_open':True}">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="max_leave"/>
+                                        <field name="remaining_leave"/>
+<!--                                        <field name="limit"/>-->
+                                    </tree>
+                                </field>
                             </group>
                         </page>
                         <page string="Rémunération">

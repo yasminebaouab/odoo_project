@@ -91,6 +91,7 @@ class EbMergeWorks(models.TransientModel):
                 # if work.categ_id.id not in jj:
                 #     raise UserError(
                 #         _("Action impossible!\nVous n'êtes pas autorisé à exécuter cette action sur un département externe"))
+                res.update({'zone': work.zone, 'secteur': work.secteur})
         return res
 
     work_ids = fields.Many2many('project.task.work', string='works')  # 'merge_tasks_rel', 'merge_id', 'task_id',)
@@ -408,16 +409,16 @@ class EbMergeWorks(models.TransientModel):
                 'categ_id': tt.categ_id.id,
                 'state_id': tt.state_id.id or None,
                 'city': tt.city or None,
-                'gest_id': tt.gest_id.id,
+                'gest_id': tt.gest_id.id or None,
                 'uom_id': tt.uom_id.id if tt.uom_id else None,
                 'uom_id_r': tt.uom_id_r.id if tt.uom_id_r.id else None,
                 'hours': tt.hours,
                 'etape': tt.etape,
                 'ftp': tt.ftp,
-                'zone': tt.zone,
-                'secteur': tt.secteur,
-                'zo': 'Zone ' + str(tt.zone).zfill(1),
-                'sect': 'Secteur ' + str(tt.secteur).zfill(2),
+                'zone': self.zone,
+                'secteur': self.secteur,
+                'zo': 'Zone ' + str(self.zone).zfill(1),
+                'sect': 'Secteur ' + str(self.secteur).zfill(2),
                 'state': 'draft',
                 'active': True,
                 'display': tt.display,
@@ -473,4 +474,3 @@ class EbMergeWorks(models.TransientModel):
                 'id_object': self.id,
             })
         return cte
-#

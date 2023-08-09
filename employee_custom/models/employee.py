@@ -124,6 +124,7 @@ class HrEmployee(models.Model):
 
     # we need a related field in order to be able to sort the employee by name
     # 'name_related': fields.related('resource_id', 'name', type='char', string='Name', readonly=True, store=True),
+    holiday_ids = fields.One2many('hr.employee.holiday', 'employee_id', string='Congés')
     academic_ids = fields.One2many('hr.academic', 'employee_id', string='Affectations Département', )
     remuneration_ids = fields.One2many('hr.curriculum', 'employee_id', 'Rénumération', copy=True)
     date_pay = fields.Date("Date of Payment")  # check the name
@@ -223,6 +224,9 @@ class HrEmployee(models.Model):
     certification_ids = fields.One2many('hr.certification', 'employee_id', string='Certifications')
     product_id = fields.Many2one('product.product', string=' Professional Experiences', )
     journal_id = fields.Many2one('account.analytic.journal', string=' Professional Experiences', )
+    bank_hours = fields.Float(string='Bank work', default=0)
+    bank_ill = fields.Float(string='Bank work', default=0)
+
 
     # def _get_default_image(self, cr, uid, context=None):
     #     image_path = get_module_resource('hr', 'static/src/img', 'default_image.png')
@@ -557,3 +561,22 @@ class MailChannel(models.Model):
 
     def _subscribe_users_automatically_get_members(self):
         return {}
+
+
+class HrEmployeeHoliday(models.Model):
+    _name = 'hr.employee.holiday'
+
+    def _emp_name(self):
+        for rec in self:
+            rec.employee = self.env['hr.employee'].browse(rec.employee_id.id).name
+
+    name = fields.Char(string='Type de Congé', size=64, translate=True)
+    max_leave = fields.Integer(string='Nombre de Jours Maximal')
+    remaining_leave = fields.Integer(string='Nombre de Jours Restant')
+    limit = fields.Boolean(string='Autoriser de Dépasser La Limite de Jours')
+    employee_id = fields.Many2one('hr.employee', string='Employé')
+    employee = fields.Char(compute='_emp_name', string='Nom Employé')
+
+    def reset(self):
+        for rec in self:
+            self.remaining_leave = self.max_leave

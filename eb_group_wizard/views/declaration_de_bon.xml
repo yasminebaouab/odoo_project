@@ -21,7 +21,7 @@
                             <button name="button_workflow" type="object" string="Action Workflow" class="oe_highlight"
                                     confirm="Lancer une Action W.F?" attrs="{'invisible':[('state','in',('draft'))]}"
                             />
-                            <button name="annuler_bon" type="object" string="Annuler Bons" class="oe_highlight"
+                            <button name="annuler_bon_prod" type="object" string="Annuler Bons" class="oe_highlight"
                                     confirm="Annuler Les Bons?"
                                     attrs="{'invisible':[ '|',('state','not in',('tovalid')),('done','=',False)]}"
                             />
@@ -199,10 +199,5 @@
             <field name="name">Declaration des bons de production</field>
             <field name="res_model">base.group.merge.automatic.wizard</field>
         </record>
-        <!--        <menuitem id="declaration_bons"-->
-        <!--                  name="Declaration des bons"-->
-        <!--                  parent="menu_declaration_bons_master"-->
-        <!--                  action="action_declaration_bons"-->
-        <!--                  sequence="10"/>-->
     </data>
 </odoo>

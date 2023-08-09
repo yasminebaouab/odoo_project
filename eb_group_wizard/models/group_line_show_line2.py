@@ -47,7 +47,7 @@ class GroupLineShowLine2(models.Model):
     poteau_t = fields.Float('Time Spent', readonly=True, states={'draft': [('readonly', False)]})
     poteau_i = fields.Float('Time Spent', readonly=True, states={'draft': [('readonly', False)]})
     poteau_reste = fields.Float('Time Spent', readonly=True, states={'draft': [('readonly', False)]})
-    total_part = fields.Selection([
+    total_part_corr = fields.Selection([
         ('partiel', 'Partiel'),
         ('total', 'Total'),
     ], 'Status', copy=False, readonly=True, states={'draft': [('readonly', False)]})
@@ -116,11 +116,11 @@ class GroupLineShowLine2(models.Model):
     note = fields.Text('Work summary', readonly=True, states={'draft': [('readonly', False)]})
     color = fields.Integer('Nbdays', readonly=True, states={'draft': [('readonly', False)]})
     color1 = fields.Integer('Nbdays', readonly=True, states={'draft': [('readonly', False)]})
-    uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
-                             states={'draft': [('readonly', False)]})
-
-    uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
-                             states={'draft': [('readonly', True)]})
+    # uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
+    #                          states={'draft': [('readonly', False)]})
+    uom_id = fields.Many2one('product.uom', string='Wizard')
+    # uom_id = fields.Many2one('product.uom', 'Unit of Measure', required=True, readonly=True,
+    #                          states={'draft': [('readonly', True)]})
 
     uom_id_r = fields.Many2one('product.uom', 'Unit of Measure', readonly=True,
                                states={'draft': [('readonly', False)]})

@@ -15,11 +15,14 @@
                         <button name="button_reopen" type="object" string="Annuler Facture/F.T" class="oe_highlight"
                                 confirm="Annuler la demande de Validation?"
                                 attrs="{'invisible':[ '|' ,('state','in',('draft','open','cancelled','close')),('done','=',False)]}"/>
+                        <button name="button_inject" type="object" string="Traitement d'heures" class="oe_highlight"
+                                attrs="{'invisible': [('ch_inj','=',False)]}"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,open,close,treat,paid"
                                statusbar_colors="{&quot;draft&quot;:&quot;blue&quot;}" readonly="1"/>
                     </header>
                         <group string="Filtre de Recherche des Factures/F.T">
                             <group>
+                                <field name="ch_inj" invisible="1"/>
                                 <field name="employee_id" string="Bénéficiaire"
                                        options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
                                        readonly="1"/>

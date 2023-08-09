@@ -26,6 +26,12 @@
                     <group string="Destination" invisible="1">
                         <field name="dst_work_id" class="oe_inline"/>
                     </group>
+                    <group string="Zone et Secteur">
+                        <group>
+                            <field name="zone"/>
+                            <field name="secteur"/>
+                        </group>
+                    </group>
                     <group string="Travaux A Dupliquer">
                         <field name="work_ids" nolabel="1" readonly="1" options="{'no_create': True}">
                             <tree string="Tasks" create="false" edit="false" editable="bottom">

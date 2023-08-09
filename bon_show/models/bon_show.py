@@ -233,6 +233,27 @@ class BonShow(models.Model):
                                      string='Legumes', readonly=True, states={'draft': [('readonly', False)]}, )
     employee_ids2 = fields.Many2many('hr.employee', 'bon_show_hr_employee_rel2', 'bon_show_id', 'hr_employee_id',
                                      string='Legumes', readonly=True, states={'draft': [('readonly', False)]}, )
+    ch_inj = fields.Boolean(compute='check_injection', string='check injection')
+
+    def check_injection(self):
+
+        exist = self.env['hours.injection'].search([('bon_id', '=', self.id)])
+        self.ch_inj = (not exist) and (self.state == 'close')
+
+    def button_inject(self):
+
+        return {
+            'name': 'Traitement des Heures',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_model': 'hours.injection',
+            'view_id': self.env.ref('hours_injection.view_hours_injection_form').id,
+            'context': {'active_model': self._name,
+                        'active_id': self.ids[0]},
+            'domain': []
+        }
 
     def unlink(self):
         for rec in self:
@@ -995,7 +1016,7 @@ class BonShowLine2(models.Model):
     def _disponible(self):
 
         for book in self:
-            if self.uid == 1:
+            if self.env.user.id == 1:
                 book.done = True
 
             elif book.bon_id.state == 'draft' and book.send is False:
@@ -1208,11 +1229,6 @@ class BonShowLine1(models.Model):
     uom_id = fields.Many2one('product.uom', string='Unit of Measure', required=True)
     uom_id_r = fields.Many2one('product.uom', string='Unit of Measure')
 
-
-class HrHolidays(models.Model):
-    _name = 'hr.holidays'
-
-
 class ProjectTaskWork(models.Model):
     _inherit = 'project.task.work'
 
@@ -1225,3 +1241,9 @@ class ProjectTaskWorkLine(models.Model):
 
     group_id = fields.Many2one('bon.show', string='Done by', select="1", readonly=True,
                                states={'affect': [('readonly', False)]}, )
+
+
+class HoursInjection(models.Model):
+    _inherit = 'hours.injection'
+
+    bon_id = fields.Many2one('bon.show', string='Réf F.T')

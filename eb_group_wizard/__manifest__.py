@@ -20,6 +20,7 @@
         'views/retour_bon_production.xml',
         'views/retour_bon_control.xml',
         'views/retour_bons_correction.xml',
+        'views/choix_declaration_bons.xml',
         'views/button.xml',
     ],
     'demo': [],
@@ -29,5 +30,4 @@
     'auto_instale': False,
     'application': True,
     'license': 'LGPL-3',
-    'assets': {},
 }
