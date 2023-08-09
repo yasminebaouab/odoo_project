@@ -12,7 +12,7 @@ class MergeInvoicesLine(models.Model):
 
     wizard_id = fields.Many2one('base.invoices.merge.automatic.wizard', string='Wizard')
     min_id = fields.Integer(string='Wizard')
-    aggr_ids = fields.Char('Ids', required=True)
+    aggr_ids = fields.Char('Ids')
     line_id = fields.Many2one('project.task.work.line', string='Wizard')
     project_id = fields.Many2one('project.project', string='Wizard')
     task_id = fields.Many2one('project.task', string='Wizard')
