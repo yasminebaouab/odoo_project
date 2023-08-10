@@ -422,7 +422,7 @@ class EbMergeInvoices(models.Model):
     intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
     time = fields.Float(string='Temps de gestion')
     time_ch = fields.Char(string='Temps de gestion')
-    # intervenant_id = fields.Many2one('hr.employee', string='Intervenant')
+
 
     # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
 
@@ -898,7 +898,11 @@ class EbMergeInvoices(models.Model):
                         'date_affectation': fields.Date.today(),
                         'task_work_id': wk.id
                     })
+
+                    intervenant_employee_ids = intervenants_affect_production.mapped('employee_id')
+
                     wk.write({
+                        'employee_ids': [(4, this.employee_id2.id)],
                         'affect_emp': wk1 + this.employee_id2.name + ',',
                         'affect_emp_list': wk11 + str(this.employee_id2.user_id.id) + ',',
                         'affect_e_l': wk111 + str(this.employee_id2.user_id.login) + ',',
@@ -906,6 +910,8 @@ class EbMergeInvoices(models.Model):
                         'employee_id': this.employee_id2.id,
                         'display': True
                     })
+
+                    print('this.employee_id2.id:', this.employee_id2.id)
                     if wk_histo:
                         if len(wk_histo) == 1:
                             wk_histo_id = wk_histo.id
