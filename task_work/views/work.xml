@@ -1,10 +1,4 @@
 <odoo>
-    <data>
-        <template id="assets_backend" name="task_work" inherit_id="web.assets_backend">
-            <xpath expr="." position="inside">
-                <script type="text/javascript" src="/task_work/static/src/js/widget_employee_image.js"></script>
-            </xpath>
-        </template>
         <record id="view_task_work_tree" model="ir.ui.view">
             <field name="name">task.work.tree</field>
             <field name="model">project.task.work</field>
@@ -261,5 +255,6 @@
                 </p>
             </field>
         </record>
-    </data>
+
+
 </odoo>

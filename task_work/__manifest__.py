@@ -32,6 +32,8 @@
         'views/work.xml',
         'views/status.xml',
         'views/employes_intervenant_prod.xml',
+
+
     ],
     # only loaded in demonstration mode
     'demo': [
