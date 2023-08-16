@@ -221,7 +221,9 @@ class TaskWork(models.Model):
     r_id = fields.Many2one('risk.management.category', string='r ID', readonly=True,
                            states={'draft': [('readonly', False)]}, )
     dep = fields.Char(string='dep', )
-    employee_ids = fields.Many2many('hr.employee', string='Employés assignés' )
+    employee_ids = fields.Many2many('hr.employee', string='Employés assignés')
+
+    # employee_avatar = fields.Binary(string="Employee Avatar", compute='_compute_employee_avatar')
 
     # @api.depends('user_id')
     # def _compute_employee_ids(self):
@@ -230,6 +232,9 @@ class TaskWork(models.Model):
     #             task_work.employee_ids = task_work.user_id.employee_ids
     #         else:
     #             task_work.employee_ids = False
+
+
+
     def _default_done(self):
 
         for rec in self:
@@ -1188,6 +1193,19 @@ class TaskWork(models.Model):
             'domain': [('task_work_id', 'in', tt)]
         }
 
+    @api.depends('employee_ids.image_128')
+    def _compute_employee_avatar(self):
+        print('_compute_employee_avatar')
+        for task_work in self:
+            if task_work.employee_ids:
+                employee_avatars = [emp.image_128 for emp in task_work.employee_ids if emp.image_128]
+                print('employee_avatars:', employee_avatars)
+                if employee_avatars:
+                    task_work.employee_avatar = employee_avatars[0]
+                else:
+                    task_work.employee_avatar = False
+            else:
+                task_work.employee_avatar = False
 
 class TaskWorkLine(models.Model):
     _name = 'project.task.work.line'

@@ -34,7 +34,14 @@
         'views/employes_intervenant_prod.xml',
 
 
+
     ],
+    'assets': {
+        'web.assets_backend' [
+                    'task_work/static/src/js/custom_many2many_tags.js',
+
+                ],
+    },
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
