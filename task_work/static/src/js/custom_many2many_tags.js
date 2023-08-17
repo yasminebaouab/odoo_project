@@ -1,9 +1,14 @@
-odoo.define('project.task.work.custom_many2many_tags', function (require) {
+odoo.define('task_work.custom_many2many_tags', function (require) {
     "use strict";
 
     var core = require('web.core');
-    var FieldMany2ManyTags = core.form_widget_registry.get('many2many_tags');
 
+    if (!core || !core.form_widget_registry) {
+        console.error("'web.core' or 'core.form_widget_registry' is not loaded.");
+        return;
+    }
+
+    var FieldMany2ManyTags = core.form_widget_registry.get('many2many_tags');
     var CustomMany2ManyTags = FieldMany2ManyTags.extend({
         _renderEdit: function () {
             this._super.apply(this, arguments);
@@ -29,7 +34,6 @@ odoo.define('project.task.work.custom_many2many_tags', function (require) {
     });
 
     core.form_widget_registry.add('custom_many2many_tags', CustomMany2ManyTags);
-});
 
-    core.form_widget_registry.add('custom_many2many_tags', CustomFieldMany2ManyTags);
+    console.log("JS Loaded");
 });

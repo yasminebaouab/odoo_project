@@ -24,6 +24,7 @@
                 'product_custom',
                 'link_line',
                 'risk_management',
+                'web',
                 ],
 
     # always loaded
@@ -37,7 +38,7 @@
 
     ],
     'assets': {
-        'web.assets_backend' [
+        'web.assets_backend': [
                     'task_work/static/src/js/custom_many2many_tags.js',
 
                 ],
