@@ -37,12 +37,16 @@
 
 
     ],
-    'assets': {
-        'web.assets_backend': [
-                    'task_work/static/src/js/custom_many2many_tags.js',
 
-                ],
-    },
+    'js': [
+        'task_work/static/src/js/custom_many2many_tags.js',
+
+    ],
+
+    'css': [
+        'task_work/static/src/css/custom_styles.css',
+    ],
+
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
