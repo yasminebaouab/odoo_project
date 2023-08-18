@@ -33,19 +33,23 @@
         'views/work.xml',
         'views/status.xml',
         'views/employes_intervenant_prod.xml',
+        # '/static/src/xml/custom_many2many_tags.xml'
 
 
 
     ],
-
-    'js': [
-        'task_work/static/src/js/custom_many2many_tags.js',
-
+    'qweb': [
+        'task_work/static/src/xml/custom_many2many_tags.xml',
     ],
 
-    'css': [
-        'task_work/static/src/css/custom_styles.css',
-    ],
+    'assets': {
+            'web.assets_backend': [
+                'task_work/static/src/js/custom_many2many_tags.js',
+            ],
+            'web.assets_qweb': [
+                    'task_work/static/src/xml/custom_many2many_tags.xml',
+                ],
+        },
 
     # only loaded in demonstration mode
     'demo': [

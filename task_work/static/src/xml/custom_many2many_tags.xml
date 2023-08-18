@@ -1,0 +1,17 @@
+<templates xml:space="preserve">
+    <t t-name="CustomMany2ManyTags">
+        <div class="o_input_dropdown">
+            <div class="o_input_dropdown_inner">
+                <div class="o_tags_input">
+                    <t t-foreach="widget.get('value').data" t-as="record">
+                        <div class="o_tag">
+                            <img t-att-src="'data:image/png;base64,' + record.data.image_128" class="rounded-circle" />
+                            <a t-att-data-id="record.id" href="#" class="o_tag_remove fa fa-times"/>
+                        </div>
+                    </t>
+                    <input class="o_input ui-autocomplete-input" type="text" autocomplete="off"/>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

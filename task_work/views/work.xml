@@ -55,7 +55,7 @@
                 <!--                    </tree>-->
                 <!--                </field>-->
 
-                <field name="employee_ids" widget="custom_many2many_tags"
+                <field name="employee_ids" widget="many2many_tags"
                        options="{'no_create': True}" domain="[('id', 'in', employee_ids)]"/>
                 <field name="affect_emp" string="Aff. Employés"/>
                 <field name="affect_con" string="Aff. Controle"/>

@@ -1,46 +1,48 @@
 odoo.define('task_work.custom_many2many_tags', function (require) {
     "use strict";
 
+    var relational_fields = require('web.relational_fields');
+    var field_registry = require('web.field_registry');
+    var session = require('web.session');
+//    var WebClient = require('web.WebClient');
     var core = require('web.core');
-    var FormWidgetRegistry = require('web.form_widget_registry');
+    var qweb = core.qweb;
 
-    if (!core) {
-        console.error("'web.core' is not loaded.");
-        return;
-    }
+    var FieldMany2ManyTags = relational_fields.FieldMany2ManyTags;
 
-    if (!FormWidgetRegistry) {
-        console.error("'web.form_widget_registry' is not loaded.");
-        return;
-    }
-
-    var FieldMany2ManyTags = FormWidgetRegistry.get('many2many_tags');
     var CustomMany2ManyTags = FieldMany2ManyTags.extend({
-        _renderEdit: function () {
+          init: function () {
             this._super.apply(this, arguments);
-            var self = this;
-            this.$('a.o_tag_remove').each(function () {
-                var $tag = $(this).parent();
-                var recordID = $tag.data('id');
-                var record = self.dataset.get_cache(self.record, recordID);
-                if (record) {
-                    var employeeModel = new Model('hr.employee');
-                    employeeModel.query(['image_128']).filter([['id', '=', recordID]])
-                        .all()
-                        .then(function (employees) {
-                            if (employees.length > 0) {
-                                var image = employees[0].image_128;
-                                var $img = $('<img>').attr('src', 'data:image/png;base64,' + image);
-                                $img.addClass('circle-image'); // Add a CSS class
-                                $tag.prepend($img);
-                            }
-                        });
-                }
-            });
-        },
+            this.tag_template = "CustomMany2ManyTags";
+          },
+
+          _renderTags: function () {
+                var self = this;
+                var $tags = this._super.apply(this, arguments);
+                var employeeModel = new WebClient.Model('hr.employee');
+
+                this._rpc({
+                    model: 'hr.employee',
+                    method: 'search_read',
+                    domain: [['id', 'in', this.value.res_ids]],
+                    fields: ['image_128'],
+                }).then(function (employees) {
+                    employees.forEach(function (employee) {
+                        var $tag = $tags.find('a[data-id="' + employee.id + '"]').parent();
+                        if ($tag.length) {
+                            var $img = $('<img>')
+                                .addClass('rounded-circle')
+                                .attr('src', 'data:image/png;base64,' + employee.image_128);
+                            $tag.prepend($img);
+                        }
+                    });
+                });
+
+                return $tags;
+            },
     });
 
-    FormWidgetRegistry.add('custom_many2many_tags', CustomMany2ManyTags);
-
-    console.log("JS Loaded");
+    field_registry.add('custom_many2many_tags', CustomMany2ManyTags);
+    console.log('jssssssssss')
 });
+
