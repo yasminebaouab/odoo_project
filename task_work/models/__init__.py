@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
 from . import taskWork
-from . import intervenants_affecte_production
+from . import intervenants_affecte

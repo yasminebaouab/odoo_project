@@ -584,6 +584,7 @@ class EbMergeInvoices(models.Model):
 
                     if this.employee_id2 and str(wk.affect_emp_list).find(
                             str(this.employee_id2.user_id.id)) != -1 and wk.state == 'affect':
+                        wk.write({'employee_ids_production': [(3, this.employee_id2.id)]})
                         work_line.write({'state': 'draft'})
                         work_line.write({
                             'job': '',
@@ -607,6 +608,7 @@ class EbMergeInvoices(models.Model):
                     if this.employee_id2 and str(wk.affect_con).find(str(this.employee_id2.name)) != -1:
                         print('affect_con_list', wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
                         wk.update({
+                            'employee_ids_controle': [(3, this.employee_id2.id)],
                             'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
                             'affect_con': wk.affect_con.replace(str(this.employee_id2.name) + ',', ''),
                         })
@@ -616,6 +618,7 @@ class EbMergeInvoices(models.Model):
                 elif this.types_affect == 'correction':
                     if this.employee_id2 and str(wk.affect_cor).find(str(this.employee_id2.name)) != -1:
                         wk.write({
+                            'employee_ids_correction': [(3, this.employee_id2.id)],
                             'affect_cor_list': wk.affect_cor_list.replace(str(this.employee_id2.id) + ',', ''),
                             'affect_cor': wk.affect_cor.replace(str(this.employee_id2.name) + ',', ''),
                         })
@@ -846,7 +849,7 @@ class EbMergeInvoices(models.Model):
         res_user = self.env['res.users'].browse(self.env.uid)
         this = self
 
-        intervenants_affect_production = self.env['intervenants.affect.production']
+        intervenants_affect = self.env['intervenants.affect']
 
         print('work_ids : ', this.work_ids)
         for line in this.work_ids:
@@ -890,19 +893,19 @@ class EbMergeInvoices(models.Model):
                     if wk.state == 'draft':
                         wk.write({'state': 'affect'})
 
-                    intervenant_affect_production_id = intervenants_affect_production.create({
+                    intervenant_affect_id = intervenants_affect.create({
 
                         'name': this.employee_id2.name,
                         'employee_id': this.employee_id2.id,
-                        'state': 'non_traité',
+                        'types_affect': this.types_affect,
                         'date_affectation': fields.Date.today(),
                         'task_work_id': wk.id
                     })
 
-                    intervenant_employee_ids = intervenants_affect_production.mapped('employee_id')
+                    intervenant_employee_ids = intervenants_affect.mapped('employee_id')
 
                     wk.write({
-                        'employee_ids': [(4, this.employee_id2.id)],
+                        'employee_ids_production': [(4, this.employee_id2.id)],
                         'affect_emp': wk1 + this.employee_id2.name + ',',
                         'affect_emp_list': wk11 + str(this.employee_id2.user_id.id) + ',',
                         'affect_e_l': wk111 + str(this.employee_id2.user_id.login) + ',',
@@ -948,10 +951,19 @@ class EbMergeInvoices(models.Model):
                             'id_object': self.ids[0],
                         })
                 elif this.employee_id2 and this.types_affect == 'controle':
+                    intervenant_affect_id = intervenants_affect.create({
+
+                        'name': this.employee_id2.name,
+                        'employee_id': this.employee_id2.id,
+                        'types_affect': this.types_affect,
+                        'date_affectation': fields.Date.today(),
+                        'task_work_id': wk.id
+                    })
                     if wk.state == 'affect':
                         wk.write({'state': 'tovalidcont'})
 
                     wk.write({
+                        'employee_ids_controle': [(4, this.employee_id2.id)],
                         'affect_con': wk2 + this.employee_id2.name + ',',
                         'affect_con_list': wk21 + str(this.employee_id2.user_id.id) + ',',
                     })
@@ -995,7 +1007,16 @@ class EbMergeInvoices(models.Model):
                             'id_object': self.ids[0],
                         })
                 elif this.employee_id2 and this.types_affect == 'correction':
+                    intervenant_affect_id = intervenants_affect.create({
+
+                        'name': this.employee_id2.name,
+                        'employee_id': this.employee_id2.id,
+                        'types_affect': this.types_affect,
+                        'date_affectation': fields.Date.today(),
+                        'task_work_id': wk.id
+                    })
                     wk.write({
+                        'employee_ids_correction': [(4, this.employee_id2.id)],
                         'state': 'affect_corr',
                         'affect_cor': wk3 + this.employee_id2.name + ',',
                         'affect_cor_list': wk31 + str(this.employee_id2.user_id.id) + ',',

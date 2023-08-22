@@ -12,8 +12,8 @@ class TaskWork(models.Model):
     _description = 'Project Task Work'
     _rec_name = 'id'
 
-    intervenant_affect_production_ids = fields.One2many('intervenants.affect.production', 'task_work_id',
-                                                        'Intervenants Production')
+    intervenant_affect_ids = fields.One2many('intervenants.affect', 'task_work_id',
+                                             'Intervenants Affectés')
     work_id = fields.Char(string='work ID')
     work_id2 = fields.Char(string='work ID')
     group_id2 = fields.Many2one('base.group.merge.automatic.wizard', string='group 2 ID', select="1", readonly=True,
@@ -221,7 +221,12 @@ class TaskWork(models.Model):
     r_id = fields.Many2one('risk.management.category', string='r ID', readonly=True,
                            states={'draft': [('readonly', False)]}, )
     dep = fields.Char(string='dep', )
-    employee_ids = fields.Many2many('hr.employee', string='Employés assignés')
+    employee_ids_production = fields.Many2many('hr.employee', 'project_task_work_employee_production_rel',
+                                               string='Employés assignés production')
+    employee_ids_controle = fields.Many2many('hr.employee', 'project_task_work_employee_controle_rel',
+                                             string='Employés assignés contrôle')
+    employee_ids_correction = fields.Many2many('hr.employee', 'project_task_work_employee_correction_rel',
+                                               string='Employés assignés correction')
 
     # employee_avatar = fields.Binary(string="Employee Avatar", compute='_compute_employee_avatar')
 
@@ -232,8 +237,6 @@ class TaskWork(models.Model):
     #             task_work.employee_ids = task_work.user_id.employee_ids
     #         else:
     #             task_work.employee_ids = False
-
-
 
     def _default_done(self):
 
@@ -434,8 +437,11 @@ class TaskWork(models.Model):
 
     def _isinter(self):
         print('_isinter ')
+        # print('self.employee_ids: ', self.employee_ids.image_1920)
+        # print('self.employee_ids: ', self.employee_ids.image_128)
         for book in self:
             book.is_intervenant = True
+
             # if book.line_ids:
             #     tt = []
             #     for kk in book.line_ids.ids:
@@ -454,48 +460,46 @@ class TaskWork(models.Model):
             #         if test:
             #             book.is_intervenant = True
 
-    #
+        #
+
     def _iscontrol(self):
         print('_iscontrol ')
         for book in self:
-            book.is_control = False
+            book.is_control = True
 
-    #         if book.line_ids:
-    #             tt = []
-    #             for kk in book.line_ids.ids:
-    #                 rec_line = self.env['project.task.work.line'].browse(kk)
-    #                 if rec_line.group_id2:
-    #                     if rec_line.group_id2.id not in tt:
-    #                         tt.append(rec_line.group_id2.id)
-    #             print('tt:', tt)
-    #             if tt:
-    #                 test = self.env['base.group.merge.automatic.wizard'].search(
-    #                     [('id', 'in', tt), ('state1', '!=', 'draft')])
-    #                 # [('id', 'in', tt), ('state1', '!=', 'draft')])
-    #                 if test:
-    #                     print('test:', test)
-    #                     book.is_control = True
-    #
-    #                 test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
-    #                 # test1 = self.env['project.task.work.line'].search(
-    #                 #     ['|', ('work_id2', '=', book.id), ('work_id2', '=', False)])
-    #
-    #                 print('test1:', test1)
-    #
-    #                 if test1:
-    #                     for jj in test1:
-    #                         rec_line = self.env['project.task.work.line'].browse(jj)
-    #                         if rec_line.group_id2:
-    #                             if rec_line.group_id2.id not in tt:
-    #                                 tt.append(rec_line.group_id2.id)
-    #                     book.is_control = True
-    #
-    #         print('book.is_control', book.is_control)
+            # if book.line_ids:
+            #     tt = []
+            #     for kk in book.line_ids.ids:
+            #         rec_line = self.env['project.task.work.line'].browse(kk)
+            #         if rec_line.group_id2:
+            #             if rec_line.group_id2.id not in tt:
+            #                 tt.append(rec_line.group_id2.id)
+            #     print('tt:', tt)
+            #     if tt:
+            #         test = self.env['base.group.merge.automatic.wizard'].search(
+            #             [('id', 'in', tt), ('state1', '!=', 'draft')])
+            #         if test:
+            #             print('test:', test)
+            #             book.is_control = True
+            #
+            #         test1 = self.env['project.task.work.line'].search([('work_id2', '=', book.id or False)])
+            #
+            #         print('test1:', test1)
+            #
+            #         if test1:
+            #             for jj in test1:
+            #                 rec_line = self.env['project.task.work.line'].browse(jj)
+            #                 if rec_line.group_id2:
+            #                     if rec_line.group_id2.id not in tt:
+            #                         tt.append(rec_line.group_id2.id)
+            #             book.is_control = True
+            #
+            # print('book.is_control', book.is_control)
 
     def _iscorr(self):
-        self.is_correction = False
+        # self.is_correction = False
         for book in self:
-            book.is_correction = False
+            book.is_correction = True
             # if book.line_ids:
             #     tt = []
             #     for kk in book.line_ids.ids:
@@ -594,7 +598,7 @@ class TaskWork(models.Model):
     def action_affect(self):
 
         return {
-            'name': ('Modification Travaux Permis'),
+            'name': ('Affecter des Ressources'),
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -932,38 +936,37 @@ class TaskWork(models.Model):
 
     def action_open_group3(self):
         print('action_open_group3')
-
         tt = []
-
         for current in self:
             test1 = self.env['project.task.work.line'].search([('work_id2', '=', current.id)])
             if test1:
                 for rec_line in test1:
                     if rec_line.group_id2:
-                        if rec_line.group_id2.ids not in tt:
-                            tt.append(rec_line.group_id2.ids)
+                        if rec_line.group_id2.id not in tt:
+                            tt.append(rec_line.group_id2.id)
             # group_id2.ids instead
             if current.line_ids:
                 for rec_line in current.line_ids:
-                    if rec_line.group_id2s:
-                        if rec_line.group_id2.ids not in tt:
-                            tt.append(rec_line.group_id2.ids)
+                    if rec_line.group_id2:
+                        if rec_line.group_id2.id not in tt:
+                            tt.append(rec_line.group_id2.id)
 
-            # if tt:
-            #     for kk in tt:
-            #         self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
-            #             {'create_uid': self.env.uid})
             #     correct
             print(tt)
+            # if tt:
+            #     self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt)]).write(
+            #         {'create_uid': self.env.uid})
+
             if tt:
-                self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt)]).write(
+                group_merge_automatic_wizard = self.env['base.group.merge.automatic.wizard']
+                group_merge_automatic_wizard.search([('id', 'in', tt), ('state1', '<>', 'draft')]).write(
                     {'create_uid': self.env.uid})
 
         return {
             'name': 'Consultation Travaux Validés',
             'type': 'ir.actions.act_window',
             'view_mode': 'tree',
-            'views': [[self.env.ref('eb_group_wizard.retour_bons_production').id, 'tree']],
+            'views': [[self.env.ref('eb_group_wizard.retour_bons_control').id, 'tree']],
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
             'context': {'code': 'fedback'},
@@ -980,13 +983,14 @@ class TaskWork(models.Model):
             if test1:
                 for rec_line in test1:
                     if rec_line.group_id2:
-                        if rec_line.group_id2.ids not in tt:
-                            tt.append(rec_line.group_id2.ids)
+                        if rec_line.group_id2.id not in tt:
+                            tt.append(rec_line.group_id2.id)
             if current.line_ids:
                 for rec_line in current.line_ids:
                     if rec_line.group_id2:
-                        if rec_line.group_id2.ids not in tt:
-                            tt.append(rec_line.group_id2.ids)
+                        if rec_line.group_id2.id not in tt:
+                            tt.append(rec_line.group_id2.id)
+        print('tt :', tt)
         if tt:
             self.env['base.group.merge.automatic.wizard'].search([('id', 'in', tt)]).write({'create_uid': self.env.uid})
 
@@ -994,10 +998,10 @@ class TaskWork(models.Model):
             'name': 'Consultation Travaux Validés',
             'type': 'ir.actions.act_window',
             'view_mode': 'tree',
-            'views': self.env.ref('your_module_name.retour_bons_correction').id,
+            'views': [[self.env.ref('eb_group_wizard.retour_bons_correction').id, 'tree']],
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'context': {},
+            'context': {'code': 'fedback'},
             'domain': [('id', 'in', tt), ('state2', '!=', 'draft')]
         }
 
@@ -1178,34 +1182,37 @@ class TaskWork(models.Model):
         #     self.env['base.group.merge.automatic.wizard'].search([('id', '=', kk)]).write(
         #         {'create_uid': self.env.uid})
 
-        view_id = self.env.ref('task_work.view_employes_intervenant_prod').id
+        view_id = self.env.ref('task_work.view_employes_intervenant').id
 
         return {
-            'name': 'Employes intervenants',
+            'name': 'Liste des assignés',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'tree,form',
             'target': 'new',
-            'res_model': 'intervenants.affect.production',
-            'context': {},
+            'res_model': 'intervenants.affect',
+            'context': {
+                'group_by': 'types_affect',
+            },
             'views': [(view_id, 'tree')],
             'view_id': view_id,
             'domain': [('task_work_id', 'in', tt)]
         }
 
-    @api.depends('employee_ids.image_128')
-    def _compute_employee_avatar(self):
-        print('_compute_employee_avatar')
-        for task_work in self:
-            if task_work.employee_ids:
-                employee_avatars = [emp.image_128 for emp in task_work.employee_ids if emp.image_128]
-                print('employee_avatars:', employee_avatars)
-                if employee_avatars:
-                    task_work.employee_avatar = employee_avatars[0]
-                else:
-                    task_work.employee_avatar = False
-            else:
-                task_work.employee_avatar = False
+    # @api.depends('employee_ids.image_128')
+    # def _compute_employee_avatar(self):
+    #     print('_compute_employee_avatar')
+    #     for task_work in self:
+    #         if task_work.employee_ids:
+    #             employee_avatars = [emp.image_128 for emp in task_work.employee_ids if emp.image_128]
+    #             print('employee_avatars:', employee_avatars)
+    #             if employee_avatars:
+    #                 task_work.employee_avatar = employee_avatars[0]
+    #             else:
+    #                 task_work.employee_avatar = False
+    #         else:
+    #             task_work.employee_avatar = False
+
 
 class TaskWorkLine(models.Model):
     _name = 'project.task.work.line'

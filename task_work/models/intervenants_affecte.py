@@ -5,8 +5,8 @@ from odoo.tools.translate import _
 import math
 
 
-class IntervenantsAffectProduction(models.Model):
-    _name = 'intervenants.affect.production'
+class IntervenantsAffect(models.Model):
+    _name = 'intervenants.affect'
     _description = 'intervenants affectés à la production'
     _rec_name = 'id'
 
@@ -15,7 +15,18 @@ class IntervenantsAffectProduction(models.Model):
 
     name = fields.Char('name')
     employee_id = fields.Integer('Employee')
-    state = fields.Char('Status')
+    state = fields.Selection([
+        ('actif', 'Actif'),
+        ('en_cours', 'En cours'),
+        ('termine', 'Terminé'),
+    ], string='Statut', default='actif')
+
     date_affectation = fields.Date('Date affectation')
     date_declaration_bon = fields.Date('Date Declaration')
     task_work_id = fields.Many2one('project.task.work', 'Task Work')
+    types_affect = fields.Selection([
+        ('intervenant', 'Production'),
+        ('controle', 'Contrôle'),
+        ('correction', 'Correction')
+    ], string="Type d'affectation", default='intervenant')
+    _group_by_default = {'types_affect': 'true'}
