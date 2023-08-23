@@ -14,7 +14,8 @@ class IntervenantsAffect(models.Model):
     # l'id de l'employé, son nom, le statut (non traité, ou traité), date affectation, et date D.B.
 
     name = fields.Char('name')
-    employee_id = fields.Integer('Employee')
+    # employee_id = fields.Integer('Employee')
+    employee_id = fields.Many2one('hr.employee', 'Employee')
     state = fields.Selection([
         ('actif', 'Actif'),
         ('en_cours', 'En cours'),

@@ -585,6 +585,14 @@ class EbMergeInvoices(models.Model):
                     if this.employee_id2 and str(wk.affect_emp_list).find(
                             str(this.employee_id2.user_id.id)) != -1 and wk.state == 'affect':
                         wk.write({'employee_ids_production': [(3, this.employee_id2.id)]})
+                        print('types_affect', this.types_affect)
+                        intervenants_affect_records = self.env['intervenants.affect'].search([
+                            ('employee_id', '=', self.employee_id2.id),
+                            ('task_work_id', '=', wk.id),
+                            ('types_affect', '=', this.types_affect)
+                        ])
+                        intervenants_affect_records.unlink()
+
                         work_line.write({'state': 'draft'})
                         work_line.write({
                             'job': '',
@@ -606,7 +614,14 @@ class EbMergeInvoices(models.Model):
                             _("Champs Intervenant vide ou employée n'existe pas dans liste des intervenants"))
                 elif this.types_affect == 'controle':
                     if this.employee_id2 and str(wk.affect_con).find(str(this.employee_id2.name)) != -1:
+                        print('types_affect', this.types_affect)
                         print('affect_con_list', wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''))
+                        intervenants_affect_records = self.env['intervenants.affect'].search([
+                            ('employee_id', '=', self.employee_id2.id),
+                            ('task_work_id', '=', wk.id),
+                            ('types_affect', '=', this.types_affect)
+                        ])
+                        intervenants_affect_records.unlink()
                         wk.update({
                             'employee_ids_controle': [(3, this.employee_id2.id)],
                             'affect_con_list': wk.affect_con_list.replace(str(this.employee_id2.user_id.id) + ',', ''),
@@ -617,6 +632,12 @@ class EbMergeInvoices(models.Model):
                             _("Champs Intervenant vide ou employée n'existe pas dans liste des controleurs"))
                 elif this.types_affect == 'correction':
                     if this.employee_id2 and str(wk.affect_cor).find(str(this.employee_id2.name)) != -1:
+                        intervenants_affect_records = self.env['intervenants.affect'].search([
+                            ('employee_id', '=', self.employee_id2.id),
+                            ('task_work_id', '=', wk.id),
+                            ('types_affect', '=', this.types_affect)
+                        ])
+                        intervenants_affect_records.unlink()
                         wk.write({
                             'employee_ids_correction': [(3, this.employee_id2.id)],
                             'affect_cor_list': wk.affect_cor_list.replace(str(this.employee_id2.id) + ',', ''),
