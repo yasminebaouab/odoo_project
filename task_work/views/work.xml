@@ -66,10 +66,10 @@
                            options="{'no_create': True}" domain="[('id', 'in', employee_ids_controle)]"/>
                     <field name="employee_ids_correction" widget="many2many_avatar_employee"
                            options="{'no_create': True}" domain="[('id', 'in', employee_ids_correction)]"/>
-<!--                    <field name="affect_emp" string="Aff. Employés"/>-->
-<!--                    <field name="affect_emp" string="Aff. Employés"/>-->
-<!--                    <field name="affect_con" string="Aff. Controle"/>-->
-<!--                    <field name="affect_cor" string="Aff. Correction"/>-->
+                    <!--                    <field name="affect_emp" string="Aff. Employés"/>-->
+                    <!--                    <field name="affect_emp" string="Aff. Employés"/>-->
+                    <!--                    <field name="affect_con" string="Aff. Controle"/>-->
+                    <!--                    <field name="affect_cor" string="Aff. Correction"/>-->
                     <button name="action_affect" string="" type="object" invisible="1"
                             help="Affecter ressource"
                             icon="fa-plus">
@@ -123,7 +123,8 @@
 
                     <button name="action_open_group" string="Consulter la F.T/Facture" type="object" icon="fa:indent"
                             attrs="{'invisible': [('done2','=', False)]}"/>
-                    <button name="lister_intervenant" string="" help="Liste des assignés" type="object" icon="fa-list-alt"/>
+                    <button name="lister_intervenant" string="" help="Liste des assignés" type="object"
+                            icon="fa-list-alt"/>
                     <!--                <button name="move_next" string="Taches Suivantes" type="object" icon="fa:angle-double-right"-->
                     <!--                        attrs="{'invisible': [('done33','=', False)]}"/>-->
 
@@ -137,6 +138,93 @@
 
             </field>
         </record>
+
+
+        <record id="view_task_work_kanban" model="ir.ui.view">
+            <field name="name">task.work.kanban</field>
+            <field name="model">project.task.work</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="gest_id"/>
+                    <field name="kit_id"/>
+                    <field name="product_id"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="color"/>
+                    <field name="employee_ids_production"/>
+                    <field name="employee_ids_controle"/>
+                    <field name="employee_ids_correction"/>
+                    <progressbar field="activity_state"
+                                 colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_content oe_kanban_global_click">
+                                <div>
+                                    <span class="o_text_overflow text-center" style="font-size: 18px;">
+                                        <t t-esc="record.name.value"/>
+                                    </span>
+
+                                </div>
+                                <div>
+
+                                    <span class="fa fa-user mr-2" aria-label="Partner" title="Partner"/>
+                                    <field name="gest_id"/>
+
+                                </div>
+                                <div t-if="record.date_end.raw_value or record.date_start.raw_value"
+                                     class="text-muted o_row">
+                                    <span class="fa fa-clock-o mr-2" title="Dates"/>
+                                    <field name="date_start"/>
+                                    <i t-if="record.date_end.raw_value and record.date_start.raw_value"
+                                       class="fa fa-long-arrow-right mx-2 oe_read_only" aria-label="Arrow icon"
+                                       title="Arrow"/>
+                                    <field name="date_end"/>
+                                </div>
+                                <div>
+                                    <span class="o_kanban_record_subtitle">
+                                        <span class="badge badge-info">
+                                            <field name="project_id"/>
+                                        </span>
+                                    </span>
+
+                                </div>
+                                <div>
+                                    <!--                                  <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>-->
+                                </div>
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_production" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_production)]"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_controle" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_controle)]"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_correction" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_correction)]"/>
+                                </div>
+
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <!--                                        <field name="priority" widget="priority"/>-->
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
 
         <record id="view_task_work_form" model="ir.ui.view">
             <field name="name">task.work.form</field>
@@ -273,7 +361,7 @@
             <field name="name">Tâches</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">project.task.work</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">tree,form,kanban</field>
             <field name="context">{}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
