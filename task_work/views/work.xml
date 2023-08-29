@@ -150,9 +150,20 @@
                           default_group_by="kit_id"
                           event_open_popup="true"
                           zoomKey="ctrlKey"
+                          colors="#959291:state == 'draft';
+                                    #5e98e3:state == 'affect';
+                                    #5e98e3:state =='tovalid';
+                                    #5e98e3:state =='validprod';
+                                    #ecf161:state == 'affect_con';
+                                    #ecf161:state =='tovalidcont';
+                                    #ecf161:state =='validcont';
+                                    #5ee378:state == 'affect_corr'
+                                    #5ee378:state =='tovalidcorrec';
+                                    #5ee378:state =='validcorrec'"
+
                 >
-                    <!--                    dependency_arrow="task_dependency_ids"-->
-                                          colors="#ec7063:user_id == false;#2ecb71:kanban_state=='done';"
+
+
                     <field name="name"/>
                     <!--                    <field name="project_id"/>-->
                     <!--                    <field name="gest_id"/>-->

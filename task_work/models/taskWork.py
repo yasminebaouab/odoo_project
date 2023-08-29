@@ -157,13 +157,17 @@ class TaskWork(models.Model):
                                            'dependency_work_id', 'work_id', string='Dependencies')
     state = fields.Selection([('draft', 'T. Planifiés'),
                               ('affect', 'T. Affectés'),
-                              ('affect_con', 'T. Affectés controle'),
-                              ('affect_corr', 'T. Affectés corrction'),
                               ('tovalid', 'Ret. En cours'),
+                              ('validprod', 'Prod. Valides'),
+
+                              ('affect_con', 'T. Affectés controle'),
                               ('tovalidcont', 'Cont. En cours'),
                               ('validcont', 'Cont. Valides'),
+
+                              ('affect_corr', 'T. Affectés corrction'),
                               ('tovalidcorrec', 'Corr. En cours'),
                               ('validcorrec', 'Corr. Valides'),
+
                               ('valid', 'T. Terminés'),
                               ('cancel', 'T. Annulés'),
                               ('pending', 'T. Suspendus'),
