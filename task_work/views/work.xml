@@ -139,15 +139,97 @@
             </field>
         </record>
 
+        <record id="view_task_timeline" model="ir.ui.view">
+            <field name="model">project.task.work</field>
+            <field name="type">timeline</field>
+            <field name="arch" type="xml">
+                <timeline date_start="date_start"
+                          date_stop="date_end"
+                          project_id="project_id"
+                          string="Tasks"
+                          default_group_by="kit_id"
+                          event_open_popup="true"
+                          zoomKey="ctrlKey"
+                >
+                    <!--                    dependency_arrow="task_dependency_ids"-->
+                                          colors="#ec7063:user_id == false;#2ecb71:kanban_state=='done';"
+                    <field name="name"/>
+                    <!--                    <field name="project_id"/>-->
+                    <!--                    <field name="gest_id"/>-->
+                    <!--                    <field name="kit_id"/>-->
+                    <!--                    <field name="product_id"/>-->
+                    <!--                    <field name="date_start"/>-->
+                    <!--                    <field name="date_end"/>-->
+                    <field name="employee_ids_production"/>
+                    <field name="employee_ids_controle"/>
+                    <field name="employee_ids_correction"/>
+                    <field name="product_id"/>
+
+                    <templates>
+                        <div t-name="timeline-item">
+                            <span>
+                                <div t-esc="record.product_id"/>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_production" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_production"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_controle" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_controle"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_correction" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_correction"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+                            </span>
+
+                        </div>
+
+                    </templates>
+                </timeline>
+            </field>
+        </record>
+
 
         <record id="view_task_work_kanban" model="ir.ui.view">
             <field name="name">task.work.kanban</field>
             <field name="model">project.task.work</field>
             <field name="arch" type="xml">
-                <kanban class="o_kanban_dashboard">
+                <kanban class="o_kanban_dashboard" default_group_by="state">
                     <field name="name"/>
                     <field name="project_id"/>
-                    <field name="gest_id"/>
+                    <field name="categ_id"/>
+                    <field name="partner_id"/>
                     <field name="kit_id"/>
                     <field name="product_id"/>
                     <field name="date_start"/>
@@ -156,22 +238,26 @@
                     <field name="employee_ids_production"/>
                     <field name="employee_ids_controle"/>
                     <field name="employee_ids_correction"/>
-                    <progressbar field="activity_state"
-                                 colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_content oe_kanban_global_click">
                                 <div>
                                     <span class="o_text_overflow text-center" style="font-size: 18px;">
-                                        <t t-esc="record.name.value"/>
+                                        <t t-esc="record.product_id.value"/>
                                     </span>
-
                                 </div>
                                 <div>
-
+                                    <span class="fa fa-folder-open-o" aria-label="Project">
+                                        <t t-esc="record.project_id.value"/>
+                                    </span>
+                                </div>
+                                <div>
                                     <span class="fa fa-user mr-2" aria-label="Partner" title="Partner"/>
-                                    <field name="gest_id"/>
-
+                                    <field name="partner_id"/>
+                                </div>
+                                <div>
+                                    <span class="fa fa-building-o" aria-label="Dep" title="Department"/>
+                                    <field name="categ_id"/>
                                 </div>
                                 <div t-if="record.date_end.raw_value or record.date_start.raw_value"
                                      class="text-muted o_row">
@@ -182,41 +268,25 @@
                                        title="Arrow"/>
                                     <field name="date_end"/>
                                 </div>
-                                <div>
-                                    <span class="o_kanban_record_subtitle">
-                                        <span class="badge badge-info">
-                                            <field name="project_id"/>
-                                        </span>
-                                    </span>
-
-                                </div>
-                                <div>
-                                    <!--                                  <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>-->
-                                </div>
                                 <div class="oe_kanban_bottom_right text-right">
                                     <field name="employee_ids_production" widget="many2many_avatar_employee"
                                            options="{'no_create': True}"
                                            domain="[('id', 'in', employee_ids_production)]"/>
                                 </div>
-
                                 <div class="oe_kanban_bottom_right text-right">
                                     <field name="employee_ids_controle" widget="many2many_avatar_employee"
                                            options="{'no_create': True}"
                                            domain="[('id', 'in', employee_ids_controle)]"/>
                                 </div>
-
                                 <div class="oe_kanban_bottom_right text-right">
                                     <field name="employee_ids_correction" widget="many2many_avatar_employee"
                                            options="{'no_create': True}"
                                            domain="[('id', 'in', employee_ids_correction)]"/>
                                 </div>
-
                                 <div class="o_kanban_record_bottom">
                                     <div class="oe_kanban_bottom_left">
-                                        <!--                                        <field name="priority" widget="priority"/>-->
-
+                                        <field name="priority" widget="priority"/>
                                     </div>
-
                                 </div>
                             </div>
                         </t>
@@ -224,7 +294,6 @@
                 </kanban>
             </field>
         </record>
-
 
         <record id="view_task_work_form" model="ir.ui.view">
             <field name="name">task.work.form</field>
@@ -361,7 +430,7 @@
             <field name="name">Tâches</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">project.task.work</field>
-            <field name="view_mode">tree,form,kanban</field>
+            <field name="view_mode">kanban,tree,form,timeline</field>
             <field name="context">{}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">

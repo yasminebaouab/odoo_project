@@ -227,6 +227,7 @@ class TaskWork(models.Model):
                                              string='Employés assignés contrôle')
     employee_ids_correction = fields.Many2many('hr.employee', 'project_task_work_employee_correction_rel',
                                                string='Employés assignés correction')
+    priority = fields.Selection([('0', 'Faible'), ('1', 'Normale'), ('2', 'Elevée')], string='Priorité Projet')
 
     # employee_avatar = fields.Binary(string="Employee Avatar", compute='_compute_employee_avatar')
 
