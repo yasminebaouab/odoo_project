@@ -9,8 +9,6 @@
     <menuitem id="menu_tab_bord" name="Tableau de Bord Admin" sequence="-994"/>
     <menuitem id="menu_discuss" name="Messagerie" sequence="-993"/>
     <menuitem id="menu_conf" name="Configuration" sequence="-992"/>
-    <menuitem id="menu_settings" name="Settings Custom" sequence="-991"/>
-
 
     <!--    menu_gest submenus-->
 
@@ -107,9 +105,5 @@
 
     <menuitem id="menu_company" name="Sociétés" sequence="0" parent="menu_conf"
               action="company_custom.action_company"/>
-
-
-    <menuitem id="menu_settings_custom" name="Settings Custom" parent="menu_settings" sequence="0"
-      action="settings_custom.action_settings_custom"/>
 
 </odoo>

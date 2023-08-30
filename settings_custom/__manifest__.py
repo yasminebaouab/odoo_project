@@ -7,12 +7,11 @@
     'category': 'Uncategorized',
     'version': '0.1',
     'depends': ['base',
-                'project',
-                'product_custom',
+                'project_custom',
                 ],
     'data': [
-        "views/settings_custom.xml"
-
+        'security/ir.model.access.csv',
+        "views/settings_custom.xml",
     ],
     'demo': [],
     'application': True,
