@@ -32,7 +32,6 @@ class SettingsCustom(models.Model):
         else:
             return super(SettingsCustom, self).create(vals)
 
-#
 # if not affectation_multiple and work.state == 'draft':
 #     print('affectation_simple:', 'draft')
 #
@@ -42,13 +41,9 @@ class SettingsCustom(models.Model):
 #         vv = []
 #         if work.kit_id:
 #             kit_list = self.env['project.task.work'].search([
-#                 ('project_id', '=', work.project_id.id),
-#                 ('zone', '=', work.zone),
-#                 ('secteur', '=', work.secteur),
-#                 ('kit_id', '=', work.kit_id.id),
-#                 # ('id' in active_ids),
+#                 ('id', 'in', active_ids),
 #             ])
-#             print('kit_list:', kit_list)
+#             print('*****kit_list******:', kit_list)
 #
 #             for kit_work in kit_list:
 #                 if not work.is_copy and not kit_work.is_copy:

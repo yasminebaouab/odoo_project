@@ -192,113 +192,51 @@ class EbMergeInvoices(models.Model):
                         'name': str(str(datetime.today().year) + str(res1).zfill(3))
                     })
 
-        # if self.env.context.get('active_model') == 'project.task.work':
-        #     active_ids = self.env.context.get('active_ids')
-        #     tt = self.env['project.task.work'].browse(active_ids)
-        #
-        #     affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
-        #     print('settings_custom : ', affectation_multiple)
-        #
-        #     print('*********default get a.2 *************')
-        #     print('tt:', tt)
-        #     for work in tt:
-        #
-        #         if ('correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) and affectation_multiple:
-        #             raise UserError(
-        #                 _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
-        #
-        #         vv = []
-        #
-        #         if work.kit_id:
-        #             kit_list = self.env['project.task.work'].search([
-        #                 ('project_id', '=', work.project_id.id),
-        #                 ('zone', '=', work.zone),
-        #                 ('secteur', '=', work.secteur),
-        #                 ('kit_id', '=', work.kit_id.id),
-        #                 ('product_id.name', 'not ilike', '%correction%'),
-        #                 ('product_id.name', 'not ilike', '%cont%'),
-        #                 ('product_id.name', 'not ilike', '%gestion client%')
-        #             ])
-        #             for kit_work in kit_list:
-        #
-        #                 if not work.is_copy and not kit_work.is_copy:
-        #                     vv.append(kit_work.id)
-        #                 elif kit_work.is_copy and work.rank == kit_work.rank:
-        #                     vv.append(kit_work.id)
-        #
-        #             res['work_ids'] = vv
-        #
-        #         else:
-        #             res['work_ids'] = active_ids
-        #
-        #         if work.state == 'valid':
-        #             raise UserError(_('Erreur!\nTravaux clotués!'))
-
         if self.env.context.get('active_model') == 'project.task.work' and active_ids:
             # active_ids = self.env.context.get('active_ids')
             print('*********default get a.3 *************')
             tt = self.env['project.task.work'].browse(active_ids)
             affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
-            for work in tt:
-                if (
-                        'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) and affectation_multiple:
-                    raise UserError(
-                        _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
-
-                vv = []
-            for hh in active_ids:
-
-                if not affectation_multiple and work.state == 'draft':
-                    print('affectation_simple:', 'draft')
-
-                    if 'correction' in work.product_id.name or u'Contrôle' in work.product_id.name:
-                        print('correction:', 'Contrôle')
-
-                        vv = []
-                        if work.kit_id:
-                            kit_list = self.env['project.task.work'].search([
-                                ('id', 'in', active_ids),
-                            ])
-                            print('*****kit_list******:', kit_list)
-
-                            for kit_work in kit_list:
-                                if not work.is_copy and not kit_work.is_copy:
-                                    vv.append(kit_work.id)
-                                elif kit_work.is_copy and work.rank == kit_work.rank:
-                                    vv.append(kit_work.id)
-                            print('vv', vv)
-                            res['work_ids'] = vv
-                            print('res 0:', res)
-                            print('active_ids :', active_ids)
-                work = self.env['project.task.work'].browse(hh)
-                print(work)
-                vv = []
-
-                if work.kit_id:
-                    kit_list = self.env['project.task.work'].search([
-                        ('project_id', '=', work.project_id.id),
-                        ('zone', '=', work.zone),
-                        ('secteur', '=', work.secteur),
-                        ('kit_id', '=', work.kit_id.id),
-                        ('product_id.name', 'not ilike', '%correction%'),
-                        ('product_id.name', 'not ilike', '%cont%'),
-                        ('product_id.name', 'not ilike', '%gestion client%')
-                    ])
-
-                    print('************************')
-                    for kit_work in kit_list:
-
-                        if not work.is_copy and not kit_work.is_copy:
-                            vv.append(kit_work.id)
-                        elif kit_work.is_copy and work.rank == kit_work.rank:
-                            vv.append(kit_work.id)
-
-                    res['work_ids'] = vv
-                    print('vv : ', vv)
-                else:
-                    print("2.1")
-                    res['work_ids'] = active_ids
-
+            if affectation_multiple:
+               res = self.get_default_multiple(tt,active_ids, res )
+                # for work in tt:
+                #     if (
+                #             'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) :
+                #         raise UserError(
+                #             _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
+                #
+                #     vv = []
+                # for hh in active_ids:
+                #     work = self.env['project.task.work'].browse(hh)
+                #     print(work)
+                #     vv = []
+                #     if work.kit_id:
+                #         kit_list = self.env['project.task.work'].search([
+                #             ('project_id', '=', work.project_id.id),
+                #             ('zone', '=', work.zone),
+                #             ('secteur', '=', work.secteur),
+                #             ('kit_id', '=', work.kit_id.id),
+                #             ('product_id.name', 'not ilike', '%correction%'),
+                #             ('product_id.name', 'not ilike', '%cont%'),
+                #             ('product_id.name', 'not ilike', '%gestion client%')
+                #         ])
+                #         print('************************')
+                #         for kit_work in kit_list:
+                #
+                #             if not work.is_copy and not kit_work.is_copy:
+                #                 vv.append(kit_work.id)
+                #             elif kit_work.is_copy and work.rank == kit_work.rank:
+                #                 vv.append(kit_work.id)
+                #
+                #         res['work_ids'] = vv
+                #         print('vv : ', vv)
+                #     else:
+                #         print("2.1")
+                #         res['work_ids'] = active_ids
+            else :
+                for hh in active_ids:
+                    work = self.env['project.task.work'].browse(hh)
+                    res = self.get_default_simple(work, active_ids, res)
             r = []
             l = []
             pref = ''
@@ -357,6 +295,71 @@ class EbMergeInvoices(models.Model):
                     res.update({'name': str(str(datetime.today().year) + str(str(res1).zfill(3)))})
 
         print('res: ', res)
+        return res
+
+    def get_default_multiple (self, tt, active_ids, res):
+        for work in tt:
+            if (
+                    'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name):
+                raise UserError(
+                    _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
+
+            vv = []
+        for hh in active_ids:
+            work = self.env['project.task.work'].browse(hh)
+            vv = []
+            if work.kit_id:
+                kit_list = self.env['project.task.work'].search([
+                    ('project_id', '=', work.project_id.id),
+                    ('zone', '=', work.zone),
+                    ('secteur', '=', work.secteur),
+                    ('kit_id', '=', work.kit_id.id),
+                    ('product_id.name', 'not ilike', '%correction%'),
+                    ('product_id.name', 'not ilike', '%cont%'),
+                    ('product_id.name', 'not ilike', '%gestion client%')
+                ])
+                for kit_work in kit_list:
+
+                    if not work.is_copy and not kit_work.is_copy:
+                        vv.append(kit_work.id)
+                    elif kit_work.is_copy and work.rank == kit_work.rank:
+                        vv.append(kit_work.id)
+
+                res['work_ids'] = vv
+            else:
+                res['work_ids'] = active_ids
+        return res
+
+    def get_default_simple(self, work, active_ids, res):
+        print('get_default_simple')
+        vv = []
+        if 'correction' in work.product_id.name or u'Contrôle' in work.product_id.name:
+            if work.kit_id:
+                kit_list = self.env['project.task.work'].search([
+                    ('id', 'in', active_ids),
+                ])
+                for kit_work in kit_list:
+                    if not work.is_copy and not kit_work.is_copy:
+                        vv.append(kit_work.id)
+                    elif kit_work.is_copy and work.rank == kit_work.rank:
+                        vv.append(kit_work.id)
+                res['work_ids'] = vv
+        else :
+            kit_list = self.env['project.task.work'].search([
+                ('project_id', '=', work.project_id.id),
+                ('zone', '=', work.zone),
+                ('secteur', '=', work.secteur),
+                ('kit_id', '=', work.kit_id.id),
+                ('product_id.name', 'not ilike', '%correction%'),
+                ('product_id.name', 'not ilike', '%cont%'),
+                ('product_id.name', 'not ilike', '%gestion client%')
+            ])
+            for kit_work in kit_list:
+                if not work.is_copy and not kit_work.is_copy:
+                    vv.append(kit_work.id)
+                elif kit_work.is_copy and work.rank == kit_work.rank:
+                    vv.append(kit_work.id)
+            res['work_ids'] = vv
         return res
 
     def _amount_all(self):
