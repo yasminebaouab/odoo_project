@@ -28,6 +28,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/merge_facture.xml',
+        'views/button.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

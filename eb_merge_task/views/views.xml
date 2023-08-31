@@ -1,18 +1,16 @@
 <odoo>
-
-    <record id="base_task_merge_automatic_wizard_tree" model="ir.ui.view">
-        <field name="name">base.task.merge.automatic.wizard.tree</field>
-        <field name="model">base.task.merge.automatic.wizard</field>
-        <field name="arch" type="xml">
-            <tree string="Tasks">
-                <field name="create_uid" string="Créateur Subd"/>
-                <field name="write_date" string="Date Création"/>
-                <field name="project_id" string="Projet"/>
-                <field name="state" string="Etat"/>
-            </tree>
-        </field>
-    </record>
-
+         <record id="base_task_merge_automatic_wizard_tree" model="ir.ui.view">
+             <field name="name">base.task.merge.automatic.wizard.tree</field>
+             <field name="model">base.task.merge.automatic.wizard</field>
+             <field name="arch" type="xml">
+             <tree string="Tasks">
+                 <field name="create_uid" string="Créateur Subd"/>
+                 <field name="write_date" string="Date Création"/>
+                 <field name="project_id" string="Projet"/>
+                 <field name="state" string="Etat"/>
+             </tree>
+             </field>
+         </record>
     <record id="base_task_merge_automatic_wizard_form" model="ir.ui.view">
         <field name="name">base.task.merge.automatic.wizard.form</field>
         <field name="model">base.task.merge.automatic.wizard</field>
@@ -29,7 +27,7 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,open"
                            statusbar_colors="{'pending':'blue'}" readonly="1"/>
                 </header>
-                <sheet string="Project">
+                
                     <div class="oe_title"/>
                     <group string="Assign tasks to" invisible="1">
                         <field name="name" class="oe_inline"/>
@@ -39,7 +37,7 @@
                     <group string="Filtre de Recherche des Taches" attrs="{'readonly':[('state','in',['done'])]}">
                         <group>
                             <field name="partner_id" string="Client" domain="[('customer','=',True)]"
-                                   options="{'no_create': True, 'no_create_edit':True}" required="1"/>
+                                   options="{'no_create': False, 'no_create_edit':False}" required="1"/>
                             <field name="project_id" string="Projet"
                                    domain="[('partner_id','=',partner_id),('state','=','open')]"
                                    options="{'no_create': True, 'no_create_edit':True}" required="1"/>
@@ -242,7 +240,7 @@
                             </group>
                         </page>
                     </notebook>
-                </sheet>
+               
             </form>
         </field>
     </record>
@@ -256,10 +254,10 @@
             <p class="o_view_nocontent_smiling_face">Merge tasks !</p>
         </field>
         <field name="view_ids" eval="[(5, 0, 0),
-        (0, 0, {'view_mode': 'tree', 'view_id': ref('eb_merge_task.base_task_merge_automatic_wizard_tree')}),
-        (0, 0, {'view_mode': 'form', 'view_id': ref('eb_merge_task.base_task_merge_automatic_wizard_form')})]"/>
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('eb_merge_task.base_task_merge_automatic_wizard_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('eb_merge_task.base_task_merge_automatic_wizard_form')})]"/>
     </record>
-
+    #submenu
     <menuitem id="menu_merge_tasks_root" name="Subdivision Zone Secteur"
               action="action_base_task_merge_automatic_wizard" parent="project_custom.menu_project" sequence="5"/>
 </odoo>

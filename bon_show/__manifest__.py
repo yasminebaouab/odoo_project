@@ -28,6 +28,7 @@
         'views/facture.xml',
         'views/ft.xml',
         'views/inherit.xml',
+        'views/dash.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

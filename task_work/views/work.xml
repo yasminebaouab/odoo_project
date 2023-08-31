@@ -6,6 +6,181 @@
         <!--            </xpath>-->
         <!--        </template>-->
 
+        <record id="view_task_work_kanban" model="ir.ui.view">
+            <field name="name">task.work.kanban</field>
+            <field name="model">project.task.work</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard" default_group_by="state">
+                    <field name="name"/>
+                    <field name="project_id"/>
+                    <field name="categ_id"/>
+                    <field name="partner_id"/>
+                    <field name="kit_id"/>
+                    <field name="product_id"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="color"/>
+                    <field name="employee_ids_production"/>
+                    <field name="employee_ids_controle"/>
+                    <field name="employee_ids_correction"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_content oe_kanban_global_click">
+
+                                <div class="text-right">
+                                    <field name="priority" widget="priority"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="project_id"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="partner_id"/>
+                                </div>
+
+                                <div>
+                                    <span class="o_text_overflow text-center" style="font-size: 18px;">
+                                        <t t-esc="record.categ_id.value"/>
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span class="fa fa-folder-open-o" aria-label="Nom tache" title="Task"/>
+                                    <field name="kit_id"/>
+                                </div>
+
+                                <div>
+                                    <span class="fa fa-tag" aria-label="Nom tache" title="Task"/>
+                                    <field name="product_id"/>
+                                </div>
+
+                                <div t-if="record.date_end.raw_value or record.date_start.raw_value"
+                                     class="text-muted o_row">
+                                    <span class="fa fa-clock-o mr-2" title="Dates"/>
+                                    <field name="date_start"/>
+                                    <i t-if="record.date_end.raw_value and record.date_start.raw_value"
+                                       class="fa fa-long-arrow-right mx-2 oe_read_only" aria-label="Arrow icon"
+                                       title="Arrow"/>
+                                    <field name="date_end"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_production" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_production)]"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_controle" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_controle)]"/>
+                                </div>
+
+                                <div class="oe_kanban_bottom_right text-right">
+                                    <field name="employee_ids_correction" widget="many2many_avatar_employee"
+                                           options="{'no_create': True}"
+                                           domain="[('id', 'in', employee_ids_correction)]"/>
+                                </div>
+
+
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+<record id="view_task_timeline" model="ir.ui.view">
+            <field name="model">project.task.work</field>
+            <field name="type">timeline</field>
+            <field name="arch" type="xml">
+                <timeline date_start="date_start"
+                          date_stop="date_end"
+                          project_id="project_id"
+                          string="Tasks"
+                          default_group_by="kit_id"
+                          event_open_popup="true"
+                          zoomKey="ctrlKey"
+                          colors="#959291:state == 'draft';
+                                    #5e98e3:state == 'affect';
+                                    #5e98e3:state =='tovalid';
+                                    #5e98e3:state =='validprod';
+                                    #ecf161:state == 'affect_con';
+                                    #ecf161:state =='tovalidcont';
+                                    #ecf161:state =='validcont';
+                                    #5ee378:state == 'affect_corr'
+                                    #5ee378:state =='tovalidcorrec';
+                                    #5ee378:state =='validcorrec'"
+
+                >
+
+
+                    <field name="name"/>
+                    <!--                    <field name="project_id"/>-->
+                    <!--                    <field name="gest_id"/>-->
+                    <!--                    <field name="kit_id"/>-->
+                    <!--                    <field name="product_id"/>-->
+                    <!--                    <field name="date_start"/>-->
+                    <!--                    <field name="date_end"/>-->
+                    <field name="employee_ids_production"/>
+                    <field name="employee_ids_controle"/>
+                    <field name="employee_ids_correction"/>
+                    <field name="product_id"/>
+
+                    <templates>
+                        <div t-name="timeline-item">
+                            <span>
+                                <div t-esc="record.product_id"/>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_production" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_production"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_controle" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_controle"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+
+                                <div>
+                                    <t t-foreach="record.employee_ids_correction" t-as="employee">
+                                        <img
+                                                t-if="record.employee_ids_correction"
+                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
+                                                t-att-title="record.employee"
+                                                width="16"
+                                                height="16"
+                                                class="mr8"
+                                                alt="Employee"
+                                        />
+                                    </t>
+                                </div>
+                            </span>
+
+                        </div>
+
+                    </templates>
+                </timeline>
+            </field>
+        </record>
         <record id="view_task_work_tree" model="ir.ui.view">
             <field name="name">task.work.tree</field>
             <field name="model">project.task.work</field>
@@ -136,173 +311,6 @@
                     <!--                        attrs="{'invisible': [('r_id', '=', False)]}"/>-->
                 </tree>
 
-            </field>
-        </record>
-
-        <record id="view_task_timeline" model="ir.ui.view">
-            <field name="model">project.task.work</field>
-            <field name="type">timeline</field>
-            <field name="arch" type="xml">
-                <timeline date_start="date_start"
-                          date_stop="date_end"
-                          project_id="project_id"
-                          string="Tasks"
-                          default_group_by="kit_id"
-                          event_open_popup="true"
-                          zoomKey="ctrlKey"
-                          colors="#959291:state == 'draft';
-                                    #5e98e3:state == 'affect';
-                                    #5e98e3:state =='tovalid';
-                                    #5e98e3:state =='validprod';
-                                    #ecf161:state == 'affect_con';
-                                    #ecf161:state =='tovalidcont';
-                                    #ecf161:state =='validcont';
-                                    #5ee378:state == 'affect_corr'
-                                    #5ee378:state =='tovalidcorrec';
-                                    #5ee378:state =='validcorrec'"
-
-                >
-
-
-                    <field name="name"/>
-                    <!--                    <field name="project_id"/>-->
-                    <!--                    <field name="gest_id"/>-->
-                    <!--                    <field name="kit_id"/>-->
-                    <!--                    <field name="product_id"/>-->
-                    <!--                    <field name="date_start"/>-->
-                    <!--                    <field name="date_end"/>-->
-                    <field name="employee_ids_production"/>
-                    <field name="employee_ids_controle"/>
-                    <field name="employee_ids_correction"/>
-                    <field name="product_id"/>
-
-                    <templates>
-                        <div t-name="timeline-item">
-                            <span>
-                                <div t-esc="record.product_id"/>
-
-                                <div>
-                                    <t t-foreach="record.employee_ids_production" t-as="employee">
-                                        <img
-                                                t-if="record.employee_ids_production"
-                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
-                                                t-att-title="record.employee"
-                                                width="16"
-                                                height="16"
-                                                class="mr8"
-                                                alt="Employee"
-                                        />
-                                    </t>
-                                </div>
-
-                                <div>
-                                    <t t-foreach="record.employee_ids_controle" t-as="employee">
-                                        <img
-                                                t-if="record.employee_ids_controle"
-                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
-                                                t-att-title="record.employee"
-                                                width="16"
-                                                height="16"
-                                                class="mr8"
-                                                alt="Employee"
-                                        />
-                                    </t>
-                                </div>
-
-                                <div>
-                                    <t t-foreach="record.employee_ids_correction" t-as="employee">
-                                        <img
-                                                t-if="record.employee_ids_correction"
-                                                t-attf-src="/web/image/hr.employee/#{employee}/image_128/16x16"
-                                                t-att-title="record.employee"
-                                                width="16"
-                                                height="16"
-                                                class="mr8"
-                                                alt="Employee"
-                                        />
-                                    </t>
-                                </div>
-                            </span>
-
-                        </div>
-
-                    </templates>
-                </timeline>
-            </field>
-        </record>
-
-
-        <record id="view_task_work_kanban" model="ir.ui.view">
-            <field name="name">task.work.kanban</field>
-            <field name="model">project.task.work</field>
-            <field name="arch" type="xml">
-                <kanban class="o_kanban_dashboard" default_group_by="state">
-                    <field name="name"/>
-                    <field name="project_id"/>
-                    <field name="categ_id"/>
-                    <field name="partner_id"/>
-                    <field name="kit_id"/>
-                    <field name="product_id"/>
-                    <field name="date_start"/>
-                    <field name="date_end"/>
-                    <field name="color"/>
-                    <field name="employee_ids_production"/>
-                    <field name="employee_ids_controle"/>
-                    <field name="employee_ids_correction"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div t-attf-class="oe_kanban_content oe_kanban_global_click">
-                                <div>
-                                    <span class="o_text_overflow text-center" style="font-size: 18px;">
-                                        <t t-esc="record.product_id.value"/>
-                                    </span>
-                                </div>
-                                <div>
-                                    <span class="fa fa-folder-open-o" aria-label="Project">
-                                        <t t-esc="record.project_id.value"/>
-                                    </span>
-                                </div>
-                                <div>
-                                    <span class="fa fa-user mr-2" aria-label="Partner" title="Partner"/>
-                                    <field name="partner_id"/>
-                                </div>
-                                <div>
-                                    <span class="fa fa-building-o" aria-label="Dep" title="Department"/>
-                                    <field name="categ_id"/>
-                                </div>
-                                <div t-if="record.date_end.raw_value or record.date_start.raw_value"
-                                     class="text-muted o_row">
-                                    <span class="fa fa-clock-o mr-2" title="Dates"/>
-                                    <field name="date_start"/>
-                                    <i t-if="record.date_end.raw_value and record.date_start.raw_value"
-                                       class="fa fa-long-arrow-right mx-2 oe_read_only" aria-label="Arrow icon"
-                                       title="Arrow"/>
-                                    <field name="date_end"/>
-                                </div>
-                                <div class="oe_kanban_bottom_right text-right">
-                                    <field name="employee_ids_production" widget="many2many_avatar_employee"
-                                           options="{'no_create': True}"
-                                           domain="[('id', 'in', employee_ids_production)]"/>
-                                </div>
-                                <div class="oe_kanban_bottom_right text-right">
-                                    <field name="employee_ids_controle" widget="many2many_avatar_employee"
-                                           options="{'no_create': True}"
-                                           domain="[('id', 'in', employee_ids_controle)]"/>
-                                </div>
-                                <div class="oe_kanban_bottom_right text-right">
-                                    <field name="employee_ids_correction" widget="many2many_avatar_employee"
-                                           options="{'no_create': True}"
-                                           domain="[('id', 'in', employee_ids_correction)]"/>
-                                </div>
-                                <div class="o_kanban_record_bottom">
-                                    <div class="oe_kanban_bottom_left">
-                                        <field name="priority" widget="priority"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </t>
-                    </templates>
-                </kanban>
             </field>
         </record>
 
@@ -437,11 +445,36 @@
             </field>
         </record>
 
+        <record id="view_task_work_search" model="ir.ui.view">
+            <field name="name">task.work.search</field>
+            <field name="model">project.task.work</field>
+            <field name="arch" type="xml">
+                <search string="Tasks">
+                    <field name="name" string="Task"/>
+                    <field string="Project" name="project_id"/>
+                    <field name="partner_id" operator="child_of"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Project" name="project" context="{'group_by': 'project_id'}"/>
+                        <filter string="Creation Date" name="group_create_date" context="{'group_by': 'create_date'}"/>
+                    </group>
+                    <searchpanel view_types="tree,kanban">
+                        <field name="partner_id" icon="fa-user" hierarchize="1" enable_counters="1"/>
+                        <field name="project_id" icon="fa-building" enable_counters="1" select="multi" hierarchize="1"
+                               domain="[('partner_id', '=', partner_id)]"/>
+                        <field name="categ_id" icon="fa-building" enable_counters="1" hierarchize="1"/>
+                        <field name="product_id" icon="fa-tag" enable_counters="1" select="multi"
+                               domain="[('categ_id', '=', categ_id)]"/>
+                        <field name="state" icon="fa-play" enable_counters="1"/>
+                    </searchpanel>
+                </search>
+            </field>
+        </record>
+
         <record id="action_task_work" model="ir.actions.act_window">
             <field name="name">Tâches</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">project.task.work</field>
-            <field name="view_mode">kanban,tree,form,timeline</field>
+            <field name="view_mode">tree,kanban,form,timeline</field>
             <field name="context">{}</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">

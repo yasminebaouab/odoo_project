@@ -34,7 +34,6 @@ class HrHolidaysStatus(models.Model):
                                    ('ivory', 'Ivory')], default='red', required=True,
                                   string='Couleur Affichée dans le Rapport',
                                   readonly=True, states={'draft': [('readonly', False)]})
-    limit = fields.Boolean(string='Autoriser de Dépasser La Limite de Jours', default=False)
     active = fields.Boolean(string='Active', default=True)
     max_leave = fields.Integer(string='Nombre de Jours Maximal', required=True,
                                readonly=True, states={'draft': [('readonly', False)]})
@@ -69,8 +68,6 @@ class HrHolidaysStatus(models.Model):
                 'name': self.name,
                 'employee_id': tt,
                 'max_leave': self.max_leave,
-                'remaining_leave': self.max_leave,
-                'limit': self.limit,
             })
 
         self.state = 'valid'
@@ -112,9 +109,6 @@ class HrHolidaysStatus(models.Model):
         }
 
 
-# if record.gest_id.user_id.id == self._uid:
-
-
 class HrHolidays(models.Model):
     _name = 'hr.holidays'
     _description = "Leave"
@@ -123,7 +117,7 @@ class HrHolidays(models.Model):
     def name_get(self):
         res = []
         for rec in self:
-            name = str(rec.date) + ' - ' + str(rec.holiday_type_id.name)
+            name = rec.employee_id.name + ' - ' + str(rec.date_from) + ' - ' + str(rec.holiday_type_id.name)
             res.append((rec.id, name))
         return res
 
@@ -150,9 +144,9 @@ class HrHolidays(models.Model):
                             states={'draft': [('readonly', False)]}, copy=False)
     date_to = fields.Date(string='Date de Fin', readonly=True, required=True,
                           states={'draft': [('readonly', False)]}, copy=False)
-    date_from_r = fields.Date(string='Nouvelle Date de Début', readonly=True, required=True,
+    date_from_r = fields.Date(string='Ancienne Date de Début', readonly=True,
                               states={'draft': [('readonly', False)]}, copy=False)
-    date_to_r = fields.Date(string='Nouvelle Date de Fin', readonly=True, required=True,
+    date_to_r = fields.Date(string='Ancienne Date de Fin', readonly=True,
                             states={'draft': [('readonly', False)]}, copy=False)
     employee_id = fields.Many2one('hr.employee', string='Employé', select=True, invisible=False,
                                   readonly=True, default=lambda self: self._employee_get(), )
@@ -162,15 +156,16 @@ class HrHolidays(models.Model):
     notes = fields.Text(string='Reasons', readonly=True,
                         states={'draft': [('readonly', False)], 'confirm': [('readonly', False)]})
     notes_r = fields.Text(string='Reasons', readonly=True,
-                        states={'draft': [('readonly', False)], 'confirm': [('readonly', False)]})
+                          states={'draft': [('readonly', False)], 'confirm': [('readonly', False)]})
     number_of_days = fields.Float(string='Nombre de Jours', copy=False)
-    number_of_days_r = fields.Float(string='Nouveau Nombre de Jours')
+    number_of_days_r = fields.Float(string='Ancien Nombre de Jours')
     meeting_id = fields.Many2one('calendar.event', string='Meeting')
     user_id = fields.Many2one('res.users', string='Utilisateur')
     holiday_line_ids = fields.One2many('hr.holidays.line', 'holiday_id')
     holiday_type_id = fields.Many2one('hr.holidays.type', string='Type de Congé', required=True,
                                       readonly=True, states={'draft': [('readonly', False)]})
-    holiday_id = fields.Many2one('hr.holidays', string='Congé')
+    holiday_id = fields.Many2one('hr.holidays', string='Congé', readonly=True,
+                                 states={'draft': [('readonly', False)]})
     type = fields.Selection([('take', 'Demande Congé'), ('modify', 'Modification Congé')],
                             string='Type Opération')
 
@@ -212,44 +207,32 @@ class HrHolidays(models.Model):
 
     @api.onchange('date_to', 'date_from')
     def onchange_date_from(self):
-        """
-        If there are no date set for date_to, automatically set one 8 hours later than
-        the date_from.
-        Also update the number_of_days.
-        """
+
         date_from = self.date_from
         date_to = self.date_to
-        # date_to has to be greater than date_from
+
         if (date_from and date_to) and (date_from > date_to):
             raise UserError(_('Attention!\nLa date de début doit être antérieur à la date de fin.'))
 
-        result = {'value': {}}
-        holy = self.env['hr.public.holiday'].search([('date_from', '>=', date_from), ('date_to', '<=', date_to),
-                                                     ('state', '=', 'validate')]).ids
-        cpt = 0
-        if holy:
-            for jj in holy:
-                hh = self.env['hr.public.holiday'].browse(jj)
-                cpt = cpt + hh.nbr
+        if date_from and date_to:
+            diff = (date_to - date_from).days + 1
+            dayoff = self.env['training.holiday.period'].search([('date_start', '>=', date_from),
+                                                                 ('date_stop', '<=', date_to)]).ids
+            dayoff1 = self.env['training.holiday.period'].search([('date_stop', '=', date_from)]).ids
+            dayoff2 = self.env['training.holiday.period'].search([('date_start', '=', date_to)]).ids
+            diff -= 2 * len(dayoff) + len(dayoff1) + len(dayoff2)
 
-        # No date_to set so far: automatically compute one 8 hours later
+            hol = self.env['hr.public.holiday'].search([('date_from', '>=', date_from),
+                                                        ('date_to', '<=', date_to),
+                                                        ('state', '=', 'validate')]).ids
+            if hol:
+                for tt in hol:
+                    diff -= self.env['hr.public.holiday'].browse(tt).nbr
+            hol1 = self.env['hr.public.holiday'].search([('date_to', '=', date_from)]).ids
+            hol2 = self.env['hr.public.holiday'].search([('date_from', '=', date_to)]).ids
+            diff -= len(hol1) + len(hol2)
 
-        # Compute and update the number of days
-        if (date_to and date_from) and (date_from <= date_to):
-            timedelta = date_to - date_from
-            diff_day = timedelta.days
-            diff_day1 = self._get_number_of_days(date_from, date_to)
-            if diff_day1 == 0:
-                diff_day = diff_day + 1
-            self.number_of_days = diff_day - diff_day1 - cpt
-        else:
-            self.number_of_days = 0
-
-        self.number_of_days_r = self.number_of_days
-        self.date_from_r = self.date_from
-        self.date_to_r = self.date_to
-
-        return result
+            self.number_of_days = diff
 
     @api.onchange('employee_id')
     def onchange_employee(self):
@@ -264,9 +247,17 @@ class HrHolidays(models.Model):
                 'name': emp_hol.name,
                 'max_leave': emp_hol.max_leave,
                 'remaining_leave': emp_hol.remaining_leave,
-                'limit': emp_hol.limit,
             })
         return {'domain': {'holiday_type_id': [('name', 'in', type_ids)]}}
+
+    @api.onchange('holiday_id')
+    def onchange_holiday_id(self):
+        hol = self.env['hr.holidays'].browse(self.holiday_id.id)
+        self.manager_id = hol.manager_id
+        self.holiday_type_id = hol.holiday_type_id
+        self.date_from_r = hol.date_from
+        self.date_to_r = hol.date_to
+        self.number_of_days_r = hol.number_of_days
 
     def button_send(self):
         name = self.env['hr.holidays.type'].browse(self.holiday_type_id.id).name
@@ -283,25 +274,54 @@ class HrHolidays(models.Model):
         self.write({'state': 'draft'})
 
     def button_accept(self):
-        name = self.env['hr.holidays.type'].browse(self.holiday_type_id.id).name
-        sol_id = self.env['hr.employee.holiday'].search(
-            [('name', '=', name), ('employee_id', '=', self.employee_id.id)]).id
-        sol = self.env['hr.employee.holiday'].browse(sol_id).remaining_leave
-        nb_days = self.number_of_days
-        self.env['hr.employee.holiday'].browse(sol_id).write({'remaining_leave': sol - nb_days})
 
         self.env['hr.holidays.histo'].create({
             'holiday_id': self.id,
             'employee_id': self.employee_id.id,
             'date': self.date,
-            'diff': nb_days,
-            'year': self.date.year(),
+            'diff': self.number_of_days,
+            'year': self.date.year,
+            'motif': 'Congé attribué',
+            'type': self.holiday_type_id.id,
         })
 
         self.write({'state': 'accept'})
 
     def button_refuse(self):
         self.write({'state': 'refuse'})
+
+    def button_accept_r(self):
+        name = self.env['hr.holidays.type'].browse(self.holiday_type_id.id).name
+        sol_id = self.env['hr.employee.holiday'].search(
+            [('name', '=', name), ('employee_id', '=', self.employee_id.id)]).id
+        sol = self.env['hr.employee.holiday'].browse(sol_id).remaining_leave
+        n_sol = sol + self.number_of_days_r
+        nb_days = self.number_of_days
+        if nb_days > n_sol:
+            raise UserError('Solde Insuffisant')
+        else:
+            self.env['hr.holidays.histo'].create({
+                'holiday_id': self.id,
+                'employee_id': self.employee_id.id,
+                'date': self.date,
+                'diff': - self.number_of_days_r,
+                'year': self.date.year,
+                'motif': 'Congé annulé',
+                'type': self.holiday_type_id.id,
+            })
+
+            self.env['hr.holidays.histo'].create({
+                'holiday_id': self.id,
+                'employee_id': self.employee_id.id,
+                'date': self.date,
+                'diff': self.number_of_days,
+                'year': self.date.year,
+                'motif': 'Congé attribué',
+                'type': self.holiday_type_id.id,
+            })
+
+            self.env['hr.holidays'].browse(self.holiday_id.id).write({'state': 'modify'})
+            self.write({'state': 'accept'})
 
 
 class HrHolidayLine(models.Model):
@@ -311,7 +331,6 @@ class HrHolidayLine(models.Model):
     name = fields.Char(string='Type de Congé', size=64, translate=True)
     max_leave = fields.Integer(string='Nombre de Jours Maximal')
     remaining_leave = fields.Integer(string='Nombre de Jours Restant')
-    limit = fields.Boolean(string='Autoriser de Dépasser La Limite de Jours')
 
 
 class HrHolidayHisto(models.Model):
@@ -319,6 +338,93 @@ class HrHolidayHisto(models.Model):
 
     holiday_id = fields.Many2one('hr.holidays', string='Référence Congé')
     employee_id = fields.Many2one('hr.employee', string='Employé')
-    date = fields.Date(string='Date Opération')
+    type = fields.Many2one('hr.holidays.type', string='Type de Congé')
+    date = fields.Date(string='Date Opération', default=fields.date.today())
     diff = fields.Float(string='Nombre de Jours')
-    year = fields.Integer(string='Année fiscale')
+    year = fields.Integer(string='Année fiscale', default=fields.date.today().year)
+    motif = fields.Text(string='Libellé Opération')
+    sol = fields.Float(string='Solde Actuel')
+
+    _sql_constraints = [
+        ('check_sol', 'check(sol >= diff)',
+         'Action Impossible! Le solde doit rester positif .')
+    ]
+
+    @api.onchange('employee_id')
+    def onchange_holiday_type(self):
+        type_names = []
+        type_ids = self.env['hr.employee.holiday'].search([('employee_id', '=', self.employee_id.id)]).ids
+        for tt in type_ids:
+            emp_hol = self.env['hr.employee.holiday'].browse(tt)
+            type_names.append(emp_hol.name)
+        return {'domain': {'type': [('name', 'in', type_names)]}}
+
+    @api.onchange('employee_id', 'type')
+    def onchange_sol(self):
+        sol_id = self.env['hr.employee.holiday'].search(
+            [('name', '=', self.type.name), ('employee_id', '=', self.employee_id.id)]).id
+        self.sol = self.env['hr.employee.holiday'].browse(sol_id).remaining_leave
+
+
+class HrHolidaysCloture(models.Model):
+    _name = 'hr.holidays.cloture'
+
+    type = fields.Selection([('year', 'Année'), ('employee', 'Employé(s)')],
+                            string='Type de Clôture', required=True)
+    state = fields.Selection([('draft', 'Brouillon'), ('valid', 'Validé')],
+                             string='status', default='draft')
+    date = fields.Date(string='Date de Clôture', readonly=True, default=fields.date.today())
+    year_cl = fields.Integer(string='Année à Clôturer', default=fields.date.today().year)
+    employee_ids = fields.Many2many('hr.employee', string='Employé(s)')
+    line_ids = fields.One2many('hr.holidays.cloture.line', 'cloture_id')
+    cn = fields.Integer(string='compteur')
+
+    _sql_constraints = [
+        ('uniq_year', 'unique(year_cl)', 'Année déjà clôturée !'),
+    ]
+
+    @api.onchange('type')
+    def _onchange_type(self):
+        if self.type == 'year' and self.cn == 0:
+            self.cn += 1
+            type_ids = self.env['hr.holidays.type'].search([]).ids
+            for tt in type_ids:
+                hol = self.env['hr.holidays.type'].browse(tt)
+                self.env['hr.holidays.cloture.line'].create({
+                    'cloture_id': self.id,
+                    'name': hol.name,
+                    'max_leave': hol.max_leave,
+                })
+
+    def button_valid(self):
+        if self.type == 'employee' and not self.employee_ids:
+            raise UserError(_("Vous n'avez choisi aucun employé"))
+        if self.type == 'year':
+            for ll in self.line_ids:
+                if (ll.avec_sol and ll.sans_sol) or (not ll.avec_sol and not ll.sans_sol):
+                    raise UserError(_("Veuillez Choisir entre 'avec' ou 'sans' solde !"))
+            for ll in self.line_ids:
+                if ll.avec_sol:
+                    type_id = self.env['hr.holidays.type'].search([('name', '=', ll.name)]).id
+                    hr_ids = self.env['hr.employee.holiday'].search([('name', '=', ll.name)]).ids
+                    for x in hr_ids:
+                        line = self.env['hr.employee.holiday'].browse(x)
+                        self.env['hr.holidays.histo'].create({
+                            'employee_id': line.employee_id.id,
+                            'date': fields.date.today(),
+                            'diff': - line.remaining_leave,
+                            'year': self.year_cl + 1,
+                            'motif': 'Clôture Avec Solde',
+                            'type': type_id,
+                        })
+            self.state = 'valid'
+
+
+class HrHolidaysClotureLine(models.Model):
+    _name = 'hr.holidays.cloture.line'
+
+    cloture_id = fields.Many2one('hr.holidays.cloture')
+    name = fields.Char(string='Type de Congé')
+    max_leave = fields.Float(string='Nombre de Jours Maximal')
+    avec_sol = fields.Boolean(string='Avec Solde Ouverture')
+    sans_sol = fields.Boolean(string='Sans Solde Ouverture')

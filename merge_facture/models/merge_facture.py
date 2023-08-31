@@ -290,7 +290,7 @@ class EbMergeFactures(models.Model):
         line_work_ids = self.env['base.facture.wizard']
         work_line = self.env['project.task.work.line']
         for line in this.work_ids:
-            work_line.write(line.id, {'rentability': 0, 'taux_horaire': 0})
+            work_line.browse(line.id).write({'rentability': 0, 'taux_horaire': 0})
         for line in this.project_profitability:
             tarif_client = 0
             total_dep2 = 0
@@ -304,7 +304,7 @@ class EbMergeFactures(models.Model):
                         academic_obj = self.env['hr.academic']
                         roles_obj = self.env['res.users.role']
                         empl = employee_obj.browse(rec.employee_id.id)
-                        aca = academic_obj.search([('employee_id', '=', empl.id)])
+                        aca = academic_obj.search([('employee_id', '=', empl.id)]).ids
                         if rec.group_id:
                             bon_id = self.env['bon.show'].browse(rec.group_id.id)
                             for line in bon_id.line_ids2:
@@ -312,20 +312,19 @@ class EbMergeFactures(models.Model):
                                     wage = line.wage
                                     total_dep = line.amount_line
                                     total_dep2 += line.amount_line
-                                    work_line.write(rec.id, {'rentability': total_dep, 'taux_horaire': wage})
+                                    work_line.browse(rec.id).write({'rentability': total_dep, 'taux_horaire': wage})
                                     break
                         elif aca:
                             for list in aca:
                                 if list:
                                     ligne = academic_obj.browse(list)
                                     if ligne.curr_ids:
-                                        for ll in ligne.curr_ids:
+                                        sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                 reverse=True)
+                                        for ll in sorted_curr_ids:
                                             if ligne.project_id and ll.project_id.id == ligne.project_id.id:
                                                 if ll.product_id and ll.uom_id:
-                                                    if datetime.strptime(ll.start_date,
-                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                        rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                        ll.end_date, "%Y-%m-%d"):
+                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                             wage = ll.amount
                                                             total_dep = wage * rec.hours_r
@@ -334,15 +333,12 @@ class EbMergeFactures(models.Model):
                                                             wage = ll.amount
                                                             total_dep = wage * rec.poteau_r
                                                             total_dep2 += wage * rec.poteau_r
-                                                        work_line.write(rec.id, {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                        work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
                                                         break
                                                     elif ll.product_id and ll.uom_id2:
                                                         if ll.product_id.id == rec.product_id.id:
-                                                            if datetime.strptime(ll.start_date,
-                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                                ll.end_date, "%Y-%m-%d"):
+                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                     exist += 1
                                                                     wage = ll.amount2
@@ -353,16 +349,13 @@ class EbMergeFactures(models.Model):
                                                                     wage = ll.amount2
                                                                     total_dep = wage * rec.poteau_r
                                                                     total_dep2 += wage * rec.poteau_r
-                                                                work_line.write(rec.id,
-                                                                                {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                                work_line.browse(rec.id).write(
+                                                                    {'rentability': total_dep,
+                                                                     'taux_horaire': wage})
                                                                 break
                                                 elif ll.product_id and ll.uom_id2:
                                                     if ll.product_id.id == rec.product_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount2
@@ -373,15 +366,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                                 elif ll.categ_id and ll.uom_id:
                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount
@@ -392,15 +382,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                                     elif ll.categ_id and ll.uom_id2:
                                                         if ll.categ_id.id == rec.categ_id.id:
-                                                            if datetime.strptime(ll.start_date,
-                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                                ll.end_date, "%Y-%m-%d"):
+                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                     exist += 1
                                                                     wage = ll.amount2
@@ -411,16 +398,13 @@ class EbMergeFactures(models.Model):
                                                                     wage = ll.amount2
                                                                     total_dep = wage * rec.poteau_r
                                                                     total_dep2 += wage * rec.poteau_r
-                                                                work_line.write(rec.id,
-                                                                                {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                                work_line.browse(rec.id).write(
+                                                                    {'rentability': total_dep,
+                                                                     'taux_horaire': wage})
                                                                 break
                                                 elif ll.categ_id and ll.uom_id2:
                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.hours_r
@@ -429,18 +413,17 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                     if ligne.curr_ids:
-                                        for ll in ligne.curr_ids:
+                                        sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                 reverse=True)
+                                        for ll in sorted_curr_ids:
                                             if ll.partner_id.id == ligne.partner_id.id:
                                                 if ll.product_id and ll.uom_id:
                                                     if ll.product_id.id == rec.product_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 wage = ll.amount
                                                                 total_dep = wage * rec.hours_r
@@ -449,15 +432,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                                     elif ll.product_id and ll.uom_id2:
                                                         if ll.product_id.id == rec.product_id.id:
-                                                            if datetime.strptime(ll.start_date,
-                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                                ll.end_date, "%Y-%m-%d"):
+                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                     exist += 1
                                                                     wage = ll.amount2
@@ -468,16 +448,13 @@ class EbMergeFactures(models.Model):
                                                                     wage = ll.amount2
                                                                     total_dep = wage * rec.poteau_r
                                                                     total_dep2 += wage * rec.poteau_r
-                                                                work_line.write(rec.id,
-                                                                                {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                                work_line.browse(rec.id).write(
+                                                                    {'rentability': total_dep,
+                                                                     'taux_horaire': wage})
                                                                 break
                                                 elif ll.product_id and ll.uom_id2:
                                                     if ll.product_id.id == rec.product_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount2
@@ -488,15 +465,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                                 elif ll.categ_id and ll.uom_id:
                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 wage = ll.amount
                                                                 total_dep = wage * rec.hours_r
@@ -505,15 +479,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                                     elif ll.categ_id and ll.uom_id2:
                                                         if ll.categ_id.id == rec.categ_id.id:
-                                                            if datetime.strptime(ll.start_date,
-                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                                ll.end_date, "%Y-%m-%d"):
+                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                     exist += 1
                                                                     wage = ll.amount2
@@ -524,18 +495,15 @@ class EbMergeFactures(models.Model):
                                                                     wage = ll.amount2
                                                                     total_dep = wage * rec.poteau_r
                                                                     total_dep2 += wage * rec.poteau_r
-                                                                work_line.write(rec.id,
-                                                                                {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                                work_line.browse(rec.id).write(
+                                                                    {'rentability': total_dep,
+                                                                     'taux_horaire': wage})
 
                                                                 break
 
                                                 elif ll.categ_id and ll.uom_id2:
                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount2
@@ -546,18 +514,17 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                         continue
                                     if ligne.curr_ids:
-                                        for ll in ligne.curr_ids:
+                                        sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                 reverse=True)
+                                        for ll in sorted_curr_ids:
                                             if ll.product_id and ll.uom_id:
                                                 if ll.product_id.id == rec.product_id.id:
-                                                    if datetime.strptime(ll.start_date,
-                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                        rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                        ll.end_date, "%Y-%m-%d"):
+                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                             wage = ll.amount
                                                             total_dep = wage * rec.hours_r
@@ -567,15 +534,12 @@ class EbMergeFactures(models.Model):
                                                             wage = ll.amount
                                                             total_dep = wage * rec.poteau_r
                                                             total_dep2 += wage * rec.poteau_r
-                                                        work_line.write(rec.id, {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                        work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
                                                         break
                                                 elif ll.product_id and ll.uom_id2:
                                                     if ll.product_id.id == rec.product_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount2
@@ -586,15 +550,12 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
                                                             break
                                             elif ll.product_id and ll.uom_id2:
                                                 if ll.product_id.id == rec.product_id.id:
-                                                    if datetime.strptime(ll.start_date,
-                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                        rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                        ll.end_date, "%Y-%m-%d"):
+                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                             exist += 1
                                                             wage = ll.amount2
@@ -605,15 +566,12 @@ class EbMergeFactures(models.Model):
                                                             wage = ll.amount2
                                                             total_dep = wage * rec.poteau_r
                                                             total_dep2 += wage * rec.poteau_r
-                                                        work_line.write(rec.id, {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                        work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
                                                         break
                                             elif ll.categ_id and ll.uom_id:
                                                 if ll.categ_id.id == rec.categ_id.id:
-                                                    if datetime.strptime(ll.start_date,
-                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                        rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                        ll.end_date, "%Y-%m-%d"):
+                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                             exist += 1
                                                             wage = ll.amount
@@ -624,15 +582,12 @@ class EbMergeFactures(models.Model):
                                                             wage = ll.amount
                                                             total_dep = wage * rec.poteau_r
                                                             total_dep2 += wage * rec.poteau_r
-                                                        work_line.write(rec.id, {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                        work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
                                                         break
                                                 elif ll.categ_id and ll.uom_id2:
                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                        if datetime.strptime(ll.start_date,
-                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                            rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                            ll.end_date, "%Y-%m-%d"):
+                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                 exist += 1
                                                                 wage = ll.amount2
@@ -643,17 +598,14 @@ class EbMergeFactures(models.Model):
                                                                 wage = ll.amount2
                                                                 total_dep = wage * rec.poteau_r
                                                                 total_dep2 += wage * rec.poteau_r
-                                                            work_line.write(rec.id, {'rentability': total_dep,
-                                                                                     'taux_horaire': wage})
+                                                            work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                            'taux_horaire': wage})
 
                                                             break
 
                                             elif ll.categ_id and ll.uom_id2:
                                                 if ll.categ_id.id == rec.categ_id.id:
-                                                    if datetime.strptime(ll.start_date,
-                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                        rec.date_start_r, "%Y-%m-%d") <= datetime.strptime(
-                                                        ll.end_date, "%Y-%m-%d"):
+                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                             exist += 1
                                                             wage = ll.amount2
@@ -664,8 +616,8 @@ class EbMergeFactures(models.Model):
                                                             wage = ll.amount2
                                                             total_dep = wage * rec.poteau_r
                                                             total_dep2 += wage * rec.poteau_r
-                                                        work_line.write(rec.id, {'rentability': total_dep,
-                                                                                 'taux_horaire': wage})
+                                                        work_line.browse(rec.id).write({'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
                                                     break
 
                             if wage == 0:
@@ -679,15 +631,14 @@ class EbMergeFactures(models.Model):
                                                 if list:
                                                     ligne = academic_obj.browse(list)
                                                     if ligne.curr_ids:
-                                                        for ll in ligne.curr_ids:
+                                                        sorted_curr_ids = sorted(ligne.curr_ids,
+                                                                                 key=lambda x: x['product_id'],
+                                                                                 reverse=True)
+                                                        for ll in sorted_curr_ids:
                                                             if ligne.project_id and ll.project_id.id == ligne.project_id.id:
                                                                 if ll.product_id and ll.uom_id:
                                                                     if ll.product_id.id == rec.product_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount
@@ -698,17 +649,13 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
                                                                             break
                                                                     elif ll.product_id and ll.uom_id2:
                                                                         if ll.product_id.id == rec.product_id.id:
-                                                                            if datetime.strptime(ll.start_date,
-                                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                                rec.date_start_r,
-                                                                                "%Y-%m-%d") <= datetime.strptime(
-                                                                                ll.end_date, "%Y-%m-%d"):
+                                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                     exist += 1
                                                                                     wage = ll.amount2
@@ -719,20 +666,16 @@ class EbMergeFactures(models.Model):
                                                                                     wage = ll.amount2
                                                                                     total_dep = wage * rec.poteau_r
                                                                                     total_dep2 += wage * rec.poteau_r
-                                                                                work_line.write(rec.id,
-                                                                                                {
-                                                                                                    'rentability': total_dep,
-                                                                                                    'taux_horaire': wage})
+                                                                                work_line.browse(rec.id).write(
+                                                                                    {
+                                                                                        'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
 
                                                                                 break
 
                                                                 elif ll.product_id and ll.uom_id2:
                                                                     if ll.product_id.id == rec.product_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -743,18 +686,14 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                                 elif ll.categ_id and ll.uom_id:
                                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount
@@ -764,18 +703,14 @@ class EbMergeFactures(models.Model):
                                                                                 exist += 1
                                                                                 wage = ll.amount
                                                                                 total_dep = 0
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                                     elif ll.categ_id and ll.uom_id2:
                                                                         if ll.categ_id.id == this.categ_id.id:
-                                                                            if datetime.strptime(ll.start_date,
-                                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                                rec.date_start_r,
-                                                                                "%Y-%m-%d") <= datetime.strptime(
-                                                                                ll.end_date, "%Y-%m-%d"):
+                                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                     exist += 1
                                                                                     wage = ll.amount2
@@ -786,20 +721,16 @@ class EbMergeFactures(models.Model):
                                                                                     wage = ll.amount2
                                                                                     total_dep = wage * rec.poteau_r
                                                                                     total_dep2 += wage * rec.poteau_r
-                                                                                work_line.write(rec.id,
-                                                                                                {
-                                                                                                    'rentability': total_dep,
-                                                                                                    'taux_horaire': wage})
+                                                                                work_line.browse(rec.id).write(
+                                                                                    {
+                                                                                        'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
 
                                                                                 break
 
                                                                 elif ll.categ_id and ll.uom_id2:
                                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -810,21 +741,20 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                     if ligne.curr_ids:
-                                                        for ll in ligne.curr_ids:
+                                                        sorted_curr_ids = sorted(ligne.curr_ids,
+                                                                                 key=lambda x: x['product_id'],
+                                                                                 reverse=True)
+                                                        for ll in sorted_curr_ids:
                                                             if ligne.project_id is False and ll.partner_id.id == ligne.partner_id.id:
                                                                 if ll.product_id and ll.uom_id:
                                                                     if ll.product_id.id == rec.product_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount
@@ -835,18 +765,14 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                                     elif ll.product_id and ll.uom_id2:
                                                                         if ll.product_id.id == rec.product_id.id:
-                                                                            if datetime.strptime(ll.start_date,
-                                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                                rec.date_start_r,
-                                                                                "%Y-%m-%d") <= datetime.strptime(
-                                                                                ll.end_date, "%Y-%m-%d"):
+                                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                     exist += 1
                                                                                     wage = ll.amount2
@@ -857,20 +783,16 @@ class EbMergeFactures(models.Model):
                                                                                     wage = ll.amount2
                                                                                     total_dep = wage * rec.poteau_r
                                                                                     total_dep2 += wage * rec.poteau_r
-                                                                                work_line.write(rec.id,
-                                                                                                {
-                                                                                                    'rentability': total_dep,
-                                                                                                    'taux_horaire': wage})
+                                                                                work_line.browse(rec.id).write(
+                                                                                    {
+                                                                                        'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
 
                                                                                 break
 
                                                                 elif ll.product_id and ll.uom_id2:
                                                                     if ll.product_id.id == rec.product_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -881,19 +803,15 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
 
                                                                 elif ll.categ_id and ll.uom_id:
                                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount
@@ -903,18 +821,14 @@ class EbMergeFactures(models.Model):
                                                                                 exist += 1
                                                                                 wage = ll.amount
                                                                                 total_dep = 0
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                                     elif ll.categ_id and ll.uom_id2:
                                                                         if ll.categ_id.id == rec.categ_id.id:
-                                                                            if datetime.strptime(ll.start_date,
-                                                                                                 "%Y-%m-%d") <= datetime.strptime(
-                                                                                rec.date_start_r,
-                                                                                "%Y-%m-%d") <= datetime.strptime(
-                                                                                ll.end_date, "%Y-%m-%d"):
+                                                                            if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                                 if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                     exist += 1
                                                                                     wage = ll.amount2
@@ -925,20 +839,16 @@ class EbMergeFactures(models.Model):
                                                                                     wage = ll.amount2
                                                                                     total_dep = wage * rec.poteau_r
                                                                                     total_dep2 += wage * rec.poteau_r
-                                                                                work_line.write(rec.id,
-                                                                                                {
-                                                                                                    'rentability': total_dep,
-                                                                                                    'taux_horaire': wage})
+                                                                                work_line.browse(rec.id).write(
+                                                                                    {
+                                                                                        'rentability': total_dep,
+                                                                                        'taux_horaire': wage})
 
                                                                                 break
 
                                                                 elif ll.categ_id and ll.uom_id2:
                                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -949,20 +859,19 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                     if ligne.curr_ids:
-                                                        for ll in ligne.curr_ids:
+                                                        sorted_curr_ids = sorted(ligne.curr_ids,
+                                                                                 key=lambda x: x['product_id'],
+                                                                                 reverse=True)
+                                                        for ll in sorted_curr_ids:
                                                             if ll.product_id and ll.uom_id:
                                                                 if ll.product_id.id == rec.product_id.id:
-                                                                    if datetime.strptime(ll.start_date,
-                                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                                        rec.date_start_r,
-                                                                        "%Y-%m-%d") <= datetime.strptime(
-                                                                        ll.end_date, "%Y-%m-%d"):
+                                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                             exist += 1
                                                                             wage = ll.amount
@@ -973,17 +882,13 @@ class EbMergeFactures(models.Model):
                                                                             wage = ll.amount
                                                                             total_dep = wage * rec.poteau_r
                                                                             total_dep2 += wage * rec.poteau_r
-                                                                        work_line.write(rec.id,
-                                                                                        {'rentability': total_dep,
-                                                                                         'taux_horaire': wage})
+                                                                        work_line.browse(rec.id).write(
+                                                                            {'rentability': total_dep,
+                                                                             'taux_horaire': wage})
                                                                         break
                                                                 elif ll.product_id and ll.uom_id2:
                                                                     if ll.product_id.id == rec.product_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -994,18 +899,14 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep = wage * rec.poteau_r
                                                                                 total_dep2 += wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
 
                                                                             break
                                                             elif ll.product_id and ll.uom_id2:
                                                                 if ll.product_id.id == rec.product_id.id:
-                                                                    if datetime.strptime(ll.start_date,
-                                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                                        rec.date_start_r,
-                                                                        "%Y-%m-%d") <= datetime.strptime(
-                                                                        ll.end_date, "%Y-%m-%d"):
+                                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                             exist += 1
                                                                             wage = ll.amount2
@@ -1016,17 +917,13 @@ class EbMergeFactures(models.Model):
                                                                             wage = ll.amount2
                                                                             total_dep = wage * rec.poteau_r
                                                                             total_dep2 += wage * rec.poteau_r
-                                                                        work_line.write(rec.id,
-                                                                                        {'rentability': total_dep,
-                                                                                         'taux_horaire': wage})
+                                                                        work_line.browse(rec.id).write(
+                                                                            {'rentability': total_dep,
+                                                                             'taux_horaire': wage})
                                                                         break
                                                             elif ll.categ_id and ll.uom_id:
                                                                 if ll.categ_id.id == rec.categ_id.id:
-                                                                    if datetime.strptime(ll.start_date,
-                                                                                         "%Y-%m-%d") <= datetime.strptime(
-                                                                        rec.date_start_r,
-                                                                        "%Y-%m-%d") <= datetime.strptime(
-                                                                        ll.end_date, "%Y-%m-%d"):
+                                                                    if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                         if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                             exist += 1
                                                                             wage = ll.amount
@@ -1036,19 +933,15 @@ class EbMergeFactures(models.Model):
                                                                             exist += 1
                                                                             wage = ll.amount
                                                                             total_dep = 0
-                                                                        work_line.write(rec.id,
-                                                                                        {'rentability': total_dep,
-                                                                                         'taux_horaire': wage})
+                                                                        work_line.browse(rec.id).write(
+                                                                            {'rentability': total_dep,
+                                                                             'taux_horaire': wage})
                                                                         break
 
                                                                 elif ll.categ_id and ll.uom_id2:
 
                                                                     if ll.categ_id.id == rec.categ_id.id:
-                                                                        if datetime.strptime(ll.start_date,
-                                                                                             "%Y-%m-%d") <= datetime.strptime(
-                                                                            rec.date_start_r,
-                                                                            "%Y-%m-%d") <= datetime.strptime(
-                                                                            ll.end_date, "%Y-%m-%d"):
+                                                                        if ll.start_date <= rec.date_start_r <= ll.end_date:
                                                                             if empl.job_id.id == 1 or ll.uom_id.id == 5:
                                                                                 exist += 1
                                                                                 wage = ll.amount2
@@ -1059,9 +952,9 @@ class EbMergeFactures(models.Model):
                                                                                 wage = ll.amount2
                                                                                 total_dep2 += wage * rec.poteau_r
                                                                                 total_dep = wage * rec.poteau_r
-                                                                            work_line.write(rec.id,
-                                                                                            {'rentability': total_dep,
-                                                                                             'taux_horaire': wage})
+                                                                            work_line.browse(rec.id).write(
+                                                                                {'rentability': total_dep,
+                                                                                 'taux_horaire': wage})
                                                                             break
 
                                                             elif ll.categ_id and ll.uom_id2:
@@ -1078,9 +971,9 @@ class EbMergeFactures(models.Model):
                                                                             wage = ll.amount2
                                                                             total_dep = wage * rec.poteau_r
                                                                             total_dep2 += wage * rec.poteau_r
-                                                                        work_line.write(rec.id,
-                                                                                        {'rentability': total_dep,
-                                                                                         'taux_horaire': wage})
+                                                                        work_line.browse(rec.id).write(
+                                                                            {'rentability': total_dep,
+                                                                             'taux_horaire': wage})
 
                                                                         break
                         if wage == 0:
@@ -1107,8 +1000,8 @@ class EbMergeFactures(models.Model):
                                                 wage = contract_valid.wage
                                                 total_dep = wage * rec.poteau_r
                                                 total_dep2 += wage * rec.poteau_r
-                                            work_line.write(rec.id,
-                                                            {'rentability': total_dep, 'taux_horaire': wage})
+                                            work_line.browse(rec.id).write(
+                                                {'rentability': total_dep, 'taux_horaire': wage})
             if update == False and tarif_client == 0:
                 self.env.cr.execute("""  UPDATE project_profitability
                                                SET total_depenses = %s,
@@ -1339,7 +1232,6 @@ class EbMergeFactures(models.Model):
         for line in self.line_ids:
             itered.append(line.id)
             line_to_merge = self.line_ids.search([('wizard_id', '=', self.id),
-
                                                   ('code', '=', line.code),
                                                   ('uom_id', '=', line.uom_id.id),
                                                   ('id', 'not in', itered)], limit=1)
@@ -1925,8 +1817,8 @@ class EbMergeFactures(models.Model):
 
             if not current.num:
                 raise UserError(_('Action Impossible!\nN° Facture Obligatoire !'))
-            self.env['project.task.work.line'].write(s3, {'num': current.num, 'date_inv': current.date_inv,
-                                                          'facture': True})
+            self.env['project.task.work.line'].browse(s3).write({'num': current.num, 'date_inv': current.date_inv,
+                                                                 'facture': True})
 
         self.write({'state': 'open'})
         view = self.env['sh.message.wizard']
@@ -1961,7 +1853,7 @@ class EbMergeFactures(models.Model):
         current = self.browse(self.ids[0])
 
         for s3 in current.work_ids.ids:
-            self.env['project.task.work.line'].write(s3, {'num': '', 'date_inv': False})
+            self.env['project.task.work.line'].browse(s3).write({'num': '', 'date_inv': False, 'facture': False})
 
         self.write({'state': 'draft'})
         view = self.env['sh.message.wizard']
@@ -1982,7 +1874,7 @@ class EbMergeFactures(models.Model):
 class ProjectProfitability(models.Model):
     _name = 'project.profitability'
     _description = 'Project Profitability'
-#
+    #
     total_depenses = fields.Float(string='Total Depenses')
     montant_total = fields.Float(string='Montant total')
     diference = fields.Float('Difference ')
@@ -1991,5 +1883,3 @@ class ProjectProfitability(models.Model):
     invoice_id = fields.Many2one('base.facture.wizard', string='Invoice')
     # progress_amount is a  computed field
     # progress_amout = fields.Float(string='Progress Amount')
-
-

@@ -24,7 +24,6 @@
                 'product_custom',
                 'link_line',
                 'risk_management',
-                'web',
                 ],
 
     # always loaded
@@ -33,28 +32,17 @@
         'views/work.xml',
         'views/status.xml',
         'views/employes_intervenant.xml',
-        # '/static/src/xml/custom_many2many_tags.xml'
-
-
-
+        'views/work_line.xml',
     ],
-    # 'qweb': [
-    #     'task_work/static/src/xml/custom_many2many_tags.xml',
-    # ],
-    #
-    # 'assets': {
-    #         'web.assets_backend': [
-    #             'task_work/static/src/js/custom_many2many_tags.js',
-    #         ],
-    #         'web.assets_qweb': [
-    #                 'task_work/static/src/xml/custom_many2many_tags.xml',
-    #             ],
-    #     },
-
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'task_work/static/src/js/custom_task_work_renderer.js',
+        ],
+    },
     'application': True,
     'sequence': -960,
 }

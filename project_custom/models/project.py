@@ -362,7 +362,8 @@ class ProjectCustom(models.Model):
                               ('pending', 'Suspendu'),
                               ('close', 'Terminé')],
                              string='Status', required=True, copy=False, default='draft')
-    zone = fields.Integer('Zone', readonly=True, states={'draft': [('readonly', False)]}, default=1, )
+    zone = fields.Integer(string='Zone', default=0)
+    secteur = fields.Integer(string='Secteur', default=0)
     work_ids = fields.One2many('project.task.work', 'project_id', readonly=True,
                                states={'draft': [('readonly', False)]}, )
     work_line_ids = fields.One2many('project.task.work.line', 'project_id', readonly=True,
@@ -370,10 +371,11 @@ class ProjectCustom(models.Model):
     academic_ids = fields.One2many('hr.academic', 'project_id', string='Academic experiences', help="Academic experiences")
     parent_id1 = fields.Many2one('project.project', string='Project Parent', select=True, ondelete='cascade',
                                  default=False, )
-    child_id = fields.One2many('project.project', 'parent_id1', string='Child Categories')
+    child_ids = fields.One2many('project.project', 'parent_id1', string='Child Projects')
     doc_count = fields.Integer(compute='_get_attached_docs', string='Number of documents attached')
     name = fields.Char(required=False, string='Nom', )
     issue_ids = fields.One2many('project.issue', 'project_id')
+
 
     _sql_constraints = [
         ('project_date_greater', 'check(date_end >= date_start)',

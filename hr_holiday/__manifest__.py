@@ -25,12 +25,13 @@
     'data': [
         'security/ir.model.access.csv',
         'views/type.xml',
-        'views/histo.xml',
+        'views/histo_co_workers.xml',
         'views/super_view.xml',
         'views/employee_view.xml',
         'views/holiday_histo.xml',
-        'views/modify_employee.xml',
-        'views/modify_super.xml',
+        'views/actions_employee.xml',
+        'views/histo_super.xml',
+        'views/cloture.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

@@ -29,6 +29,7 @@
         'views/project.xml',
         'views/not_kit.xml',
         'views/type.xml',
+        'views/dash.xml',
         'views/menu.xml',
     ],
     # only loaded in demonstration mode

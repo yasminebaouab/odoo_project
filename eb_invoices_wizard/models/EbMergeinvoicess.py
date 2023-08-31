@@ -192,50 +192,84 @@ class EbMergeInvoices(models.Model):
                         'name': str(str(datetime.today().year) + str(res1).zfill(3))
                     })
 
-        if self.env.context.get('active_model') == 'project.task.work':
-            active_ids = self.env.context.get('active_ids')
-            tt = self.env['project.task.work'].browse(active_ids)
-            print('*********default get a.2 *************')
-            print('tt:', tt)
-            for work in tt:
-                if 'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name:
-                    raise UserError(
-                        _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
-
-                vv = []
-
-                if work.kit_id:
-                    kit_list = self.env['project.task.work'].search([
-                        ('project_id', '=', work.project_id.id),
-                        ('zone', '=', work.zone),
-                        ('secteur', '=', work.secteur),
-                        ('kit_id', '=', work.kit_id.id),
-                        ('product_id.name', 'not ilike', '%correction%'),
-                        ('product_id.name', 'not ilike', '%cont%'),
-                        ('product_id.name', 'not ilike', '%gestion client%')
-                    ])
-                    for kit_work in kit_list:
-
-                        if not work.is_copy and not kit_work.is_copy:
-                            vv.append(kit_work.id)
-                        elif kit_work.is_copy and work.rank == kit_work.rank:
-                            vv.append(kit_work.id)
-
-                    res['work_ids'] = vv
-                else:
-                    res['work_ids'] = active_ids
-
-                if work.state == 'valid':
-                    raise UserError(_('Erreur!\nTravaux clotués!'))
-
-        ##raise osv.except_osv(_('Transfert impossible!'),_("Pas de Stock suffisantdffd pour l'article %s  !")% tt)
-        ##        raise osv.except_osv(_('Error !'),
-        ##                                         _('You cannot validate this journal entry because account "%s" does not belong to chart of accounts "%s"!') % (tt, tt))
+        # if self.env.context.get('active_model') == 'project.task.work':
+        #     active_ids = self.env.context.get('active_ids')
+        #     tt = self.env['project.task.work'].browse(active_ids)
+        #
+        #     affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
+        #     print('settings_custom : ', affectation_multiple)
+        #
+        #     print('*********default get a.2 *************')
+        #     print('tt:', tt)
+        #     for work in tt:
+        #
+        #         if ('correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) and affectation_multiple:
+        #             raise UserError(
+        #                 _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
+        #
+        #         vv = []
+        #
+        #         if work.kit_id:
+        #             kit_list = self.env['project.task.work'].search([
+        #                 ('project_id', '=', work.project_id.id),
+        #                 ('zone', '=', work.zone),
+        #                 ('secteur', '=', work.secteur),
+        #                 ('kit_id', '=', work.kit_id.id),
+        #                 ('product_id.name', 'not ilike', '%correction%'),
+        #                 ('product_id.name', 'not ilike', '%cont%'),
+        #                 ('product_id.name', 'not ilike', '%gestion client%')
+        #             ])
+        #             for kit_work in kit_list:
+        #
+        #                 if not work.is_copy and not kit_work.is_copy:
+        #                     vv.append(kit_work.id)
+        #                 elif kit_work.is_copy and work.rank == kit_work.rank:
+        #                     vv.append(kit_work.id)
+        #
+        #             res['work_ids'] = vv
+        #
+        #         else:
+        #             res['work_ids'] = active_ids
+        #
+        #         if work.state == 'valid':
+        #             raise UserError(_('Erreur!\nTravaux clotués!'))
 
         if self.env.context.get('active_model') == 'project.task.work' and active_ids:
             # active_ids = self.env.context.get('active_ids')
             print('*********default get a.3 *************')
+            tt = self.env['project.task.work'].browse(active_ids)
+            affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
+            for work in tt:
+                if (
+                        'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) and affectation_multiple:
+                    raise UserError(
+                        _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
+
+                vv = []
             for hh in active_ids:
+
+                if not affectation_multiple and work.state == 'draft':
+                    print('affectation_simple:', 'draft')
+
+                    if 'correction' in work.product_id.name or u'Contrôle' in work.product_id.name:
+                        print('correction:', 'Contrôle')
+
+                        vv = []
+                        if work.kit_id:
+                            kit_list = self.env['project.task.work'].search([
+                                ('id', 'in', active_ids),
+                            ])
+                            print('*****kit_list******:', kit_list)
+
+                            for kit_work in kit_list:
+                                if not work.is_copy and not kit_work.is_copy:
+                                    vv.append(kit_work.id)
+                                elif kit_work.is_copy and work.rank == kit_work.rank:
+                                    vv.append(kit_work.id)
+                            print('vv', vv)
+                            res['work_ids'] = vv
+                            print('res 0:', res)
+                            print('active_ids :', active_ids)
                 work = self.env['project.task.work'].browse(hh)
                 print(work)
                 vv = []
@@ -926,6 +960,8 @@ class EbMergeInvoices(models.Model):
 
     def affecter_simple(self):
         print("affecter_simple")
+
+
         return
 
     def affecter_multiple(self):
@@ -937,8 +973,6 @@ class EbMergeInvoices(models.Model):
 
         for line in this.work_ids:
             line = self.env['project.task.work'].browse(line.id)
-            print('line : ', line)
-            print('line.ids : ', line.ids)
             if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
                 line.write({'state': 'affect'})
             for msg_id in line.ids:

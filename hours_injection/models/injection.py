@@ -19,18 +19,30 @@ class HoursInjection(models.Model):
         for b_id in ft.line_ids2.ids:
             x = self.env['bon.show.line2'].browse(b_id).hours_r
             total += x
+
+        empl_ho = self.env['hr.employee.holiday'].search(
+            [('employee_id', '=', ft.employee_id.id), ('name', 'ilike', 'ordinaire')])
+        if not empl_ho:
+            raise UserError(_("Le type 'Congé Ordinaire' n'existe pas"))
+        else:
+            sol_ord = empl_ho.remaining_leave
+
         res.update({'bon_id': active_id,
                     'employee_id': ft.employee_id.id,
                     'sum': total,
                     'sol_bank': emp.bank_hours,
-                    'sol_cong': emp.bank_ill})
+                    'sol_cong': sol_ord})
 
         return res
 
     def get_bank(self):
         empl = self.env['hr.employee'].browse(self.employee_id.id)
         self.sol_bank = empl.bank_hours
-        self.sol_cong = empl.bank_ill
+        empl_ho = self.env['hr.employee.holiday'].search([('employee_id', '=', self.employee_id.id), ('name', 'ilike', 'ordinaire')])
+        if not empl_ho:
+            raise UserError(_("Le type 'Congé Ordinaire' n'existe pas"))
+        else:
+            self.sol_cong = empl_ho.remaining_leave
 
     def _get_user(self):
 
@@ -81,7 +93,7 @@ class HoursInjection(models.Model):
     ]
 
     @api.onchange('hr_cong')
-    def onchange_rest_bank(self):
+    def _onchange_rest_bank(self):
         if self.choice == 'both':
             self.hr_bank = self.hr_total - float(self.hr_cong)
         if self.choice == 'cong':
@@ -91,21 +103,37 @@ class HoursInjection(models.Model):
 
     def send(self):
 
+        ord_id = self.env['hr.holidays.type'].search([('name', 'ilike', 'ordinaire')]).id
         employee = self.env['hr.employee'].browse(self.employee_id.id)
+
         if self.choice == 'bank':
             bank = employee.bank_hours + self.hr_bank
             employee.write({'bank_hours': bank})
 
         elif self.choice == 'cong':
-            cong = employee.bank_ill + float(self.hr_cong)
-            employee.write({'bank_ill': cong})
+            self.env['hr.holidays.histo'].create({
+                'employee_id': self.employee_id.id,
+                'date': self.date,
+                'diff': - float(self.hr_cong)/7,
+                'year': self.date.year,
+                'motif': "Traitement d'heures",
+                'type': ord_id,
+            })
+
         else:
             if (float(self.hr_cong) + self.hr_bank) != self.hr_total:
                 raise UserError(_('Somme Saisie invalide'))
             else:
                 bank = employee.bank_hours + self.hr_bank
-                cong = employee.bank_ill + float(self.hr_cong)
-                employee.write({'bank_hours': bank, 'bank_ill': cong})
+                employee.write({'bank_hours': bank})
+                self.env['hr.holidays.histo'].create({
+                    'employee_id': self.employee_id.id,
+                    'date': self.date,
+                    'diff': - float(self.hr_cong) / 7,
+                    'year': self.date.year,
+                    'motif': "Traitement d'heures",
+                    'type': ord_id,
+                })
 
         self.write({'state': 'valid'})
 
@@ -125,6 +153,7 @@ class HoursInjection(models.Model):
 
     def cancel(self):
 
+        ord_id = self.env['hr.holidays.type'].search([('name', 'ilike', 'ordinaire')]).id
         employee = self.env['hr.employee'].browse(self.employee_id.id)
         if self.choice == 'bank':
             if (self.sol_bank - self.hr_bank) < 0:
@@ -134,21 +163,34 @@ class HoursInjection(models.Model):
                 employee.write({'bank_hours': bank})
 
         elif self.choice == 'cong':
-            if (self.sol_cong - float(self.hr_cong)) < 0:
+            if (self.sol_cong*7 - float(self.hr_cong)) < 0:
                 raise UserError("Annulation Impossible!\nSolde de Congés sera négatif.")
             else:
-                cong = employee.bank_ill - float(self.hr_cong)
-                employee.write({'bank_ill': cong})
+                self.env['hr.holidays.histo'].create({
+                    'employee_id': self.employee_id.id,
+                    'date': self.date,
+                    'diff': float(self.hr_cong) / 7,
+                    'year': self.date.year,
+                    'motif': "Annulation Traitement d'heures",
+                    'type': ord_id,
+                })
 
         else:
             if (self.sol_bank - self.hr_bank) < 0:
                 raise UserError("Annulation Impossible!\nSolde d'heures sera négatif.")
-            elif (self.sol_cong - float(self.hr_cong)) < 0:
+            elif (self.sol_cong*7 - float(self.hr_cong)) < 0:
                 raise UserError("Annulation Impossible!\nSolde de Congés sera négatif.")
             else:
                 bank = employee.bank_hours - self.hr_bank
-                cong = employee.bank_ill - float(self.hr_cong)
-                employee.write({'bank_hours': bank, 'bank_ill': cong})
+                employee.write({'bank_hours': bank})
+                self.env['hr.holidays.histo'].create({
+                    'employee_id': self.employee_id.id,
+                    'date': self.date,
+                    'diff': float(self.hr_cong) / 7,
+                    'year': self.date.year,
+                    'motif': "Annulation Traitement d'heures",
+                    'type': ord_id,
+                })
 
         self.write({'state': 'draft'})
         return True

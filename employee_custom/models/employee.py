@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 import time
 
 
@@ -225,7 +226,20 @@ class HrEmployee(models.Model):
     product_id = fields.Many2one('product.product', string=' Professional Experiences', )
     journal_id = fields.Many2one('account.analytic.journal', string=' Professional Experiences', )
     bank_hours = fields.Float(string='Bank work', default=0)
-    bank_ill = fields.Float(string='Bank work', default=0)
+
+    def action_convert(self):
+
+        return {
+            'name': 'Conversion Congé',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_model': 'hr.employee.convert.wizard',
+            'view_id': self.env.ref('employee_custom.view_convert_holiday_wizard').id,
+            'context': {'employee_id': self.id, 'sol': self.bank_hours},
+            'domain': []
+        }
 
 
     # def _get_default_image(self, cr, uid, context=None):
@@ -360,6 +374,61 @@ class HrEmployee(models.Model):
     #     (_check_recursion, 'Error! You cannot create recursive hierarchy of Employee(s).', ['parent_id']),
     # ]
     #
+
+
+class HrEmployeeConvertWizard(models.Model):
+    _name = 'hr.employee.convert.wizard'
+
+    @api.model
+    def default_get(self, fields_list):
+
+        res = super(HrEmployeeConvertWizard, self).default_get(fields_list)
+        employee_id = self.env.context.get('employee_id')
+        sol = self.env.context.get('sol')
+        res.update({'employee_id': employee_id,
+                    'sol': sol})
+        return res
+
+    hours = fields.Float(string="Nombre d'Heures à Convertir")
+    employee_id = fields.Many2one('hr.employee', string='Employé')
+    sol = fields.Float(string='Solde')
+
+    _sql_constraints = [
+        ('check_hours', 'check(sol >= hours)',
+         "Action Impossible! Nombre d'Heures à Convertir supérieur au Solde .")
+    ]
+
+    def convert_to_holiday(self):
+        if self.hours == 0:
+            raise UserError(_("Le nombre d'heures à convertir doit être strictement positif"))
+        elif self.hours % 3.5 != 0:
+            raise UserError(_("Le nombre d'heures à convertir doit être multiple de 3.5"))
+        else:
+            ord_id = self.env['hr.holidays.type'].search([('name', 'ilike', 'ordinaire')]).id
+            self.env['hr.holidays.histo'].create({
+                'employee_id': self.employee_id.id,
+                'date': fields.date.today(),
+                'diff': - self.hours / 7,
+                'year': fields.date.today().year,
+                'motif': "Convertion Banque d'Heures",
+                'type': ord_id,
+            })
+            self.env['hr.employee'].browse(self.employee_id.id).write({'bank_hours': self.sol - self.hours})
+
+            view = self.env['sh.message.wizard']
+            view_id = view and view.id or False
+
+            return {
+                'name': 'Conversion faite avec Succès',
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_model': 'sh.message.wizard',
+                'views': [(view_id, 'form')],
+                'view_id': view_id,
+                'target': 'new',
+
+            }
 
 
 class HrDepartment(models.Model):
@@ -570,13 +639,21 @@ class HrEmployeeHoliday(models.Model):
         for rec in self:
             rec.employee = self.env['hr.employee'].browse(rec.employee_id.id).name
 
+    def _get_remaining_days(self):
+        somme = 0
+        histo = self.env['hr.holidays.histo']
+        for rec in self:
+            rec_ids = histo.search([
+                ('type.name', '=', rec.name),
+                ('employee_id', '=', rec.employee_id.id),
+                ('year', '=', fields.date.today().year),
+            ]).ids
+            for tt in rec_ids:
+                somme += histo.browse(tt).diff
+            rec.remaining_leave = rec.max_leave - somme
+
     name = fields.Char(string='Type de Congé', size=64, translate=True)
     max_leave = fields.Integer(string='Nombre de Jours Maximal')
-    remaining_leave = fields.Integer(string='Nombre de Jours Restant')
-    limit = fields.Boolean(string='Autoriser de Dépasser La Limite de Jours')
+    remaining_leave = fields.Integer(compute='_get_remaining_days', string='Nombre de Jours Restant')
     employee_id = fields.Many2one('hr.employee', string='Employé')
-    employee = fields.Char(compute='_emp_name', string='Nom Employé')
 
-    def reset(self):
-        for rec in self:
-            self.remaining_leave = self.max_leave

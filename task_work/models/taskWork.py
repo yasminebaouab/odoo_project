@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 
 from odoo import models, fields, api
 from datetime import datetime as dt
@@ -11,14 +12,17 @@ class TaskWork(models.Model):
     _name = 'project.task.work'
     _description = 'Project Task Work'
     _rec_name = 'id'
-
+    # added
     intervenant_affect_ids = fields.One2many('intervenants.affect', 'task_work_id',
                                              'Intervenants Affectés')
+    priority = fields.Selection([('0', 'Faible'),
+                                 ('1', 'Normale'),
+                                 ('2', 'Elevée'),
+                                 ('3', 'Urgent'),
+                                 ('4', 'Très Urgent'),
+                                 ('5', 'Super Urgent')], string='Priorité')
     work_id = fields.Char(string='work ID')
     work_id2 = fields.Char(string='work ID')
-    group_id2 = fields.Many2one('base.group.merge.automatic.wizard', string='group 2 ID', select="1", readonly=True,
-                                states={'draft': [('readonly', False)]}, )
-
     name = fields.Char(string='Libellé Travaux', readonly=True, states={'draft': [('readonly', False)]}, )
     ftp = fields.Char(string='Lien FTP', readonly=True, states={'draft': [('readonly', False)]}, )
     job = fields.Char(string='Job', readonly=True, states={'draft': [('readonly', False)]}, )
@@ -157,17 +161,14 @@ class TaskWork(models.Model):
                                            'dependency_work_id', 'work_id', string='Dependencies')
     state = fields.Selection([('draft', 'T. Planifiés'),
                               ('affect', 'T. Affectés'),
-                              ('tovalid', 'Ret. En cours'),
-                              ('validprod', 'Prod. Valides'),
-
                               ('affect_con', 'T. Affectés controle'),
+                              ('affect_corr', 'T. Affectés corrction'),
+                              ('tovalid', 'Ret. En cours'),
                               ('tovalidcont', 'Cont. En cours'),
                               ('validcont', 'Cont. Valides'),
-
-                              ('affect_corr', 'T. Affectés corrction'),
+                              ('validprod', 'Prod. Valides'),
                               ('tovalidcorrec', 'Corr. En cours'),
                               ('validcorrec', 'Corr. Valides'),
-
                               ('valid', 'T. Terminés'),
                               ('cancel', 'T. Annulés'),
                               ('pending', 'T. Suspendus'),
@@ -194,7 +195,7 @@ class TaskWork(models.Model):
     pourc = fields.Float('Pour C', readonly=True, states={'draft': [('readonly', False)]}, )
     rank = fields.Char('Rank', readonly=True, states={'draft': [('readonly', False)]}, )
     display = fields.Boolean(string='Réalisable')
-    is_copy = fields.Boolean(string='Dupliqué')
+    is_copy = fields.Boolean(string='Dupliqué', default=False)
     done33 = fields.Boolean(compute='_disponible', string='done')
     current_emp = fields.Many2one('hr.employee', string='Employé Encours', readonly=True,
                                   states={'draft': [('readonly', False)]}, )
@@ -231,17 +232,16 @@ class TaskWork(models.Model):
                                              string='Employés assignés contrôle')
     employee_ids_correction = fields.Many2many('hr.employee', 'project_task_work_employee_correction_rel',
                                                string='Employés assignés correction')
-    priority = fields.Selection([('0', 'Faible'), ('1', 'Normale'), ('2', 'Elevée')], string='Priorité Projet')
 
-    # employee_avatar = fields.Binary(string="Employee Avatar", compute='_compute_employee_avatar')
+    employee_ids = fields.Many2many('res.users', string='Employés assignés')
 
-    # @api.depends('user_id')
-    # def _compute_employee_ids(self):
+    # employee_image_128 = fields.Binary("Employee Image 1920", compute='_compute_employee_image_1920', store=False)
+    #
+    # @api.depends('employee_ids.image_1920')
+    # def _compute_employee_image_1920(self):
     #     for task_work in self:
-    #         if task_work.user_id:
-    #             task_work.employee_ids = task_work.user_id.employee_ids
-    #         else:
-    #             task_work.employee_ids = False
+    #         employee_images = task_work.employee_ids.mapped('image_1920')
+    #         task_work.employee_image_128 = employee_images and employee_images[0] or False
 
     def _default_done(self):
 
@@ -465,8 +465,7 @@ class TaskWork(models.Model):
             #         if test:
             #             book.is_intervenant = True
 
-        #
-
+    #
     def _iscontrol(self):
         print('_iscontrol ')
         for book in self:
@@ -603,7 +602,7 @@ class TaskWork(models.Model):
     def action_affect(self):
 
         return {
-            'name': ('Affecter des Ressources'),
+            'name': 'Modification Travaux Permis',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -1204,20 +1203,6 @@ class TaskWork(models.Model):
             'domain': [('task_work_id', 'in', tt)]
         }
 
-    # @api.depends('employee_ids.image_128')
-    # def _compute_employee_avatar(self):
-    #     print('_compute_employee_avatar')
-    #     for task_work in self:
-    #         if task_work.employee_ids:
-    #             employee_avatars = [emp.image_128 for emp in task_work.employee_ids if emp.image_128]
-    #             print('employee_avatars:', employee_avatars)
-    #             if employee_avatars:
-    #                 task_work.employee_avatar = employee_avatars[0]
-    #             else:
-    #                 task_work.employee_avatar = False
-    #         else:
-    #             task_work.employee_avatar = False
-
 
 class TaskWorkLine(models.Model):
     _name = 'project.task.work.line'
@@ -1295,9 +1280,6 @@ class TaskWorkLine(models.Model):
     done4 = fields.Boolean(string='is done')
     auto = fields.Boolean(string='is done')
     # added
-    group_id2 = fields.Many2one('base.group.merge.automatic.wizard', 'Done by', select="1", readonly=True,
-                                states={'affect': [('readonly', False)]}, )
-
     facture = fields.Boolean(string='Facture', readonly=True, states={'affect': [('readonly', False)]}, )
     date_inv = fields.Date(string='Date', select="1")
     num = fields.Char(string='Work summary', readonly=True, states={'affect': [('readonly', False)]}, )
@@ -1311,6 +1293,89 @@ class TaskWorkLine(models.Model):
     total = fields.Integer(string='Total')
     rentability = fields.Float(string='Rentabilité')
     taux_horaire = fields.Float(string='T.H')
+
+    def action_create_facture(self):
+
+        return {
+            'name': 'Génération Facture',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_model': 'base.facture.wizard',
+            'view_id': self.env.ref('merge_facture.view_merge_facture_form').id,
+            'context': {'active_ids': self.ids},
+            'domain': []
+        }
+
+    def action_invoice(self):
+        project_ids = self.ids[0]
+        current = self[0]
+
+        if current.group_id:
+            if current.group_id.type == 'Feuille de Temps':
+                return {
+                    'name': ('Feuille de Temps'),
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_model': 'bon.show',
+                    'res_id': current.group_id.id,
+                    'view_id': self.env.ref('bon_show.view_ft_form').id,
+                    'context': {},
+                    'domain': []
+                }
+            else:
+                return {
+                    'name': ('Facture'),
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_model': 'bon.show',
+                    'res_id': current.group_id.id,
+                    'view_id': self.env.ref('bon_show.view_facture_form').id,
+                    'context': {},
+                    'domain': []
+                }
+
+    def open_invoice_cust(self):
+        project_ids = self.ids[0]
+        current = self[0]
+
+        if current.num:
+            num = self.env['base.facture.wizard'].search([('num', '=', current.num)])
+            if num:
+                this_id = num[0].id
+                return {
+                    'name': ('Factures Clients'),
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_model': 'base.facture.wizard',
+                    'res_id': this_id,
+                    'context': {},
+                    'domain': []
+                }
+
+    def action_file(self):
+        project_ids = self.ids[0]
+        current = self[0]
+
+        if current.wizard_id:
+            return {
+                'name': ('Bons A Valider'),
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_model': 'base.invoice.merge.automatic.wizard',
+                'res_id': current.wizard_id.id,
+                'context': {},
+                'domain': []
+            }
 
     @api.onchange('date_end_r', 'date_start_r', 'employee_id', 'task_id')
     def onchange_date_to_(self):

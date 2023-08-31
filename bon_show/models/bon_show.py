@@ -296,161 +296,143 @@ class BonShow(models.Model):
             aca = academic_obj.search([('employee_id', '=', empl.id)])
 
             if aca:
-                for list in aca:
+                for list in aca.ids:
 
                     if list:
                         ligne = academic_obj.browse(list)
                         if ligne.curr_ids:
-
-                            for ll in ligne.curr_ids:
+                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'], reverse=True)
+                            for ll in sorted_curr_ids:
                                 if ligne.project_id and ll.project_id.id == ligne.project_id.id:
                                     if ll.product_id and ll.uom_id:
                                         if (ll.product_id.id == work.product_id.id):
                                             wage = ll.amount
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                           'amount_line': work.poteau_r * wage})
 
                                             break
                                         elif ll.product_id and ll.uom_id2:
                                             if (ll.product_id.id == work.product_id.id):
                                                 wage = ll.amount2
-                                                line_obj1.write(kk.id,
-                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                 'total_r': work.poteau_r * wage,
-                                                                 'amount_line': work.poteau_r * wage})
+                                                line_obj1.browse(kk.id).write(
+                                                    {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                     'amount_line': work.poteau_r * wage})
                                                 break
 
                                     elif ll.product_id and ll.uom_id2:
                                         if (ll.product_id.id == work.product_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
 
                                     elif ll.categ_id and ll.uom_id:
                                         if (ll.categ_id.id == work.categ_id.id):
                                             wage = ll.amount
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
                                         elif ll.categ_id and ll.uom_id2:
                                             if (ll.categ_id.id == work.categ_id.id):
                                                 wage = ll.amount2
-                                                line_obj1.write(kk.id,
-                                                                {'wage': wage, 'total_r': work.poteau_r * wage,
-                                                                 'uom_id_r': ll.uom_id2.id,
-                                                                 'amount_line': work.poteau_r * wage})
+                                                line_obj1.browse(kk.id).write(
+                                                    {'wage': wage,
+                                                     'uom_id_r': ll.uom_id2.id,
+                                                     'amount_line': work.poteau_r * wage})
                                                 break
 
                                     elif ll.categ_id and ll.uom_id2:
                                         if (ll.categ_id.id == work.categ_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
                         if ligne.curr_ids:
-
-                            for ll in ligne.curr_ids:
+                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'], reverse=True)
+                            for ll in sorted_curr_ids:
                                 if ll.partner_id.id == ligne.partner_id.id:
                                     if ll.product_id and ll.uom_id:
                                         if (ll.product_id.id == work.product_id.id):
                                             wage = ll.amount
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
                                         elif ll.product_id and ll.uom_id2:
                                             if (ll.product_id.id == work.product_id.id):
                                                 wage = ll.amount2
-                                                line_obj1.write(kk.id,
-                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                 'total_r': work.poteau_r * wage,
-                                                                 'amount_line': work.poteau_r * wage})
+                                                line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                               'amount_line': work.poteau_r * wage})
                                                 break
 
                                     elif ll.product_id and ll.uom_id2:
                                         if (ll.product_id.id == work.product_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
 
                                     elif ll.categ_id and ll.uom_id:
                                         if (ll.categ_id.id == work.categ_id.id):
                                             wage = ll.amount
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
                                         elif ll.categ_id and ll.uom_id2:
                                             if (ll.categ_id.id == work.categ_id.id):
                                                 wage = ll.amount2
-                                                line_obj1.write(kk.id,
-                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                 'total_r': work.poteau_r * wage,
-                                                                 'amount_line': work.poteau_r * wage})
+                                                line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                               'amount_line': work.poteau_r * wage})
                                                 break
 
                                     elif ll.categ_id and ll.uom_id2:
                                         if (ll.categ_id.id == work.categ_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
                         if ligne.curr_ids:
-
-                            for ll in ligne.curr_ids:
+                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'], reverse=True)
+                            for ll in sorted_curr_ids:
+                                print(ll.id)
 
                                 if ll.product_id and ll.uom_id:
                                     if (ll.product_id.id == work.product_id.id):
                                         wage = ll.amount
-                                        line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                'total_r': work.poteau_r * wage,
-                                                                'amount_line': work.poteau_r * wage})
+                                        line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                       'amount_line': work.poteau_r * wage})
                                         break
                                     elif ll.product_id and ll.uom_id2:
                                         if (ll.product_id.id == work.product_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
 
                                 elif ll.product_id and ll.uom_id2:
                                     if (ll.product_id.id == work.product_id.id):
                                         wage = ll.amount2
-                                        line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                'total_r': work.poteau_r * wage,
-                                                                'amount_line': work.poteau_r * wage})
+                                        line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                       'amount_line': work.poteau_r * wage})
                                         break
 
                                 elif ll.categ_id and ll.uom_id:
                                     if (ll.categ_id.id == work.categ_id.id):
                                         wage = ll.amount
-                                        line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                'total_r': work.poteau_r * wage,
-                                                                'amount_line': work.poteau_r * wage})
+                                        line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                       'amount_line': work.poteau_r * wage})
                                         break
                                     elif ll.categ_id and ll.uom_id2:
                                         if (ll.categ_id.id == work.categ_id.id):
                                             wage = ll.amount2
-                                            line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                    'total_r': work.poteau_r * wage,
-                                                                    'amount_line': work.poteau_r * wage})
+                                            line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                           'amount_line': work.poteau_r * wage})
                                             break
 
                                 elif ll.categ_id and ll.uom_id2:
                                     if (ll.categ_id.id == work.categ_id.id):
                                         wage = ll.amount2
-                                        line_obj1.write(kk.id, {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                'total_r': work.poteau_r * wage,
-                                                                'amount_line': work.poteau_r * wage})
+                                        line_obj1.browse(kk.id).write({'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                       'amount_line': work.poteau_r * wage})
                                         break
 
                 if wage == 0:
@@ -468,175 +450,161 @@ class BonShow(models.Model):
                                         ligne = academic_obj.browse(list)
 
                                         if ligne.curr_ids:
-                                            for ll in ligne.curr_ids:
+                                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                     reverse=True)
+                                            for ll in sorted_curr_ids:
                                                 if ligne.project_id and ll.project_id.id == ligne.project_id.id:
                                                     if ll.product_id and ll.uom_id:
                                                         if (ll.product_id.id == work.product_id.id):
                                                             wage = ll.amount
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                                         elif ll.product_id and ll.uom_id2:
                                                             if (ll.product_id.id == work.product_id.id):
                                                                 wage = ll.amount2
-                                                                line_obj1.write(kk.id, {'wage': wage,
-                                                                                        'uom_id_r': ll.uom_id2.id,
-                                                                                        'total_r': work.poteau_r * wage,
-                                                                                        'amount_line': work.poteau_r * wage})
+                                                                line_obj1.browse(kk.id).write({'wage': wage,
+                                                                                               'uom_id_r': ll.uom_id2.id,
+                                                                                               'amount_line': work.poteau_r * wage})
                                                                 break
 
                                                     elif ll.product_id and ll.uom_id2:
                                                         if (ll.product_id.id == work.product_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
 
                                                     elif ll.categ_id and ll.uom_id:
                                                         if (ll.categ_id.id == work.categ_id.id):
                                                             wage = ll.amount
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                                         elif ll.categ_id and ll.uom_id2:
                                                             if (ll.categ_id.id == work.categ_id.id):
                                                                 wage = ll.amount2
-                                                                line_obj1.write(kk.id, {'wage': wage,
-                                                                                        'uom_id_r': ll.uom_id2.id,
-                                                                                        'total_r': work.poteau_r * wage,
-                                                                                        'amount_line': work.poteau_r * wage})
+                                                                line_obj1.browse(kk.id).write({'wage': wage,
+                                                                                               'uom_id_r': ll.uom_id2.id,
+                                                                                               'amount_line': work.poteau_r * wage})
                                                                 break
 
                                                     elif ll.categ_id and ll.uom_id2:
                                                         if (ll.categ_id.id == work.categ_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                         if ligne.curr_ids:
-
-                                            for ll in ligne.curr_ids:
+                                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                     reverse=True)
+                                            for ll in sorted_curr_ids:
                                                 if ligne.project_id is False and ll.partner_id.id == ligne.partner_id.id:
                                                     if ll.product_id and ll.uom_id:
                                                         if (ll.product_id.id == work.product_id.id):
                                                             wage = ll.amount
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                                         elif ll.product_id and ll.uom_id2:
                                                             if (ll.product_id.id == work.product_id.id):
                                                                 wage = ll.amount2
-                                                                line_obj1.write(kk.id, {'wage': wage,
-                                                                                        'uom_id_r': ll.uom_id2.id,
-                                                                                        'total_r': work.poteau_r * wage,
-                                                                                        'amount_line': work.poteau_r * wage})
+                                                                line_obj1.browse(kk.id).write({'wage': wage,
+                                                                                               'uom_id_r': ll.uom_id2.id,
+                                                                                               'amount_line': work.poteau_r * wage})
                                                                 break
 
                                                     elif ll.product_id and ll.uom_id2:
                                                         if (ll.product_id.id == work.product_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
 
                                                     elif ll.categ_id and ll.uom_id:
                                                         if (ll.categ_id.id == work.categ_id.id):
                                                             wage = ll.amount
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                                         elif ll.categ_id and ll.uom_id2:
                                                             if (ll.categ_id.id == work.categ_id.id):
                                                                 wage = ll.amount2
-                                                                line_obj1.write(kk.id, {'wage': wage,
-                                                                                        'uom_id_r': ll.uom_id2.id,
-                                                                                        'total_r': work.poteau_r * wage,
-                                                                                        'amount_line': work.poteau_r * wage})
+                                                                line_obj1.browse(kk.id).write({'wage': wage,
+                                                                                               'uom_id_r': ll.uom_id2.id,
+                                                                                               'amount_line': work.poteau_r * wage})
                                                                 break
 
                                                     elif ll.categ_id and ll.uom_id2:
                                                         if (ll.categ_id.id == work.categ_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
                                         if ligne.curr_ids:
-
-                                            for ll in ligne.curr_ids:
+                                            sorted_curr_ids = sorted(ligne.curr_ids, key=lambda x: x['product_id'],
+                                                                     reverse=True)
+                                            for ll in sorted_curr_ids:
 
                                                 if ll.product_id and ll.uom_id:
                                                     if (ll.product_id.id == work.product_id.id):
                                                         wage = ll.amount
-                                                        line_obj1.write(kk.id,
-                                                                        {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                         'total_r': work.poteau_r * wage,
-                                                                         'amount_line': work.poteau_r * wage})
+                                                        line_obj1.browse(kk.id).write(
+                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                             'amount_line': work.poteau_r * wage})
                                                         break
 
                                                     elif ll.product_id and ll.uom_id2:
                                                         if (ll.product_id.id == work.product_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
 
                                                 elif ll.product_id and ll.uom_id2:
                                                     if (ll.product_id.id == work.product_id.id):
                                                         wage = ll.amount2
-                                                        line_obj1.write(kk.id,
-                                                                        {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                         'total_r': work.poteau_r * wage,
-                                                                         'amount_line': work.poteau_r * wage})
+                                                        line_obj1.browse(kk.id).write(
+                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                             'amount_line': work.poteau_r * wage})
                                                         break
 
                                                 elif ll.categ_id and ll.uom_id:
                                                     if (ll.categ_id.id == work.categ_id.id):
 
                                                         wage = ll.amount
-                                                        line_obj1.write(kk.id,
-                                                                        {'wage': wage, 'uom_id_r': ll.uom_id.id,
-                                                                         'total_r': work.poteau_r * wage,
-                                                                         'amount_line': work.poteau_r * wage})
+                                                        line_obj1.browse(kk.id).write(
+                                                            {'wage': wage, 'uom_id_r': ll.uom_id.id,
+                                                             'amount_line': work.poteau_r * wage})
                                                         break
 
                                                     elif ll.categ_id and ll.uom_id2:
                                                         if (ll.categ_id.id == work.categ_id.id):
                                                             wage = ll.amount2
-                                                            line_obj1.write(kk.id,
-                                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                             'total_r': work.poteau_r * wage,
-                                                                             'amount_line': work.poteau_r * wage})
+                                                            line_obj1.browse(kk.id).write(
+                                                                {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                                 'amount_line': work.poteau_r * wage})
                                                             break
 
                                                 elif ll.categ_id and ll.uom_id2:
                                                     if (ll.categ_id.id == work.categ_id.id):
                                                         wage = ll.amount2
-                                                        line_obj1.write(kk.id,
-                                                                        {'wage': wage, 'uom_id_r': ll.uom_id2.id,
-                                                                         'total_r': work.poteau_r * wage,
-                                                                         'amount_line': work.poteau_r * wage})
+                                                        line_obj1.browse(kk.id).write(
+                                                            {'wage': wage, 'uom_id_r': ll.uom_id2.id,
+                                                             'amount_line': work.poteau_r * wage})
                                                         break
 
             if work.uom_id_r.id == 5:
-                line_obj1.write(kk.id, {'total_r': work.hours_r * wage, 'amount_line': work.hours_r * wage})
+                line_obj1.browse(kk.id).write({'amount_line': work.hours_r * wage})
 
         return True
 
@@ -684,7 +652,7 @@ class BonShow(models.Model):
                         mm = mm + emp.work_email + ','
                     self.write({'cci': mm})
 
-            self.env['email.template'].send_mail(29, force_send=True)
+            # self.env['email.template'].send_mail(29, force_send=True)
 
         self.write({'state': 'waiting'})
         if this.type == 'Facture':
@@ -791,8 +759,7 @@ class BonShow(models.Model):
                                   'done3': True,
                                   })
 
-            task_obj_line.write(this_line.line_id.id,
-                                {'state': 'valid', 'done1': True, 'group_id': this.id})
+            task_obj_line.browse(this_line.line_id.id).write({'state': 'valid', 'done1': True, 'group_id': this.id})
             # 'paylist_id': pay_id,
             if task_obj_line.browse(this_line.line_id.id).group_id2:
                 tt = bgl_obj.search([('line_id', '=', this_line.line_id.id)])
@@ -802,7 +769,7 @@ class BonShow(models.Model):
         # if empl.job_id.id == 1:
         #     self.env['email.template'].send_mail(32, force_send=True)
 
-        self.write({'state': 'close'}) # , 'pay_id': pay_id
+        self.write({'state': 'close'})  # , 'pay_id': pay_id
 
         return True
 
@@ -875,7 +842,7 @@ class BonShow(models.Model):
                         uom = 5
                         self.write({'type': 'Feuille de Temps'})
                     else:
-                        uom = s2.uom_id_r.id
+                        uom = s2.product_id.uom_id.id
                         self.write({'type': 'Facture'})
                     self.env['bon.show.line2'].create({
                         'task_id': s2.task_id.id,
@@ -1228,6 +1195,7 @@ class BonShowLine1(models.Model):
     color1 = fields.Integer(string='Nbdays')
     uom_id = fields.Many2one('product.uom', string='Unit of Measure', required=True)
     uom_id_r = fields.Many2one('product.uom', string='Unit of Measure')
+
 
 class ProjectTaskWork(models.Model):
     _inherit = 'project.task.work'

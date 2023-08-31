@@ -4,10 +4,12 @@
         <field name="name">merge.facture.tree</field>
         <field name="model">base.facture.wizard</field>
         <field name="arch" type="xml">
-            <tree default_order='date_inv desc'>
+            <tree default_order='date_inv desc' decoration-danger="state == 'draft'"
+                  decoration-success="state == 'open'">
                 <field name="num" readonly="1" string="Numéro"/>
                 <field name="date_inv" readonly="1" string="Date"/>
                 <field name="name" string="Description" readonly="1"/>
+                <field name="state" string="Status"/>
             </tree>
         </field>
     </record>
@@ -187,7 +189,7 @@
         <field name="context">{}</field>
     </record>
 
-    <menuitem id="menu_merge_facture" name="Factures Clients" sequence="20" parent="project_custom.menu_sale"
+    <menuitem id="menu_merge_facture" name="Factures Clients" sequence="10" parent="project_custom.menu_facture_partner"
               action="action_merge_facture"/>
 
 </odoo>

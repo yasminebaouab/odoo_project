@@ -44,4 +44,19 @@
         </field>
     </record>
 
+    <record id="view_work_line_group_id" model="ir.ui.view">
+        <field name="name">work.line.group.id</field>
+        <field name="model">project.task.work.line</field>
+        <field name="inherit_id" ref="task_work.view_work_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='task_id']" position="after">
+                <field name="group_id" string="C.G"/>
+            </xpath>
+            <xpath expr="//field[@name='facture']" position="before">
+                <button name="action_invoice" string="Consulter Facture/FT" type="object" icon="kanban-apply"
+                        attrs="{'invisible': [('group_id','=', False)]}"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

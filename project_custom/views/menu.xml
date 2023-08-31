@@ -1,5 +1,8 @@
 <odoo>
+
     <!--    main menus-->
+
+    <menuitem id="menu_dashboard" name="My Dashboards" sequence="-1001"/>
     <menuitem id="menu_gest" name="Données de Base" sequence="-1000"/>
     <menuitem id="menu_project" name="Projets" sequence="-999"/>
     <menuitem id="menu_sale" name="Vente" sequence="-998"/>
@@ -9,6 +12,19 @@
     <menuitem id="menu_tab_bord" name="Tableau de Bord Admin" sequence="-994"/>
     <menuitem id="menu_discuss" name="Messagerie" sequence="-993"/>
     <menuitem id="menu_conf" name="Configuration" sequence="-992"/>
+
+    <!--    menu_dashboard submenus-->
+
+    <menuitem id="menu_dash_task_pending" name="Mes Tâches Encours" parent="menu_dashboard" sequence="0"
+              action="project_custom.action_dash_task_pending"/>
+    <menuitem id="menu_dash_task_to_affect" name="Tâches à Planifier" parent="menu_dashboard" sequence="10"
+              action="project_custom.action_dash_task_to_affect"/>
+    <menuitem id="menu_dash_task_co_workers" name="Tâches de mes Collaborateurs" parent="menu_dashboard" sequence="20"
+              action="project_custom.action_dash_task_co_workers"/>
+    <menuitem id="menu_dash_task_to_treat" name="Tâches à Traiter" parent="menu_dashboard" sequence="30"
+              action="project_custom.action_dash_task_to_treat"/>
+    <menuitem id="menu_dash_task_pre" name="Tâches Prévisionnelles" parent="menu_dashboard" sequence="40"
+              action="project_custom.action_dash_task_pre"/>
 
     <!--    menu_gest submenus-->
 
@@ -74,6 +90,12 @@
 
     <menuitem id="menu_customer" name="Gestion des Clients" sequence="0" parent="menu_sale"
               action="partner_custom.action_customer"/>
+    <menuitem id="menu_facture_partner" name="Factures Clients" sequence="20" parent="menu_sale"/>
+
+    <!--    ***** menu_facture_partner submenus-->
+
+    <menuitem id="menu_work_line" name="Bons à Facturer" sequence="0" parent="menu_facture_partner"
+              action="task_work.action_work_line"/>
 
     <!--    menu_purchase submenus-->
 
@@ -89,8 +111,11 @@
 
     <!--    ***** menu_gest_cong submenus-->
 
-    <menuitem id="menu_sol_holiday" name="Solde Employés" parent="menu_gest_cong" sequence="40"
+    <menuitem id="menu_sol_employee" name="Solde Employés" parent="menu_gest_cong" sequence="40"/>
+    <menuitem id="menu_sol_holiday" name="Congés" parent="menu_sol_employee" sequence="0"
               action="employee_custom.action_sol_holiday"/>
+    <menuitem id="menu_sol_hours" name="Banque d'Heures" parent="menu_sol_employee" sequence="10"
+              action="employee_custom.action_sol_hours"/>
 
     <!--    menu_stat submenus-->
 

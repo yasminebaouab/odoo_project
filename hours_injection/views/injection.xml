@@ -26,7 +26,7 @@
                         </group>
                         <group string="Solde">
                             <group>
-                                <field name="sol_cong" readonly="1"/>
+                                <field name="sol_cong" string="Solde Congé Ordinaire (en Jrs)" readonly="1"/>
                                 <field name="sol_bank" readonly="1"/>
                             </group>
                         </group>
