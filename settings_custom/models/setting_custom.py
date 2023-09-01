@@ -54,3 +54,4 @@ class SettingsCustom(models.Model):
 #             res['work_ids'] = vv
 #             print('res 0:', res)
 #             print('active_ids :', active_ids)
+

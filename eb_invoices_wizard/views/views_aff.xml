@@ -6,6 +6,7 @@
             <field name="model">base.invoices.merge.automatic.wizard</field>
             <field name="arch" type="xml">
                 <form string="Merge Tasks">
+
                     <header>
                         <button name="action_open" type="object" string="Consulter Ces Taches" class="btn-primary"
                                 icon="gtk-save"/>
@@ -24,8 +25,9 @@
                                        attrs="{'readonly': ['|',('group_id','!=',False),('state','=','draft')]}"/>
                             </group>
                             <group>
-                                <field name="time_ch" widget=""
-                                       options="{'round_off': True , 'timeFormat': 'HH:mm'}" required="1"/>
+                                <field name="time_ch" widget="float_time_duration"
+                                      required="1"/>
+<!--                                 options="{'round_off': True , 'timeFormat': 'HH:mm'}"-->
                                 <!--                                options="{'step': 5, 'minTime': '00:00', 'maxTime': '10:00','timeFormat':'H:i'}"-->
                             </group>
                         </group>
@@ -33,14 +35,14 @@
                             <page string="Paramétres d'Affectations">
                                 <group>
                                     <group>
-                                        <field name="id" string="ID" readonly="1"/>
-                                        <field name="group_id" string="BON" readonly="1"/>
-                                        <field name="name" string="N° Job" readonly="1"/>
+                                        <field name="id" string="ID" readonly="1" invisible="1"/>
+                                        <field name="group_id" string="BON" readonly="1" invisible="1"/>
+                                        <field name="name" string="N° Job" readonly="1" invisible="1"/>
                                         <field name="pay_id" string="done" invisible="1"/>
                                         <field name="dep" string="dep" invisible="1"/>
                                         <field name="done" string="done" invisible="1"/>
                                         <field name="employee_id2" string="Intervenant"
-                                               options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
+                                               options="{'no_create': True, 'no_create_edit':True,'no_open':True}" widget="many2one_avatar_employee"  on_change='onchange_employee_id2'/>
                                         <field name="project_id" string="done" invisible="1"/>
                                         <field name="zone" string="done" invisible="1"/>
                                         <field name="secteur" string="done" invisible="1"/>
@@ -57,17 +59,17 @@
                                     </group>
                                     <group>
                                         <field name="objet" string="objet"
-                                               attrs="{'required': [('mail_send', '=', 'yes')]}"/>
+                                              attrs="{'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
                                         <field name="mail_send" string="Envoi Email?" required="1"/>
 
-                                        <field name="employee_ids" string="A" widget='many2many_tags'
-                                               options="{'no_create': True}"/>
-                                        <field name="employee_ids1" string="CC" widget='many2many_tags'
-                                               options="{'no_create': True}"/>
-                                        <field name="employee_ids2" string="CCi" widget='many2many_tags'
-                                               options="{'no_create': True}"/>
-                                        <field name="to" string="To" invisible="1"/>
-                                        <field name="cc" string="cc" invisible="1"/>
+                                        <field name="employee_ids" string="A" widget='many2many_avatar_employee'
+                                               options="{'no_create': True}" attrs="{'invisible': [('mail_send', '=', 'no')]}"/>
+                                        <field name="employee_ids1" string="CC" widget='many2many_avatar_employee'
+                                               options="{'no_create': True}" attrs="{'invisible': [('mail_send', '=', 'no')]}"/>
+                                        <field name="employee_ids2" string="CCi" widget='many2many_avatar_employee'
+                                               options="{'no_create': True}" attrs="{'invisible': [('mail_send', '=', 'no')]}"/>
+                                        <field name="to" string="To" invisible="1" />
+                                        <field name="cc" string="cc" invisible="1" />
                                         <field name="cci" string="cci" invisible="1"/>
                                         <field name="categ_id" string="dep"
                                                on_change="onchange_place(categ_id,project_id,zone,secteur)"
@@ -84,9 +86,9 @@
                                             </tree>
                                         </field>
                                     </group>
-                                    <group string="Commentaire">
+                                    <group string="Commentaire" attrs="{'invisible': [('mail_send', '=', 'no')]}">
                                         <pre>
-                                            <field name="note" string="Commentaires"/>
+                                            <field name="note" string="Commentaires" attrs="{'invisible': [('mail_send', '=', 'no')]}"/>
                                         </pre>
                                     </group>
                                 </group>

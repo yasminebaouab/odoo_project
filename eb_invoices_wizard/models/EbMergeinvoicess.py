@@ -462,6 +462,12 @@ class EbMergeInvoices(models.Model):
 
     # butt_valider = fields.Boolean(string="Default Butt Valider", default =False)
 
+    @api.onchange('employee_id2')
+    def onchange_employee_id2(self):
+        if self.employee_id2:
+            # Mettre à jour le champ employee_ids avec la même valeur que employee_id2
+            self.employee_ids = [(6, 0, [self.employee_id2.id])]
+
     def _compute_done2(self):
         print('_compute_done2')
         for record in self:
