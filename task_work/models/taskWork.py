@@ -265,20 +265,15 @@ class TaskWork(models.Model):
                     datas1 = self.env.cr.fetchone()
 
                     if datas1 and datas1[0] > 1:
-                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
                         temp1 = dt.fromtimestamp(int(datas1[0])).strftime('%Y-%m-%d')
-                        ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
                         self.env.cr.execute('update project_task_work set date_end=%s where id=%s', (temp1, rec.id))
                     sql2 = ("select field_269 from app_entity_26 WHERE id = %s")
                     self.env.cr.execute(sql2, (rec.id,))
                     datas2 = self.env.cr.fetchone()
 
                     if datas2 and datas2[0] > 1:
-
-                        ##tt=time.strftime("%Y-%m-%d", time.localtime(int(datas[0]))) ()
                         if datas2 != '':
                             temp2 = datas2[0]
-                            ##raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create one.')%tt)
                             self.env.cr.execute('update project_task_work set employee_id=%s where id=%s',
                                                 (temp2 or None, rec.id))
 
@@ -1156,7 +1151,11 @@ class TaskWork(models.Model):
 
     @api.model
     def create(self, values):
-        if 'active_ids' in self.env.context and self.env.context.get('active_model') == 'project.task.work':
+        affect_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
+
+        if 'active_ids' in self.env.context and self.env.context.get(
+                'active_model') == 'project.task.work' and affect_multiple:
+            print('active_ids create')
             # If the context contains active_ids and active_model is 'project.task.work',
             # it means the wizard is being called from the 'project.task.work' model
             return self.browse(self.env.context['active_ids'])[0]

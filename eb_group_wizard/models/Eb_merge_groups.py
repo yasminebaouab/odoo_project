@@ -1,15 +1,10 @@
 # # -*- coding: utf-8 -*-
 #
 
-from lxml import etree
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-from datetime import datetime
-import datetime as dt
-import math
 
 
-#
 class EbMergegroups(models.Model):
     _name = "base.group.merge.automatic.wizard"
     _description = "Declararion des bons"
@@ -205,17 +200,16 @@ class EbMergegroups(models.Model):
                                      'base_group_merge_automatic_wizard_id', 'hr_employee_id', string='Legumes')
     kit_id = fields.Many2one('product.kit', string='Kit')
 
-    @api.model
+    # @api.model
     def default_get(self, fields_list):
-
         res = super().default_get(fields_list)
         active_ids = self.env.context.get('active_ids')
+        affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
         if self.env.context.get('active_model') == 'project.task.work' and active_ids:
             vv = []
             for hh in active_ids:
                 work = self.env['project.task.work'].browse(hh)
 
-                dd = []
                 if work.kit_id:
                     kit_list = self.env['project.task.work'].search([
                         ('project_id', '=', work.project_id.id),
@@ -235,10 +229,8 @@ class EbMergegroups(models.Model):
                     res['work_ids'] = vv
                 else:
                     res['work_ids'] = active_ids
-            r = []
             pref = ''
             test = ''
-            lst = []
             list1 = []
             proj = []
             gest_id2 = False
@@ -252,16 +244,12 @@ class EbMergegroups(models.Model):
 
                 if work.state == 'pending':
                     raise UserError('Action impossible! ravaux Suspendus!')
-                if work.state == 'draft':
+                if work.state == 'draft' and affectation_multiple:
                     raise UserError('Action impossible! Travaux Non Affectés!')
                 if len(proj) > 1:
                     raise UserError('Action impossible! Déclaration se fait uniquement sur un projet!')
                 if len(active_ids) > 1:
                     pref = '/'
-
-                done = 1 if work.gest_id.user_id.id == self.env.uid or self.env.uid == 1 else 0
-                done1 = 1 if work.employee_id.user_id.id == self.env.uid or self.env.uid == 1 else 0
-
                 if work.affect_cor_list and str(user1) in work.affect_cor_list:
                     type1 = 'correction'
                     emp_id2 = user
@@ -271,9 +259,9 @@ class EbMergegroups(models.Model):
                 else:
                     type1 = 'bon'
                     if work.state == 'close':
-                        raise UserError(_('Action impossible!'), _('Travaux Clotués!'))
+                        raise UserError('Action impossible! Travaux Clotués!')
                     if work.state == 'valid':
-                        raise UserError(_('Action impossible!'), _('Travaux Terminés!'))
+                        raise UserError('Action impossible! Travaux Terminés!')
 
                 test = test + pref + str(work.project_id.name) + ' - ' + str(work.task_id.sequence) + ' - ' + str(
                     work.sequence)
@@ -296,7 +284,6 @@ class EbMergegroups(models.Model):
                     'gest_id2': gest_id2,
                     'emp_id2': emp_id2,
                 })
-                # print('res  1 :', res)
                 poteau = 0
                 tt = self.env['project.task.work'].search([
                     ('project_id', '=', work.project_id.id),
@@ -304,7 +291,6 @@ class EbMergegroups(models.Model):
                     # ('name', 'ilike', 'qualit'),
                     ('etape', '=', work.etape)
                 ]).ids
-                # print('tt :', tt)
                 for ji in tt:
                     work = self.env['project.task.work'].browse(ji)
                     move_line1 = {
@@ -326,11 +312,8 @@ class EbMergegroups(models.Model):
                         'secteur': work.secteur,
                     }
                     if tt:
-                        # list1.append((0, 0, move_line1))
                         list1.append([0, 0, move_line1])
-                        # print('list1 :', list1)
                 for task in active_ids:
-                    work = self.env['project.task.work'].browse(task)
                     res_user = self.env['res.users'].browse(self.env.uid)
                     categ_ids = self.env['hr.academic'].search([('employee_id', '=', res_user.employee_id.id)])
                     jj = []
@@ -338,13 +321,8 @@ class EbMergegroups(models.Model):
                         for ll in categ_ids.ids:
                             dep = self.env['hr.academic'].browse(ll)
                             jj.append(dep.categ_id.id)
-                    # if work.categ_id.id not in jj:
-                    #     raise UserError(_('Action impossible!'),
-                    #                     _('Vous n''etes pas autorisé à exécuter cette action sur un département externe'))
 
             res['work_ids'] = list1
-            # print('res :', res)
-            # print('work_ids :', self.work_ids)
         return res
 
     def _compute_done2(self):
@@ -362,9 +340,6 @@ class EbMergegroups(models.Model):
             else:
                 record.doctor = False
 
-        # Fields**
-
-    ######################## check if logged user is admin  ############################################
     @api.onchange('sadmin')
     def _sadmin(self):
         print('def _sadmin')
@@ -374,11 +349,9 @@ class EbMergegroups(models.Model):
             else:
                 book.sadmin = False
 
-    ########################## check if logged user is admin one those user based on ids  and set done to true ##########################
     @api.onchange('done')
     def _disponible(self):
         print('def _disponible_done')
-        # simplifed code
         for book in self:
             allowed_user_ids = [45, 114, 26, 47, 83, 1]  # List of allowed user IDs
             if (
@@ -392,9 +365,7 @@ class EbMergegroups(models.Model):
                 book.done = True
             else:
                 book.done = False
-        # print('self.done :', self.done)
 
-    ########################## check if logged user is admin one those use is ??? ##########################
     @api.onchange('done1')
     def _disponible1(self):
         print('def _disponible1')
@@ -409,7 +380,6 @@ class EbMergegroups(models.Model):
                 else:
                     book.done1 = False
 
-    ########################## check if logged user is admin or corrdinator or his id is 45 ##########################
     @api.onchange('done_')
     def _disponible2(self):
         print('def _disponible2')
@@ -632,9 +602,8 @@ class EbMergegroups(models.Model):
         else:
             return res
 
-    def onchange_date_from(self, categ_id, date_start_r):
+    def onchange_date_from(self, date_start_r):
         res = {}
-
         if date_start_r:
             r = []
             z = []
@@ -663,18 +632,8 @@ class EbMergegroups(models.Model):
     def button_save_(self):
         if not self.line_ids:
             raise UserError(_("Action impossible! Vous devez avoir au moins une ligne à déclarer!"))
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],  # self.ids[0],  # ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_choice(self):
         print('button_choice')
@@ -683,46 +642,15 @@ class EbMergegroups(models.Model):
             l1 = line[0]
 
             if self.type1 == 'bon' and (str(user.id) in (l1.affect_emp_list or ' ')):
-
-                return {
-                    'name': 'Déclaration des Bons',
-                    'type': 'ir.actions.act_window',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_model': 'base.group.merge.automatic.wizard',
-                    'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-                    'res_id': self.ids[0],  # ids[0],
-                    'context': {},
-                    'domain': []
-                }
+                view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+                self.return_declaration_view(view_id)
             elif self.type1 == 'controle' and (str(user.id) in (l1.affect_con_list or ' ')):
-                return {
-                    'name': 'Déclaration  Bons Controle',
-                    'type': 'ir.actions.act_window',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_model': 'base.group.merge.automatic.wizard',
-                    'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-                    'res_id': self.ids[0],
-                    'context': {},
-                    'domain': []
-                }
-            elif self.type1 == 'correction' and (str(user.id) in (l1.affect_cor_list or ' ')):
+                view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
+                self.return_declaration_view(view_id)
 
-                return {
-                    'name': 'Déclaration Bons Correction',
-                    'type': 'ir.actions.act_window',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_model': 'base.group.merge.automatic.wizard',
-                    'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
-                    'res_id': self.ids[0],  # ids[0],
-                    'context': {},
-                    'domain': []
-                }
+            elif self.type1 == 'correction' and (str(user.id) in (l1.affect_cor_list or ' ')):
+                view_id = self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
+                self.return_declaration_view(view_id)
             else:
                 raise UserError(_("Error! Pas d'affectation pour ce type de bon!"))
 
@@ -860,12 +788,9 @@ class EbMergegroups(models.Model):
 
     def button_load_mail2(self):
         work_line = self.env['project.task.work']
-        emp_obj = self.env['hr.employee']
         this = self[0]
-        work_obj = self.env['base.group.merge.automatic.wizard']
         kk = []
         kk1 = []
-        kk2 = []
 
         for line in this.work_ids:
             l1 = work_line.browse(line.id)
@@ -953,7 +878,6 @@ class EbMergegroups(models.Model):
                     'ftp': task.ftp,
                     'sequence': task.work_id.sequence,
                     'done3': True,
-                    ##'hours': work.hours,
                     'date': task.date_start_r,
                     'date_start_r': task.date_start_r,
                     'date_end_r': task.date_end_r,
@@ -961,20 +885,13 @@ class EbMergegroups(models.Model):
                     'poteau_r': task.poteau_r,
                     'total_r': task.poteau_r,
                     'categ_id': task.work_id.categ_id.id,
-                    ##'poteau_r': work.poteau_r,
                     'hours_r': task.hours_r,
                     'color1': task.color1,
-                    ## 'total_t':work.color1*7 ,  ##*work.employee_id.contract_id.wage
                     'project_id': task.work_id.task_id.project_id.id,
                     'partner_id': task.work_id.task_id.project_id.partner_id.id,
-                    ## 'total_r':  line_w.amount_line,
-
-                    ##                    'amount_line':  line_w.amount_line,
-                    ##                    'wage':  line_w.wage,
                     'gest_id': task.gest_id.id,
                     'uom_id': task.work_id.uom_id.id,
                     'uom_id_r': task.uom_id_r.id,
-
                     'zone': task.work_id.zone,
                     'secteur': task.work_id.secteur,
 
@@ -1011,19 +928,8 @@ class EbMergegroups(models.Model):
                     ll.write({
                         'current_emp': False,
                     })
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-            # self.env.ref('module_name.view_id').id,  # Replace 'module_name' with the actual module name,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
+        self.return_declaration_view(view_id)
 
     def button_approve_s2(self):
 
@@ -1089,113 +995,42 @@ class EbMergegroups(models.Model):
                     'current_emp': False,
                     'state': 'validcorrec',
                 })
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
+        self.return_declaration_view(view_id)
 
     def button_close_(self):
 
-        this = self[0]
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-        this.write({'state3': 'valid'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        self.write({'state3': 'valid'})
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def forcer_ouverture(self):
 
         self.write({'num': '1'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_update1_(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
         self.write({'num': '1'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_update2_(self):
-        this = self[0]
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
         self.write({'num': '2'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_update3_(self):
-        this = self[0]
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-        this.write({'num': '3'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': this.id,
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
+        self.write({'num': '3'})
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
-    def button_applyupdate1_(self):
-        line_obj = self.env['base.group.merge.line']
+    # button_applyupdate1_
+    # button_applyupdate2_
+    # button_applyupdate3_
+    def button_applyupdate(self):
+
         work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
         if self.num == '1':
             for line_w in self.line_ids:
                 if line_w.line_id:
@@ -1217,120 +1052,14 @@ class EbMergegroups(models.Model):
                         'poteau_r': line_w.poteau_r,
                         'hours_r': line_w.hours_r,
                     })
-
         self.write({'num': ''})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
-
-    def button_applyupdate2_(self):
-        line_obj = self.env['base.group.merge.line']
-        this = self[0]
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-
-        if this.num == '1':
-            for line_w in this.line_ids:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-        elif this.num == '2':
-            for line_w in this.line_ids2:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-        elif this.num == '3':
-            for line_w in this.line_ids3:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-
-        this.write({'num': ''})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': this.id,
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
-
-    def button_applyupdate3_(self):
-        line_obj = self.env['base.group.merge.line']
-        this = self[0]
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-
-        if this.num == '1':
-            for line_w in this.line_ids:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-        elif this.num == '2':
-            for line_w in this.line_ids2:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-        elif this.num == '3':
-            for line_w in this.line_ids3:
-                if line_w.line_id:
-                    work_line.write({
-                        'poteau_r': line_w.poteau_r,
-                        'hours_r': line_w.hours_r,
-                    })
-
-        this.write({'num': ''})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': this.id,
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_open_(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-
         self.write({'state3': 'draft'})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_mode': 'form',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'target': 'new',
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_workflow(self):
 
@@ -1341,7 +1070,7 @@ class EbMergegroups(models.Model):
             'res_model': 'base.flow.merge.automatic.wizard',
             # 'view_id': self.env.ref('your_module_name.your_view_id').id,  # Replace with the actual view ID
             # 'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'target': 'popup',
+            'target': 'new',
             'context': {'default_project_id': self.project_id.id},
             'domain': [],
         }
@@ -1354,10 +1083,9 @@ class EbMergegroups(models.Model):
             'view_mode': 'form',
             'res_model': 'base.invoices.merge.automatic.wizard',
             'view_id': self.env.ref('eb_invoices_wizard.action_affecter_ressources').id,
-            # action_affecter_ressources-contrle
             'target': 'new',
             'context': {
-                'default_group_id': self.ids[0],  # this.id
+                'default_group_id': self.ids[0],
                 'default_types_affect': 'control',
                 'default_project_id': self.project_id.id,
             },
@@ -1365,9 +1093,6 @@ class EbMergegroups(models.Model):
         }
 
     def button_bon_correction(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
 
         return {
             'name': 'Affectation Correction',
@@ -1375,7 +1100,7 @@ class EbMergegroups(models.Model):
             'view_mode': 'form',
             'res_model': 'base.invoices.merge.automatic.wizard',
             'view_id': self.env.ref('module_yasmine.affectation_controle_view_id').id,
-            'target': 'popup',
+            'target': 'new',
             'context': {
                 'default_group_id': self.ids[0],  # This.id
                 'default_types_affect': 'correction',
@@ -1384,11 +1109,7 @@ class EbMergegroups(models.Model):
             'domain': [],
         }
 
-    def button_force_state(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
-        self.write({'state': 'tovalid'})
+    def return_declaration_view(self, view_id):
 
         return {
             'name': 'Déclaration des Bons',
@@ -1397,62 +1118,53 @@ class EbMergegroups(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],  # This.id
+            'view_id': view_id,
+            'res_id': self.id,
             'context': {},
             'domain': [],
         }
+
+    def button_force_state(self):
+        self.write({'state': 'tovalid'})
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id
+        self.return_declaration_view(view_id)
 
     def button_force_state1(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
         self.write({'state1': 'tovalid'})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],  # This.id
-            'context': {},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id
+        self.return_declaration_view(view_id)
 
     def button_force_state2(self):
-        work_obj = self.env['project.task.work']
-        work_line = self.env['project.task.work.line']
-        line_obj1 = self.env['group_line.show.line2']
         self.write({'state2': 'tovalid'})
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id
+        self.return_declaration_view(view_id)
 
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': [],
-        }
+    def general_button_open(self, date_start, date_end, view_id):
+        for task in self.line_ids2:
+            if not task.date_start_r:
+                if date_start:
+                    task.write({'date_start_r': date_start})
+            if not task.date_end_r:
+                if date_end:
+                    task.write({'date_end_r': date_end})
+        self.return_declaration_view(view_id)
 
     def button_open1(self):
         if not self.line_ids2:
             raise UserError(_("Action impossible! Vous devez avoir au moins une ligne de controle à déclarer!"))
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id
+        self.general_button_open(self.date_s2, self.date_e2, view_id)
 
-        for task in self.line_ids2:
-            if not task.date_start_r:
-                if self.date_s2:
-                    task.write({'date_start_r': self.date_s2})
-            if not task.date_end_r:
-                if self.date_e2:
-                    task.write({'date_end_r': self.date_e2})
+    def button_open2(self):
+        if not self.line_ids2:
+            raise UserError(_("Action impossible! Vous devez avoir au moins une ligne de corrections à déclarer!"))
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id
+        self.general_button_open(self.date_s3, self.date_e3, view_id)
 
+    def general_action_open(self, view_id):
+        print('general_action_open')
+        if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
+            self.write({'done': True})
         return {
             'name': 'Déclaration des Bons',
             'type': 'ir.actions.act_window',
@@ -1460,73 +1172,28 @@ class EbMergegroups(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-            # self.env.ref('your_module_name.your_view_id').id,  # Replace with the actual view ID
             'res_id': self.ids[0],
-            'context': {},
+            'view_id': view_id,
+            'context': {'form_view_initial_mode': 'edit', 'force_detailed_view': True},
+            'flags': {'form': {'action_buttons': True, 'options': {'mode': 'edit'}}},
             'domain': [],
         }
 
     def action_open(self):
-        if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
-            self.write({'done': True})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'context': {'form_view_initial_mode': 'edit', 'force_detailed_view': True},
-            'flags': {'form': {'action_buttons': True, 'options': {'mode': 'edit'}}},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.general_action_open(view_id)
 
     def action_open1(self):
-        print('action_open1')
-        if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
-            self.write({'done': True})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'popup',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-            'context': {'form_view_initial_mode': 'edit', 'force_detailed_view': True},
-            'flags': {'form': {'action_buttons': True, 'options': {'mode': 'edit'}}},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
+        self.general_action_open(view_id)
 
     def action_open2(self):
-        # print("action_open2")
-        if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
-            self.write({'done': True})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'popup',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
-            'context': {'form_view_initial_mode': 'edit', 'force_detailed_view': True},
-            'flags': {'form': {'action_buttons': True, 'options': {'mode': 'edit'}}},
-            'domain': [],
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
+        self.general_action_open(view_id)
 
     def action_open11(self):
         if self.gest_id.user_id.id == self.env.user.id and self.state == 'tovalid':
             self.write({'done': True})
-
         for task in self.line_ids:
             if self.ftp:
                 task.write({'ftp': self.ftp})
@@ -1536,7 +1203,6 @@ class EbMergegroups(models.Model):
             if not task.date_end_r:
                 if self.date_e1:
                     task.write({'date_end_r': self.date_e1})
-
         return {
             'name': 'Déclaration des Bons',
             'type': 'ir.actions.act_window',
@@ -1544,49 +1210,12 @@ class EbMergegroups(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
-
-    def button_open2(self):
-        if not self.line_ids2:
-            raise UserError(_("Action impossible! Vous devez avoir au moins une ligne de corrections à déclarer!"))
-
-        for task in self.line_ids2:
-            if not task.date_start_r:
-                if self.date_s3:
-                    task.write({'date_start_r': self.date_s3})
-            if not task.date_end_r:
-                if self.date_e3:
-                    task.write({'date_end_r': self.date_e3})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
             'res_id': self.ids[0],
             'context': {},
             'domain': []
         }
 
     def button_cancel(self):
-        work_obj = self.env['project.task.work']
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-
-        this = self
-        ## for tt in this.line_ids:
-        ##     if tt.line_id:
-        ##         tt.line_id.unlink()
-        ## this.unlink()
-        ## self.write({'state': 'draft'})
-
         return True
 
     def button_close(self):
@@ -1611,36 +1240,26 @@ class EbMergegroups(models.Model):
         self.write({'state': 'draft'})
         return True
 
-    def annuler_bon_contr(self):
+    def annuler_bon_general(self, state, type_affect):
         current = self
-        self.write({'state1': 'draft'})
+        self.write({state: 'draft'})
         if current.work_ids:
             for tt in current.work_ids:
                 task = self.env['project.task.work'].browse(tt.id)
                 task.write({
-                    'affect_con_list': tt.affect_con_list + ',' + str(current.gest_id2.user_id.id),
+                    'type_affect': tt.affect_con_list + ',' + str(current.gest_id2.user_id.id),
                     'affect_emp': current.gest_id2.id})
         return True
+
+    def annuler_bon_contr(self):
+        self.annuler_bon_general('state1', 'affect_con_list')
 
     def annuler_bon_corr(self):
-
-        current = self
-        self.write({'state2': 'draft'})
-        if current.work_ids:
-            for tt in current.work_ids:
-                task = self.env['project.task.work'].browse(tt.id)
-                task.write({
-                    'affect_con_list': tt.affect_con_list + ',' + str(current.gest_id2.user_id.id),
-                    'affect_emp': current.gest_id2.id})
-        return True
+        self.annuler_bon_general('state2', 'affect_con_list')
 
     def button_import(self):
         print("button_import")
-
         line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-        work_ = self.env['project.task.work']
         show_ = self.env['group_line.show.line2']
         this = self
 
@@ -1660,8 +1279,6 @@ class EbMergegroups(models.Model):
             cnt = 0
             gest = self.env.user.employee_id.id
             work = line.work_ids[0]
-
-            print('work :', work)
             if work.kit_id:
                 print("button_import 3")
                 found = False
@@ -1730,7 +1347,7 @@ class EbMergegroups(models.Model):
                          ('product_id.name', 'ilike', 'correct'), ('zone', '=', work.zone),
                          ('secteur', '=', work.secteur), ('is_copy', '=', False)])
             if tt:
-                ji = tt.id  # tt[0]
+                ji = tt.id
                 work1 = self.env['project.task.work'].browse(ji)
                 cnt += 1
                 move_line1 = {
@@ -1762,28 +1379,14 @@ class EbMergegroups(models.Model):
             for ww in this.work_ids:
                 ww.write({'state': 'tovalidcont'})
 
-            return {
-                'name': 'Déclaration des Bons',
-                'type': 'ir.actions.act_window',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_model': 'base.group.merge.automatic.wizard',
-                'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
-                # self.env.ref('module_name.view_id').id,  # Replace 'module_name' with your module name
-                'res_id': self.ids[0],  # ids[0],
-                'context': {},
-                'domain': []
-            }
+            view_id = self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
+            self.return_declaration_view(view_id)
 
     def button_import2(self):
         print('button_import2')
         line_obj = self.env['base.group.merge.automatic.wizard']
-        # line_obj1 = self.env['base.group.merge.line']
-        # work_line = self.env['project.task.work.line']
         work_ = self.env['project.task.work']
         show_ = self.env['group_line.show.line2']
-        # list1 = []
 
         if self.state1 == 'valid':
             self.write({'state1': 'draft'})
@@ -1818,9 +1421,6 @@ class EbMergegroups(models.Model):
                 for ji in tt:
                     cnt += 1
                     work1 = work_.browse(ji.id)
-                    # print('work1', work1)
-                    # print('work1.product_id.uom_id.id,', work1.product_id.uom_id.id)
-                    # print('work1.product_id.uom_id,', work1.product_id.uom_id)
                     move_line1 = {
                         'product_id': work1.product_id.id,
                         'employee_id': gest,
@@ -1849,26 +1449,13 @@ class EbMergegroups(models.Model):
         # to_check
         # for ww in self.work_ids:
         #     ww.write({'state': 'tovalidcorrec'})
-        return {
-            'name': 'Declaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
+        self.return_declaration_view(view_id)
 
     def button_import_(self):
         line_obj = self.env['base.group.merge.automatic.wizard']
         line_obj1 = self.env['base.group.merge.line']
-        # work_line = self.env['project.task.work.line']
         work_ = self.env['project.task.work']
-        # show_ = self.env['group_line.show.line2']
-        # list1 = []
         if self.state != 'draft':
             raise UserError(_('Error!'), _('Action possible qu"en statut brouillon.'))
         if self.state3 != 'draft':
@@ -1913,26 +1500,13 @@ class EbMergegroups(models.Model):
         for iterator_work_id in self.work_ids:
             work_.write({'current_emp': iterator_work_id.employee_id.id})
 
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_model': 'base.group.merge.automatic.wizard',
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_approve(self):
         line_obj = self.env['base.group.merge.automatic.wizard']
         line_obj1 = self.env['base.group.merge.line']
         work_line = self.env['project.task.work.line']
-        work_ = self.env['project.task.work']
-        emp_obj = self.env['hr.employee']
-        list = []
         if not self.mail_send:
             raise UserError('Erreur Vous devez choisir OUI ou NON pour l\"envoi de courriel!')
 
@@ -2000,7 +1574,6 @@ class EbMergegroups(models.Model):
 
                         one = work_line.create(move_line)
                         line_obj1.browse(kk).write({'line_id': one.id})
-                        # line_obj1.write(kk, {'line_id': one.id})
         # the code bellow must be reviewed #to_check
         for ww in self.work_ids:
             if ww.state == 'affect':
@@ -2041,29 +1614,13 @@ class EbMergegroups(models.Model):
                     'coment1': self.note or False,
                     'id_object': self.ids[0]
                 })
-
         self.write({'state': 'tovalid'})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],
-            'context': {},
-            'domain': []
-        }
+
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_approve1(self):
         print('button_approve1')
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-        work_ = self.env['project.task.work']
-        emp_obj = self.env['hr.employee']
-        this = self
 
         if not self.mail_send1:
             raise UserError('Erreur Vous devez choisir OUI ou NON pour l"envoi de courriel!')
@@ -2151,6 +1708,7 @@ class EbMergegroups(models.Model):
         # added
         for ww in self.work_ids:
             ww.write({'state': 'tovalidcont'})
+
         return {
             'name': 'Déclaration des Bons de Controle',
             'type': 'ir.actions.act_window',
@@ -2166,11 +1724,6 @@ class EbMergegroups(models.Model):
 
     # #
     def button_approve2(self):
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-        work_ = self.env['project.task.work']
-        emp_obj = self.env['hr.employee']
 
         if not self.mail_send2:
             raise UserError("Erreur Vous devez choisir OUI ou NON pour l'envoi de courriel ")
@@ -2267,29 +1820,18 @@ class EbMergegroups(models.Model):
     # button_approve_s
     def valider_bon(self):
 
-        hr_payslip = self.env['hr.payslip']
-        # hr_payslip_line = self.env['hr.payslip.line']
-        line_obj = self.env['base.group.merge.automatic.wizard']
         line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
         employee_obj = self.env['hr.employee']
-        task_obj = self.env['project.task.work']
         task_obj_line = self.env['project.task.work.line']
-        files = self.env['base.group.merge.automatic.wizard']
 
-        sum1 = 0
         line = self.employee_id.id
-        empl = employee_obj.browse(line)
 
         for tt in self.line_ids:
             self_line = line_obj1.browse(tt.id)
             line_obj1.browse(tt.id).write({'state': 'valid', 'bon_id': self.id})
             print('self_line.line_id.id :', self_line.line_id.id)
 
-            # line_obj1.browse(kk).write({'line_id': one.id})
             task_obj_line.browse(self_line.line_id.id).write({'state': 'valid', 'done3': True})
-
-            # task_obj_line.write(self_line.line_id.id, {'state': 'valid', 'done3': True})
 
             if tt.total_part == 'total' and tt.work_id.affect_emp_list:
                 tt.work_id.write({
@@ -2303,7 +1845,7 @@ class EbMergegroups(models.Model):
                     'current_emp': False,
                 })
         self.write({'state': 'valid', 'done': False})
-        # task_obj.browse(tt.id).write({'state': 'valid'})
+
         return {
             'name': 'Déclaration des Bons',
             'type': 'ir.actions.act_window',
@@ -2316,56 +1858,24 @@ class EbMergegroups(models.Model):
             'domain': []
         }
 
-    def button_switch_(self, cr, uid, ids, context=None):
-
-        hr_payslip = self.env['hr.payslip']
-        hr_payslip_line = self.env['hr.payslip.line']
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-        employee_obj = self.env['hr.employee']
-        task_obj = self.env['project.task.work']
+    def button_switch_(self):
         line_obj2 = self.env['group_line.show.line2']
 
-        sum1 = 0
-        ##        if this.state !='valid':
-        ##            raise osv.except_osv(_('Error !'), _('Switch n"est possible qu"après validation Bon!'))
         if not self.gest_id_:
             raise UserError('Vous devez assigner une ressource!')
 
         for kk in self.line_ids2:
             if not kk.b1:
                 line_obj2.write(kk.id, {'gest_id2': self.gest_id_.id})
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,
-            'res_id': self.ids[0],  # ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_bons_form').id,
+        self.return_declaration_view(view_id)
 
     def button_switch(self):
-        # print('button_switch')
-        hr_payslip = self.env['hr.payslip']
-        hr_payslip_line = self.env['hr.payslip.line']
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
-        employee_obj = self.env['hr.employee']
         task_obj = self.env['project.task.work']
         line_obj2 = self.env['group_line.show.line2']
         emp_obj = self.env['hr.employee']
-        task_obj_line = self.env['project.task.work.line']
-        files = self.env['base.group.merge.automatic.wizard']
 
         this = self
-        sum1 = 0
-
         self.write({'state1': 'draft'})
 
         if not this.gest_id2:
@@ -2402,32 +1912,13 @@ class EbMergegroups(models.Model):
             for ww in this.work_ids:
                 task_obj.write(ww.id, {'state': 'tovalidcont', 'current_emp': this.gest_id2.id})
 
-            return {
-                'name': 'Déclaration des Bons',
-                'type': 'ir.actions.act_window',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_model': 'base.group.merge.automatic.wizard',
-                'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
-                # self.env.ref('module_name.view_id').id,
-                'res_id': self.ids[0],  # ids[0],
-                'context': {},
-                'domain': []
-            }
+            view_id = self.env.ref('eb_group_wizard.declaration_de_bon_control_form').id,
+            self.return_declaration_view(view_id)
 
-    def button_switch1(self, cr, uid, ids, context=None):
-        hr_payslip = self.env['hr.payslip']
-        hr_payslip_line = self.env['hr.payslip.line']
-        line_obj = self.env['base.group.merge.automatic.wizard']
-        line_obj1 = self.env['base.group.merge.line']
-        work_line = self.env['project.task.work.line']
+    def button_switch1(self, ids):
         emp_obj = self.env['hr.employee']
-        employee_obj = self.env['hr.employee']
         task_obj = self.env['project.task.work']
         line_obj2 = self.env['group_line.show.line2']
-        task_obj_line = self.env['project.task.work.line']
-        files = self.env['base.group.merge.automatic.wizard']
         self.write({'state2': 'draft'})
         self.write({'state2': 'draft'})
 
@@ -2465,20 +1956,8 @@ class EbMergegroups(models.Model):
 
         for ww in self.work_ids:
             task_obj.write(ww.id, {'state': 'tovalidcorrec', 'current_emp': self.emp_id2.id})
-
-        return {
-            'name': 'Déclaration des Bons',
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_model': 'base.group.merge.automatic.wizard',
-            'view_id': self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
-            # self.env.ref('module_name.view_id').id,
-            'res_id': ids[0],  # self.ids[0],
-            'context': {},
-            'domain': []
-        }
+        view_id = self.env.ref('eb_group_wizard.declaration_de_bon_correction_form').id,
+        self.return_declaration_view(view_id)
 
     # @api.multi
     # def copy(self, default=None):
@@ -2512,112 +1991,3 @@ class EbMergegroups(models.Model):
                 cte = packaging_obj.create(vals)
 
         return cte
-
-    # @api.model
-    # def create(self, vals):
-    #
-    #     if self.env.context['active_model'] == 'project.task.work' and 'active_ids' in self.env.context:
-    #         return {
-    #             'name': 'Déclaration des Bons',
-    #             'type': 'ir.actions.act_window',
-    #             'view_type': 'form',
-    #             'view_mode': 'form',
-    #             # 'target': 'new',
-    #             'res_model': 'base.group.merge.automatic.wizard',
-    #             'view_id': self.env.ref('eb_group_wizard.declaration_bons_form').id,  # 1543,
-    #             'res_id': self.ids[0],
-    #             'context': {},
-    #             'domain': []
-    #         }
-    #     else:
-    #         return
-
-    # EB: {'lang': 'en_US', 'tz': 'Africa/Tunis', 'uid': 7, 'allowed_company_ids': [1], 'active_ids': [6], 'active_model': 'project.task.work'}
-    # EB: {'lang': 'en_US', 'tz': 'Africa/Tunis', 'uid': 7, 'allowed_company_ids': [1], 'active_ids': [6], 'active_model': 'project.task.work'}
-    # def action_group(self, cr, uid, id, default=None, context=None):
-    #     # your changes
-    #     if default is None:
-    #         default = {}
-    #     num = 0
-    #     list1 = []
-    #
-    #     for current in self.browse(cr, uid, id, context=context):
-    #         sum1 = 0
-    #         for tt in current.work_ids:
-    #             ##if not default.get('name'):
-    #             ##raise osv.except_osv(_('Transfert impossible!'),_("Pas de Stock suffisant pour l'article %s  !")% tt.name)
-    #             line = tt.employee_id.id
-    #             if not (line in list1):
-    #                 list1.append(line)
-    #
-    #             if tt.employee_id.id != list1[0]:
-    #                 raise osv.except_osv(_('Choix Invalide!'),
-    #                                      _("Seuls les Travaux d'un seul intervenant sont autorisés!"))
-    #             if tt.state != 'tovalid':
-    #                 raise osv.except_osv(_('Choix Invalide!'), _("Seuls les Travaux 'A Facturer' sont autorisés!"))
-    #             num = num + 1
-    #
-    #             hr_payslip = self.pool.get('hr.payslip')
-    #             hr_payslip_line = self.pool.get('hr.payslip.line')
-    #             employee_obj = self.pool.get('hr.employee')
-    #             ##default['name'] = _("%s (copy)") % tt.dst_task_id.name
-    #             task_obj = self.pool.get('project.task.work')
-    #             empl = employee_obj.browse(cr, uid, list1[0], context=context)
-    #
-    #             if empl.job_id.id == 1:
-    #                 name = 'Feuille de Temps'
-    #             else:
-    #                 name = 'Facture'
-    #
-    #             if num == 1:
-    #                 cr.execute(
-    #                     "select cast(substr(number, 6, 8) as integer) from hr_payslip where number is not Null and name=%s and EXTRACT(YEAR FROM date_from)=%s  order by cast(substr(number, 6, 8) as integer) desc limit 1",
-    #                     (name, tt.date[:4],))
-    #                 q3 = cr.fetchone()
-    #                 if q3:
-    #                     res1 = q3[0] + 1
-    #                 else:
-    #                     res1 = '001'
-    #                 pay_id = hr_payslip.create(cr, uid, {'employee_id': tt.employee_id.id,
-    #                                                      'date_from': tt.date,
-    #                                                      'date_to': tt.date,
-    #                                                      'contract_id': tt.employee_id.contract_id.id,
-    #                                                      'name': name,
-    #                                                      'number': str(
-    #                                                          str(tt.date[:4]) + '-' + str(str(res1).zfill(3))),
-    #                                                      'struct_id': 1,
-    #                                                      'currency_id': 5,
-    #                                                      ## 'work_phone': applicant.department_id and applicant.department_id.company_id and applicant.department_id.company_id.phone or False,
-    #                                                      }, context)
-    #             task_obj.write(cr, uid, tt.id, {'state': 'valid', 'paylist_id': pay_id}, context=context)
-    #             pay_id_line = hr_payslip_line.create(cr, uid, {'employee_id': tt.employee_id.id,
-    #                                                            'contract_id': tt.employee_id.contract_id.id,
-    #                                                            'name': ' ',
-    #                                                            'code': '-',
-    #                                                            'category_id': 1,
-    #                                                            'quantity': tt.hours_r,
-    #                                                            'slip_id': pay_id,
-    #                                                            'rate': 100,
-    #                                                            'work_id': tt.id,
-    #                                                            ##'contract_id':this.employee_id.contract_id.id,
-    #
-    #                                                            'quantity': tt.poteau_r,
-    #                                                            'salary_rule_id': 1,
-    #                                                            'amount': tt.wage,
-    #                                                            ## 'work_phone': applicant.department_id and applicant.department_id.company_id and applicant.department_id.company_id.phone or False,
-    #                                                            }, context)
-    #
-    #     return pay_id
-
-    # def unlink(self):
-    #     for proj in self:
-    #         if proj.state != 'draft':
-    #             raise UserError('Action Impossible! Seules Les Bons Brouillons peuvent etre supprimés!')
-    #
-    #     return super(EbMergegroups, self).unlink()
-
-    # def action_copy3(self):
-    #     packaging_obj = self.env['project.task']
-    #     packaging_copy = packaging_obj.copy(self.dst_task_id.id)
-    #     packaging_copy.write({'name': 'dfsdf'})
-    #     return True

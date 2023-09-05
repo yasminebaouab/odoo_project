@@ -11,18 +11,18 @@ class EbMergeInvoices(models.Model):
     _description = "Merge invoicess"
 
     def default_get(self, fields_list):
-
         res = super().default_get(fields_list)
         active_ids = self.env.context.get('active_ids')
-
-        if self.env.context.get('active_model') == 'base.group.merge.automatic.wizard':
-            tt = self.env['base.group.merge.automatic.wizard'].browse(self.env.context.get('active_ids'))
+        active_model = self.env.context.get('active_model')
+        if active_model != 'project.task.work':
+            if active_model == 'base.group.merge.automatic.wizard':
+                tt = self.env['base.group.merge.automatic.wizard'].browse(active_ids)
+            else:
+                tt = self.env['base.flow.merge.automatic.wizard'].browse(active_ids)
             active_ids = tt.work_ids.ids
-            vv = []
-
-            for hh in active_ids:
-                work = self.env['project.task.work'].browse(hh)
-
+            selected_work_ids = []
+            for active_id in active_ids:
+                work = self.env['project.task.work'].browse(active_id)
                 if work.kit_id:
                     kit_list = self.env['project.task.work'].search([
                         ('project_id', '=', work.project_id.id),
@@ -33,281 +33,89 @@ class EbMergeInvoices(models.Model):
                         ('product_id.name', 'not ilike', '%cont%'),
                         ('product_id.name', 'not ilike', '%gestion client%')
                     ])
-
                     for kit_list_id in kit_list.ids:
                         work1 = self.env['project.task.work'].browse(kit_list_id)
                         if not work.is_copy:
                             if not work1.is_copy:
-                                vv.append(work1.id)
+                                selected_work_ids.append(work1.id)
                         else:
                             if work1.is_copy is not False:
                                 if work.rank == work1.rank:
-                                    vv.append(work1.id)
-                    res['work_ids'] = vv
+                                    selected_work_ids.append(work1.id)
+                    res['work_ids'] = selected_work_ids
                 else:
                     res['work_ids'] = active_ids
-
-            r = []
-            l = []
-            pref = ''
-            test = ''
-            state = 'draft'
-            self.env.cr.execute(
-                'select cast(substr(name, 5, 7) as integer)  from base_invoices_merge_automatic_wizard where name is not Null  and categ_id=1  and EXTRACT(YEAR FROM create_date)=%s   order by cast(name as integer) desc limit 1',
-                (str(datetime.today().year),))
-            q3 = self.env.cr.fetchone()
-
-            if q3:
-                res1 = q3[0] + 1
-            else:
-                res1 = '001'
-
-            for jj in tt.work_ids.ids:
-                work = self.env['project.task.work'].browse(jj)
-                if work.state == 'close':
-                    raise UserError(_('Erreur!\nTravaux clotués!'))
-                if len(active_ids) > 1:
-                    pref = '/'
-                done = 0
-                if work.gest_id.user_id.id == self.env.user.id:
-                    done = 1
-                else:
-                    done = 0
-                if work.state != 'draft':
-                    state = 'affect'
-                r.append(work.categ_id.id)
-                if r:
-                    for kk in r:
-                        dep = self.env['hr.academic'].search([('categ_id', '=', kk)])
-                        if dep:
-                            for nn in dep.ids:
-                                em = self.env['hr.academic'].browse(nn).employee_id.id
-                                l.append(em)
-                cat = work.categ_id.id
-                test = test + pref + str(work.project_id.name) + ' - ' + str(work.task_id.sequence) + ' - ' + str(
-                    work.sequence)
-                res.update({'states': test, 'employee_id': work.employee_id.id, 'gest_id': work.gest_id.id,
-                            'categ_id': work.categ_id.id,
-                            'project_id': work.project_id.id, 'zone': work.zone, 'secteur': work.secteur,
-                            'state': state, 'dep': r})  ##,'categ_id':work.categ_id.id
-                if cat == 1:
-                    res.update({'name': str(str(fields.Date.today().strftime('%Y%m%d'))[:4] + str(res1).zfill(3))})
-
-        elif self.env.context.get('active_model') != 'project.task.work':
-            res = super().default_get(fields_list)
-            ##raise osv.except_osv(_('Transfert impossible!'),_("Pas de Stock suffisantdffd pour l'article %s  !")%  self.env.context.get('active_ids'))
-
-            tt = self.env['base.flow.merge.automatic.wizard'].browse(self.env.context.get('active_ids'))
-            active_ids = tt.work_ids.ids
-            vv = []
-            dd = []
-
-            for hh in active_ids:
-                work = self.env['project.task.work'].browse(hh)
-
-                if work.kit_id:
-                    kit_list = self.env['project.task.work'].search([
-                        ('project_id', '=', work.project_id.id),
-                        ('zone', '=', work.zone),
-                        ('secteur', '=', work.secteur),
-                        ('kit_id', '=', work.kit_id.id),
-                        ('product_id.name', 'not ilike', '%correction%'),
-                        ('product_id.name', 'not ilike', '%cont%'),
-                        ('product_id.name', 'not ilike', '%gestion client%')
-                    ])
-                    for hh in kit_list.ids:
-                        work1 = self.env['project.task.work'].browse(hh)
-                        if not work.is_copy:
-                            if not work1.is_copy:
-                                vv.append(work1.id)
-                        else:
-                            if work1.is_copy is not False:
-                                if work.rank == work1.rank:
-                                    vv.append(work1.id)
-                    res['work_ids'] = vv
-                else:
-                    res['work_ids'] = active_ids
-
-            r = []
-            l = []
-            pref = ''
-            test = ''
-            list = []
-            state = 'draft'
-            self.env.cr.execute(
-                'select cast(substr(name, 5, 7) as integer)  from base_invoices_merge_automatic_wizard where name is not Null  and categ_id=1  and EXTRACT(YEAR FROM create_date)=%s   order by cast(name as integer) desc limit 1',
-                (str(datetime.today().year),))
-            q3 = self.env.cr.fetchone()
-
-            if q3:
-                res1 = q3[0] + 1
-            else:
-                res1 = '001'
-
-            for jj in tt.work_ids.ids:
-                print('jj:', jj)
-                work = self.env['project.task.work'].browse(jj)
-
-                ##                tt=self.env['project.task.work.line'].search([('work_id','=',jj),('state','=','affect')]).ids
-
-                if work.state == 'close':
-                    raise UserError(_('Erreur!\nTravaux clotués!'))
-
-                ##                if work.employee_id:
-                ##                    raise osv.except_osv(_('Erreur!'),_("Travaux Déja affectés aux ressources!"))
-                if len(active_ids) > 1:
-                    pref = '/'
-                done = 0
-                if work.gest_id.user_id.id == self.env.user.id:
-                    done = 1
-                else:
-                    done = 0
-                if work.state != 'draft':
-                    state = 'affect'
-                r.append(work.categ_id.id)
-                if r:
-                    for kk in r:
-                        dep = self.env['hr.academic'].search([('categ_id', '=', kk)])
-                        if dep:
-                            for nn in dep.ids:
-                                em = self.env['hr.academic'].browse(nn).employee_id.id
-                                l.append(em)
-                cat = work[0].categ_id.id
-                print(cat)
-                test = test + pref + str(work.project_id.name) + ' - ' + str(work.task_id.sequence) + ' - ' + str(
-                    work.sequence)
-                res.update({
-                    'states': test,
-                    'employee_id': work.employee_id.id,
-                    'gest_id': work.gest_id.id,
-                    'categ_id': work.categ_id.id,
-                    'project_id': work.project_id.id,
-                    'zone': work.zone,
-                    'secteur': work.secteur,
-                    'state': state,
-                    'dep': r
-                })
-                if cat == 1:
-                    res.update({
-                        'name': str(str(datetime.today().year) + str(res1).zfill(3))
-                    })
-
-        if self.env.context.get('active_model') == 'project.task.work' and active_ids:
-            # active_ids = self.env.context.get('active_ids')
-            print('*********default get a.3 *************')
+            self.update_result(active_ids, res, tt.work_ids.ids)
+        if active_model == 'project.task.work' and active_ids:
             tt = self.env['project.task.work'].browse(active_ids)
             affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
             if affectation_multiple:
-               res = self.get_default_multiple(tt,active_ids, res )
-                # for work in tt:
-                #     if (
-                #             'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name) :
-                #         raise UserError(
-                #             _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
-                #
-                #     vv = []
-                # for hh in active_ids:
-                #     work = self.env['project.task.work'].browse(hh)
-                #     print(work)
-                #     vv = []
-                #     if work.kit_id:
-                #         kit_list = self.env['project.task.work'].search([
-                #             ('project_id', '=', work.project_id.id),
-                #             ('zone', '=', work.zone),
-                #             ('secteur', '=', work.secteur),
-                #             ('kit_id', '=', work.kit_id.id),
-                #             ('product_id.name', 'not ilike', '%correction%'),
-                #             ('product_id.name', 'not ilike', '%cont%'),
-                #             ('product_id.name', 'not ilike', '%gestion client%')
-                #         ])
-                #         print('************************')
-                #         for kit_work in kit_list:
-                #
-                #             if not work.is_copy and not kit_work.is_copy:
-                #                 vv.append(kit_work.id)
-                #             elif kit_work.is_copy and work.rank == kit_work.rank:
-                #                 vv.append(kit_work.id)
-                #
-                #         res['work_ids'] = vv
-                #         print('vv : ', vv)
-                #     else:
-                #         print("2.1")
-                #         res['work_ids'] = active_ids
-            else :
-                for hh in active_ids:
-                    work = self.env['project.task.work'].browse(hh)
-                    res = self.get_default_simple(work, active_ids, res)
-            r = []
-            l = []
-            pref = ''
-            test = ''
-            state = 'draft'
-
-            self.env.cr.execute(
-                'SELECT CAST(SUBSTRING(name, 5, 7) AS INTEGER) FROM base_invoices_merge_automatic_wizard WHERE name IS NOT NULL AND categ_id=1 AND EXTRACT(YEAR FROM create_date)=%s ORDER BY CAST(name AS INTEGER) DESC LIMIT 1',
-                (str(datetime.today().year),))
-
-            q3 = self.env.cr.fetchone()
-            print(q3)
-            if q3:
-                res1 = q3[0] + 1
+                res = self.get_default_multiple(tt, active_ids, res)
             else:
-                res1 = '001'
+                for active_id in active_ids:
+                    work = self.env['project.task.work'].browse(active_id)
+                    res = self.get_default_simple(work, active_ids, res)
 
-            for jj in active_ids:
-                work = self.env['project.task.work'].browse(jj)
-
-                if work.state == 'close':
-                    raise UserError(_('Erreur!\nTravaux clotués!'))
-
-                if len(active_ids) > 1:
-                    pref = '/'
-
-                if work.state != 'draft':
-                    state = 'affect'
-
-                r.append(work.categ_id.id)
-
-                if r:
-                    for kk in r:
-                        dep = self.env['hr.academic'].search([('categ_id', '=', kk)])
-                        if dep:
-                            for nn in dep.ids:
-                                em = self.env['hr.academic'].browse(nn).employee_id.id
-                                l.append(em)
-                cat = work[0].categ_id.id
-                test = test + pref + str(work.project_id.name) + ' - ' + str(work.task_id.sequence) + ' - ' + str(
-                    work.sequence)
-
-                res.update({
-                    'states': test,
-                    'employee_id': work.employee_id.id,
-                    'gest_id': work.gest_id.id,
-                    'categ_id': cat,
-                    'project_id': work.project_id.id,
-                    'zone': work.zone,
-                    'secteur': work.secteur,
-                    'state': state,
-                    'dep': r,
-
-                })
-                if cat == 1:
-                    res.update({'name': str(str(datetime.today().year) + str(str(res1).zfill(3)))})
-
+            self.update_result(active_ids, res, active_ids)
         print('res: ', res)
         return res
 
-    def get_default_multiple (self, tt, active_ids, res):
+    def update_result(self, active_ids, res, rec_ids):
+        department_ids = []
+        employee_ids = []
+        pref = ''
+        test = ''
+        state = 'draft'
+        self.env.cr.execute(
+            'select cast(substr(name, 5, 7) as integer)  from base_invoices_merge_automatic_wizard where name is not Null  and categ_id=1  and EXTRACT(YEAR FROM create_date)=%s   order by cast(name as integer) desc limit 1',
+            (str(datetime.today().year),))
+        q3 = self.env.cr.fetchone()
+        if q3:
+            res1 = q3[0] + 1
+        else:
+            res1 = '001'
+        for rec_id in rec_ids:
+            work = self.env['project.task.work'].browse(rec_id)
+            if work.state == 'close':
+                raise UserError(_('Erreur!\nTravaux clotués!'))
+            if len(active_ids) > 1:
+                pref = '/'
+            if work.state != 'draft':
+                state = 'affect'
+            department_ids.append(work.categ_id.id)
+            if department_ids:
+                for department_id in department_ids:
+                    dep = self.env['hr.academic'].search([('categ_id', '=', department_id)])
+                    if dep:
+                        for nn in dep.ids:
+                            employee_id = self.env['hr.academic'].browse(nn).employee_id.id
+                            employee_ids.append(employee_id)
+            cat = work.categ_id.id
+            test = (test + pref + str(work.project_id.name) + ' - '
+                    + str(work.task_id.sequence) + ' - ' + str(
+                        work.sequence))
+            res.update({'states': test,
+                        'employee_id': work.employee_id.id,
+                        'gest_id': work.gest_id.id,
+                        'categ_id': work.categ_id.id,
+                        'project_id': work.project_id.id,
+                        'zone': work.zone,
+                        'secteur': work.secteur,
+                        'state': state,
+                        'dep': department_ids})
+            if cat == 1:
+                res.update({'name': str(str(fields.Date.today().year) + str(res1).zfill(3))})
+        return res
+
+    def get_default_multiple(self, tt, active_ids, res):
         for work in tt:
             if (
                     'correction' in work.product_id.name or 'gestion client' in work.product_id.name or u'Contrôle' in work.product_id.name):
                 raise UserError(
                     _("Action impossible!\nImpossible d'affecter ce type de tache à partir de ce menu!"))
-
-            vv = []
+        vv = []
         for hh in active_ids:
             work = self.env['project.task.work'].browse(hh)
-            vv = []
             if work.kit_id:
                 kit_list = self.env['project.task.work'].search([
                     ('project_id', '=', work.project_id.id),
@@ -344,7 +152,7 @@ class EbMergeInvoices(models.Model):
                     elif kit_work.is_copy and work.rank == kit_work.rank:
                         vv.append(kit_work.id)
                 res['work_ids'] = vv
-        else :
+        else:
             kit_list = self.env['project.task.work'].search([
                 ('project_id', '=', work.project_id.id),
                 ('zone', '=', work.zone),
@@ -969,261 +777,570 @@ class EbMergeInvoices(models.Model):
 
     def affecter_simple(self):
         print("affecter_simple")
+        print('work_ids', self.work_ids)
 
-
-        return
-
-    def affecter_multiple(self):
-        print("affecter_multiple")
         link_line = self.env['link.line']
         res_user = self.env['res.users'].browse(self.env.uid)
         this = self
         intervenants_affect = self.env['intervenants.affect']
 
-        for line in this.work_ids:
-            line = self.env['project.task.work'].browse(line.id)
-            if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
-                line.write({'state': 'affect'})
-            for msg_id in line.ids:
-                wk = self.env['project.task.work'].browse(msg_id)
-                wk_histo = self.env['work.histo'].search([('work_id', '=', msg_id)])
+        # Récupérer le nom du kit premier work_ids
+        first_work_id = this.work_ids and this.work_ids[0].name or ''
 
-                if this.employee_id2 and this.types_affect == 'intervenant':
-                    if wk.state == 'draft':
-                        wk.write({'state': 'affect'})
-                        self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
-                                                 fields.Date.today(), wk.id)
-                    wk.write({
-                        'employee_ids_production': [(4, this.employee_id2.id)],
-                        'current_emp': this.employee_id2.id,
-                        'employee_id': this.employee_id2.id,
-                        'display': True
+        # Sélectionner les IDs des project.task.work avec le même nom que le premier work_ids
+        self.env.cr.execute("SELECT id FROM project_task_work WHERE name = %s", (first_work_id,))
+        matching_work_ids = [row[0] for row in self.env.cr.fetchall()]
+
+        print('matching_work_ids', matching_work_ids)
+
+        new_work_ids = []
+        for work_id in matching_work_ids:
+            print('work_id', work_id)
+            work = self.env['project.task.work'].browse(work_id)
+            wk_histo = self.env['work.histo'].search([('work_id', '=', work_id)])
+            if work:
+                if this.employee_id2 and this.types_affect == 'intervenant' and work.state == 'affect':
+                    print('Duplication')
+                    print('work.product_id', work.product_id.id)
+                    project_task_work = self.env['project.task.work']
+                    new_work = project_task_work.create({
+                        'name': work.name,
+                        'product_id': work.product_id.id,
+                        'project_id': work.project_id.id,
+                        'task_id': work.task_id.id,
+                        'partner_id': work.partner_id.id,
+                        'kit_id': work.kit_id.id,
+                        'categ_id': work.categ_id.id,
+                        'hours': work.hours,
+                        'date_start': work.date_start,
+                        'date_end': work.date_end,
+                        'active': True,
+                        'sequence': work.sequence,
+                        'gest_id3': work.gest_id3.id,
+                        'state': 'affect',
+                        'work_id': work.id,
+                        'date_start_r': work.date_start_r,
+                        'date_end_r': work.date_end_r,
+                        'poteau_t': work.poteau_t,
+                        'poteau_r': work.poteau_r,
+                        'gest_id': work.gest_id.id,
+                        'uom_id': work.uom_id.id,
+                        'uom_id_r': work.uom_id_r.id,
+                        'zone': work.zone,
+                        'secteur': work.secteur,
                     })
+                    new_work_ids.append(new_work.id)
 
-                    print('this.employee_id2.id:', this.employee_id2.id)
-                    if wk_histo:
-                        if len(wk_histo) == 1:
-                            wk_histo_id = wk_histo.id
-                            self.create_histo_line('affect_inter', this.employee_id2.name, res_user.employee_id.name,
-                                                   wk_histo_id, fields.Datetime.now(),
-                                                   this.note)
-                    else:
-                        histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
-                                                       wk.task_id.name,
-                                                       wk.date_start, wk.date_start,
-                                                       wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
+            print('******new_work_ids*********', new_work_ids)
+        prod_work_ids = []
+        for msg_id in new_work_ids:
 
-                        self.create_histo_line('affect_inter', this.employee_id2.name, res_user.employee_id.name,
-                                               histo.id, fields.Datetime.now(),
-                                               this.note)
-                elif this.employee_id2 and this.types_affect == 'controle':
+            wk = self.env['project.task.work'].browse(msg_id)
+            wk_histo = self.env['work.histo'].search([('work_id', '=', msg_id)])
+            print('msg_id', msg_id)
+            print('wk.id', wk.id)
+            print('wk.product_id.name',wk.product_id.name)
 
-                    self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+            if this.employee_id2 and this.types_affect == 'intervenant'and ('correction' not in wk.product_id.name and 'Contrôle' not in wk.product_id.name):
+                prod_work_ids.append(wk.id)
+                print('prod_work_ids', prod_work_ids)
+                print(''''Productionn''')
+                if wk.state == 'affect':
+                    wk.write({'state': 'affect'})
+                    self.create_histo_affect(this.employee_id2.name, this.employee_id2.id,
+                                             this.types_affect,
                                              fields.Date.today(), wk.id)
-                    if wk.state == 'affect':
-                        wk.write({'state': 'tovalidcont'})
-
-                    wk.write({
-                        'employee_ids_controle': [(4, this.employee_id2.id)],
-                    })
-
-                    if this.group_id:
-                        this.group_id.write({'gest_id2': this.employee_id2.id, 'note_con': this.note})
-
-                    if wk_histo:
-                        if len(wk_histo) == 1:
-                            wk_histo_id = wk_histo.id
-                            self.create_histo_line('affect_control', this.employee_id2.name, res_user.employee_id.name,
-                                                   wk_histo_id, fields.Datetime.now(),
-                                                   this.note)
-
-                    else:
-                        histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
-                                                       wk.task_id.name,
-                                                       wk.date_start, wk.date_start,
-                                                       wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
-
-                        self.create_histo_line('affect_control', this.employee_id2.name, res_user.employee_id.name,
-                                               histo.id, fields.Datetime.now(),
-                                               this.note)
-
-                elif this.employee_id2 and this.types_affect == 'correction':
-                    self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
-                                             fields.Date.today(), wk.id)
-                    wk.write({
-                        'employee_ids_correction': [(4, this.employee_id2.id)],
-                        'state': 'affect_corr',
-                    })
-                    if this.group_id:
-                        this.group_id.write({'emp_id2': this.employee_id2.id, 'note_corr': this.note})
-                    if wk_histo:
-                        if len(wk_histo) == 1:
-                            wk_histo_id = wk_histo.id
-                            self.create_histo_line('affect_corr', this.employee_id2.name, res_user.employee_id.name,
-                                                   wk_histo_id, fields.Datetime.now(),
-                                                   this.note)
-                    else:
-                        histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
-                                                       wk.task_id.name, wk.date_start, wk.date_start,
-                                                       wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
-
-                        self.create_histo_line('affect_corr', this.employee_id2.name, res_user.employee_id.name,
-                                               histo.id, fields.Datetime.now(),
-                                               this.note)
-                if this.date_start_r:
-                    wk.write({'date_start': this.date_start_r})
-                if this.name:
-                    wk.write({'job': this.name})
-                if this.date_end_r:
-                    wk.write({'date_end': this.date_end_r})
-                if this.poteau_t:
-                    wk.write({'poteau_t': this.poteau_t})
-                if this.ftp:
-                    link_id = {
-                        'name': 'FTP Affectation',
-                        'ftp': this.ftp,
-                        'work_id': wk.id
-                    }
-                    one = link_line.create(link_id)
-                if this.note:
-                    wk.write({'note': this.note})
-                if wk.employee_id:
-                    self._cr.execute('update project_task_work set current_emp =%s where id=%s ',
-                                     (wk.employee_id.id, wk.id))
-            self.write({'state': 'affect'})
-
-            vals = self.time_ch.split(':')
-            t, hours = divmod(float(vals[0]), 24)
-            t, minutes = divmod(float(vals[1]), 60)
-            minutes = minutes / 60.0
-
-            total = hours + minutes
-
-            res_user = self.env['res.users'].browse(self._uid)
-        if self.work_ids:
-            for rec in self.work_ids:
-                base_group = self.env['base.group.merge.automatic.wizard'].create({
-                    'create_date': fields.Date.today(),
-                    'date_start_r': fields.Date.today(),
-                    'project_id': rec.project_id.id,
-                    'zo': rec.zone,
-                    'sect': rec.secteur,
-                    'gest_id': rec.gest_id.id,
-                    'state': 'valid',
-                    'active': True,
-                    'name': 'gestion affectation'
+                wk.write({
+                    'employee_ids_production': [(4, this.employee_id2.id)],
+                    'current_emp': this.employee_id2.id,
+                    'employee_id': this.employee_id2.id,
+                    'display': True
                 })
 
-                base_group_id = base_group.id
+                if wk_histo:
+                    if len(wk_histo) == 1:
+                        wk_histo_id = wk_histo.id
+                        self.create_histo_line('affect_inter', this.employee_id2.name,
+                                               res_user.employee_id.name,
+                                               wk_histo_id, fields.Datetime.now(),
+                                               this.note)
+                else:
+                    histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+                                                   wk.task_id.name,
+                                                   wk.date_start, wk.date_start,
+                                                   wk.zo, wk.sect, wk.project_id.id,
+                                                   wk.project_id.partner_id.id)
 
-                product = 80  # Default value
-                if rec.categ_id.id == 3:
-                    product = 156
-                elif rec.categ_id.id == 1:
-                    product = 80
-                elif rec.categ_id.id == 4:
-                    product = 218
-                elif rec.categ_id.id == 6:
-                    product = 174
-                elif rec.categ_id.id == 7:
-                    product = 197
-                elif rec.categ_id.id == 8:
-                    product = 132
-                elif rec.categ_id.id == 5:
-                    product = 132
-
-                self.env['base.group.merge.line'].create({
-                    'create_date': fields.Date.today(),
-                    'date_start_r': fields.Date.today(),
-                    'date_end_r': fields.Date.today(),
-                    'product_id': product,
-                    'project_id': rec.project_id.id,
-                    'hours_r': total,
-                    'uom_id_r': 5,
-                    'uom_id': 5,
-                    'wizard_id': base_group_id,
-                    'color1': 1,
-                    'employee_id': res_user.employee_id.id,
-                    'categ_id': rec.categ_id.id,
-                    'zone': rec.zone or 0,
-                    'secteur': rec.secteur or 0
-                })
-
-                move_line = {
-                    'employee_id': res_user.employee_id.id,
-                    'state': 'valid',
-                    'work_id': rec.id,
-                    'task_id': rec.task_id.id,
-                    'sequence': rec.sequence,
-                    'uom_id': 5,
-                    'date_start_r': fields.Date.today(),
-                    'date_end_r': fields.Date.today(),
-                    'categ_id': rec.categ_id.id,
-                    'hours_r': total,
-                    'color1': 1,
-                    'project_id': rec.project_id.id,
-                    'gest_id': rec.gest_id.id,
-                    'zone': rec.zone,
-                    'secteur': rec.secteur,
+                    self.create_histo_line('affect_inter', this.employee_id2.name,
+                                           res_user.employee_id.name,
+                                           histo.id, fields.Datetime.now(),
+                                           this.note)
+            # elif this.employee_id2 and this.types_affect == 'controle' and 'Contrôle' not in wk.product_id.name :
+            #     print(''''controle''')
+            #
+            #     self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+            #                              fields.Date.today(), wk.id)
+            #     if wk.state == 'affect':
+            #         wk.write({'state': 'tovalidcont'})
+            #
+            #     wk.write({
+            #         'employee_ids_controle': [(4, this.employee_id2.id)],
+            #     })
+            #
+            #     if this.group_id:
+            #         this.group_id.write({'gest_id2': this.employee_id2.id, 'note_con': this.note})
+            #
+            #     if wk_histo:
+            #         if len(wk_histo) == 1:
+            #             wk_histo_id = wk_histo.id
+            #             self.create_histo_line('affect_control', this.employee_id2.name,
+            #                                    res_user.employee_id.name,
+            #                                    wk_histo_id, fields.Datetime.now(),
+            #                                    this.note)
+            #
+            #     else:
+            #         histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+            #                                        wk.task_id.name,
+            #                                        wk.date_start, wk.date_start,
+            #                                        wk.zo, wk.sect, wk.project_id.id,
+            #                                        wk.project_id.partner_id.id)
+            #
+            #         self.create_histo_line('affect_control', this.employee_id2.name,
+            #                                res_user.employee_id.name,
+            #                                histo.id, fields.Datetime.now(),
+            #                                this.note)
+            #
+            # elif this.employee_id2 and this.types_affect == 'correction' and 'correction' in wk.product_id.name:
+            #     print(''''correction''')
+            #     self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+            #                              fields.Date.today(), wk.id)
+            #     wk.write({
+            #         'employee_ids_correction': [(4, this.employee_id2.id)],
+            #         'state': 'affect_corr',
+            #     })
+            #     if this.group_id:
+            #         this.group_id.write({'emp_id2': this.employee_id2.id, 'note_corr': this.note})
+            #     if wk_histo:
+            #         if len(wk_histo) == 1:
+            #             wk_histo_id = wk_histo.id
+            #             self.create_histo_line('affect_corr', this.employee_id2.name,
+            #                                    res_user.employee_id.name,
+            #                                    wk_histo_id, fields.Datetime.now(),
+            #                                    this.note)
+            #     else:
+            #         histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+            #                                        wk.task_id.name, wk.date_start, wk.date_start,
+            #                                        wk.zo, wk.sect, wk.project_id.id,
+            #                                        wk.project_id.partner_id.id)
+            #
+            #         self.create_histo_line('affect_corr', this.employee_id2.name, res_user.employee_id.name,
+            #                                histo.id, fields.Datetime.now(),
+            #                                this.note)
+            if this.date_start_r:
+                wk.write({'date_start': this.date_start_r})
+            if this.name:
+                wk.write({'job': this.name})
+            if this.date_end_r:
+                wk.write({'date_end': this.date_end_r})
+            if this.poteau_t:
+                wk.write({'poteau_t': this.poteau_t})
+            if this.ftp:
+                link_id = {
+                    'name': 'FTP Affectation',
+                    'ftp': this.ftp,
+                    'work_id': wk.id
                 }
-                self.env['base.invoices.merge.automatic.wizard'].create(move_line)
+                one = link_line.create(link_id)
+            if this.note:
+                wk.write({'note': this.note})
+            if wk.employee_id:
+                self._cr.execute('update project_task_work set current_emp =%s where id=%s ',
+                                 (wk.employee_id.id, wk.id))
+        self.write({'state': 'affect'})
 
-                # if self.mail_send == 'yes':
-                #     if not self.note:
-                #         self.note = ' '
-                #     if not self.employee_ids:
-                #         raise ValidationError(_('Erreur ! Vous devez sélectionner un destinataire.'))
-                #     else:
-                #         kk = ''
-                #         for line in self.employee_ids.ids:
-                #             emp = self.env['hr.employee'].browse(line)
-                #             kk = kk + emp.work_email + ','
-                #         self.to = kk
-                #         if self.employee_ids1:
-                #             ll = ''
-                #             for line in self.employee_ids1.ids:
-                #                 emp = self.env['hr.employee'].browse(line)
-                #                 ll = ll + emp.work_email + ','
-                #             self.cc = ll
-                #         if self.employee_ids2:
-                #             mm = ''
-                #             for line in self.employee_ids2.ids:
-                #                 emp = self.env['hr.employee'].browse(line)
-                #                 mm = mm + emp.work_email + ','
-                #             self.cci = mm
-                #
-                # if self.employee_id2 and self.types_affect == 'intervenant':
-                #     self.env['mail.template'].sudo().browse(25).send_mail(self.id, force_send=True)
-                #     ##Ne pas oublier d'ajouter la condition par bon
-                #     ##Ne pas oublier d'ajouter la condition par bon
-                # elif self.employee_id2 and self.types_affect == 'controle' and self.group_id:
-                #     self.env['mail.template'].sudo().browse(30).send_mail(self.id, force_send=True)
-                # elif self.employee_id2 and self.types_affect == 'controle' and not self.group_id:
-                #     self.env['mail.template'].sudo().browse(34).send_mail(self.id, force_send=True)
-                # elif self.employee_id2 and self.types_affect == 'correction' and self.group_id:
-                #     self.env['mail.template'].sudo().browse(31).send_mail(self.id, force_send=True)
-                # elif self.employee_id2 and self.types_affect == 'correction' and not self.group_id:
-                #     self.env['mail.template'].sudo().browse(35).send_mail(self.id, force_send=True)
+        vals = self.time_ch.split(':')
+        t, hours = divmod(float(vals[0]), 24)
+        t, minutes = divmod(float(vals[1]), 60)
+        minutes = minutes / 60.0
 
-            for rec in self.work_ids:
-                for line in self.link_ids:
-                    self.env['link.line'].create({
-                        'ftp': line.ftp,
-                        'name': line.name,
-                        'work_id': rec.id,
-                        'affect_id': line.id,
-                        'source': 'affectation',
-                        'id_record': self.id
-                    })
+        total = hours + minutes
+
+        res_user = self.env['res.users'].browse(self._uid)
+        print('self.work_ids', self.work_ids)
 
 
+        print('prod_work_ids', prod_work_ids)
+        print('self.work_ids', self.work_ids)
 
+        for pr_id in prod_work_ids:
+            rec = self.env['project.task.work'].browse(pr_id)
+            print('rec', rec)
+        #     base_group = self.env['base.group.merge.automatic.wizard'].create({
+        #         'create_date': fields.Date.today(),
+        #         'date_start_r': fields.Date.today(),
+        #         'project_id': rec.project_id.id,
+        #         'zo': rec.zone,
+        #         'sect': rec.secteur,
+        #         'gest_id': rec.gest_id.id,
+        #         'state': 'valid',
+        #         'active': True,
+        #         'name': 'gestion affectation'
+        #     })
+
+        #     base_group_id = base_group.id
+        #
+            product = 80  # Default value
+            if rec.categ_id.id == 3:
+                product = 156
+            elif rec.categ_id.id == 1:
+                product = 80
+            elif rec.categ_id.id == 4:
+                product = 218
+            elif rec.categ_id.id == 6:
+                product = 174
+            elif rec.categ_id.id == 7:
+                product = 197
+            elif rec.categ_id.id == 8:
+                product = 132
+            elif rec.categ_id.id == 5:
+                product = 132
+
+            self.env['base.group.merge.line'].create({
+                'create_date': fields.Date.today(),
+                'date_start_r': fields.Date.today(),
+                'date_end_r': fields.Date.today(),
+                'product_id': product,
+                'project_id': rec.project_id.id,
+                'hours_r': total,
+                'uom_id_r': 5,
+                'uom_id': 5,
+                # 'wizard_id': base_group_id,
+                'color1': 1,
+                'employee_id': res_user.employee_id.id,
+                'categ_id': rec.categ_id.id,
+                'zone': rec.zone or 0,
+                'secteur': rec.secteur or 0
+            })
+
+            move_line = {
+                'employee_id': res_user.employee_id.id,
+                'state': 'valid',
+                'work_id': rec.id,
+                'task_id': rec.task_id.id,
+                'sequence': rec.sequence,
+                'uom_id': 5,
+                'date_start_r': fields.Date.today(),
+                'date_end_r': fields.Date.today(),
+                'categ_id': rec.categ_id.id,
+                'hours_r': total,
+                'color1': 1,
+                'project_id': rec.project_id.id,
+                'gest_id': rec.gest_id.id,
+                'zone': rec.zone,
+                'secteur': rec.secteur,
+            }
+            self.env['base.invoices.merge.automatic.wizard'].create(move_line)
+
+            # if self.mail_send == 'yes':
+            #     if not self.note:
+            #         self.note = ' '
+            #     if not self.employee_ids:
+            #         raise ValidationError(_('Erreur ! Vous devez sélectionner un destinataire.'))
+            #     else:
+            #         kk = ''
+            #         for line in self.employee_ids.ids:
+            #             emp = self.env['hr.employee'].browse(line)
+            #             kk = kk + emp.work_email + ','
+            #         self.to = kk
+            #         if self.employee_ids1:
+            #             ll = ''
+            #             for line in self.employee_ids1.ids:
+            #                 emp = self.env['hr.employee'].browse(line)
+            #                 ll = ll + emp.work_email + ','
+            #             self.cc = ll
+            #         if self.employee_ids2:
+            #             mm = ''
+            #             for line in self.employee_ids2.ids:
+            #                 emp = self.env['hr.employee'].browse(line)
+            #                 mm = mm + emp.work_email + ','
+            #             self.cci = mm
+            #
+            # if self.employee_id2 and self.types_affect == 'intervenant':
+            #     self.env['mail.template'].sudo().browse(25).send_mail(self.id, force_send=True)
+            #     ##Ne pas oublier d'ajouter la condition par bon
+            #     ##Ne pas oublier d'ajouter la condition par bon
+            # elif self.employee_id2 and self.types_affect == 'controle' and self.group_id:
+            #     self.env['mail.template'].sudo().browse(30).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'controle' and not self.group_id:
+            #     self.env['mail.template'].sudo().browse(34).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'correction' and self.group_id:
+            #     self.env['mail.template'].sudo().browse(31).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'correction' and not self.group_id:
+            #     self.env['mail.template'].sudo().browse(35).send_mail(self.id, force_send=True)
+
+        for pr_id in prod_work_ids:
+            rec = self.env['project.task.work'].browse(pr_id)
+            for line in self.link_ids:
+                self.env['link.line'].create({
+                    'ftp': line.ftp,
+                    'name': line.name,
+                    'work_id': rec.id,
+                    'affect_id': line.id,
+                    'source': 'affectation',
+                    'id_record': self.id
+                })
+
+
+def affecter_multiple(self):
+    print("affecter_multiple")
+    link_line = self.env['link.line']
+    res_user = self.env['res.users'].browse(self.env.uid)
+    this = self
+    intervenants_affect = self.env['intervenants.affect']
+
+    for line in this.work_ids:
+        line = self.env['project.task.work'].browse(line.id)
+        if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
+            line.write({'state': 'affect'})
+        for msg_id in line.ids:
+            wk = self.env['project.task.work'].browse(msg_id)
+            wk_histo = self.env['work.histo'].search([('work_id', '=', msg_id)])
+
+            if this.employee_id2 and this.types_affect == 'intervenant':
+                if wk.state == 'draft':
+                    wk.write({'state': 'affect'})
+                    self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+                                             fields.Date.today(), wk.id)
+                wk.write({
+                    'employee_ids_production': [(4, this.employee_id2.id)],
+                    'current_emp': this.employee_id2.id,
+                    'employee_id': this.employee_id2.id,
+                    'display': True
+                })
+
+                print('this.employee_id2.id:', this.employee_id2.id)
+                if wk_histo:
+                    if len(wk_histo) == 1:
+                        wk_histo_id = wk_histo.id
+                        self.create_histo_line('affect_inter', this.employee_id2.name, res_user.employee_id.name,
+                                               wk_histo_id, fields.Datetime.now(),
+                                               this.note)
+                else:
+                    histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+                                                   wk.task_id.name,
+                                                   wk.date_start, wk.date_start,
+                                                   wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
+
+                    self.create_histo_line('affect_inter', this.employee_id2.name, res_user.employee_id.name,
+                                           histo.id, fields.Datetime.now(),
+                                           this.note)
+            elif this.employee_id2 and this.types_affect == 'controle':
+
+                self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+                                         fields.Date.today(), wk.id)
+                if wk.state == 'affect':
+                    wk.write({'state': 'tovalidcont'})
+
+                wk.write({
+                    'employee_ids_controle': [(4, this.employee_id2.id)],
+                })
+
+                if this.group_id:
+                    this.group_id.write({'gest_id2': this.employee_id2.id, 'note_con': this.note})
+
+                if wk_histo:
+                    if len(wk_histo) == 1:
+                        wk_histo_id = wk_histo.id
+                        self.create_histo_line('affect_control', this.employee_id2.name, res_user.employee_id.name,
+                                               wk_histo_id, fields.Datetime.now(),
+                                               this.note)
+
+                else:
+                    histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+                                                   wk.task_id.name,
+                                                   wk.date_start, wk.date_start,
+                                                   wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
+
+                    self.create_histo_line('affect_control', this.employee_id2.name, res_user.employee_id.name,
+                                           histo.id, fields.Datetime.now(),
+                                           this.note)
+
+            elif this.employee_id2 and this.types_affect == 'correction':
+                self.create_histo_affect(this.employee_id2.name, this.employee_id2.id, this.types_affect,
+                                         fields.Date.today(), wk.id)
+                wk.write({
+                    'employee_ids_correction': [(4, this.employee_id2.id)],
+                    'state': 'affect_corr',
+                })
+                if this.group_id:
+                    this.group_id.write({'emp_id2': this.employee_id2.id, 'note_corr': this.note})
+                if wk_histo:
+                    if len(wk_histo) == 1:
+                        wk_histo_id = wk_histo.id
+                        self.create_histo_line('affect_corr', this.employee_id2.name, res_user.employee_id.name,
+                                               wk_histo_id, fields.Datetime.now(),
+                                               this.note)
+                else:
+                    histo = self.create_work_histo(wk.task_id.id, wk.id, wk.categ_id.id, wk.product_id.id,
+                                                   wk.task_id.name, wk.date_start, wk.date_start,
+                                                   wk.zo, wk.sect, wk.project_id.id, wk.project_id.partner_id.id)
+
+                    self.create_histo_line('affect_corr', this.employee_id2.name, res_user.employee_id.name,
+                                           histo.id, fields.Datetime.now(),
+                                           this.note)
+            if this.date_start_r:
+                wk.write({'date_start': this.date_start_r})
+            if this.name:
+                wk.write({'job': this.name})
+            if this.date_end_r:
+                wk.write({'date_end': this.date_end_r})
+            if this.poteau_t:
+                wk.write({'poteau_t': this.poteau_t})
+            if this.ftp:
+                link_id = {
+                    'name': 'FTP Affectation',
+                    'ftp': this.ftp,
+                    'work_id': wk.id
+                }
+                one = link_line.create(link_id)
+            if this.note:
+                wk.write({'note': this.note})
+            if wk.employee_id:
+                self._cr.execute('update project_task_work set current_emp =%s where id=%s ',
+                                 (wk.employee_id.id, wk.id))
+        self.write({'state': 'affect'})
+
+        vals = self.time_ch.split(':')
+        t, hours = divmod(float(vals[0]), 24)
+        t, minutes = divmod(float(vals[1]), 60)
+        minutes = minutes / 60.0
+
+        total = hours + minutes
+
+        res_user = self.env['res.users'].browse(self._uid)
+    if self.work_ids:
+        for rec in self.work_ids:
+            base_group = self.env['base.group.merge.automatic.wizard'].create({
+                'create_date': fields.Date.today(),
+                'date_start_r': fields.Date.today(),
+                'project_id': rec.project_id.id,
+                'zo': rec.zone,
+                'sect': rec.secteur,
+                'gest_id': rec.gest_id.id,
+                'state': 'valid',
+                'active': True,
+                'name': 'gestion affectation'
+            })
+
+            base_group_id = base_group.id
+
+            product = 80  # Default value
+            if rec.categ_id.id == 3:
+                product = 156
+            elif rec.categ_id.id == 1:
+                product = 80
+            elif rec.categ_id.id == 4:
+                product = 218
+            elif rec.categ_id.id == 6:
+                product = 174
+            elif rec.categ_id.id == 7:
+                product = 197
+            elif rec.categ_id.id == 8:
+                product = 132
+            elif rec.categ_id.id == 5:
+                product = 132
+
+            self.env['base.group.merge.line'].create({
+                'create_date': fields.Date.today(),
+                'date_start_r': fields.Date.today(),
+                'date_end_r': fields.Date.today(),
+                'product_id': product,
+                'project_id': rec.project_id.id,
+                'hours_r': total,
+                'uom_id_r': 5,
+                'uom_id': 5,
+                'wizard_id': base_group_id,
+                'color1': 1,
+                'employee_id': res_user.employee_id.id,
+                'categ_id': rec.categ_id.id,
+                'zone': rec.zone or 0,
+                'secteur': rec.secteur or 0
+            })
+
+            move_line = {
+                'employee_id': res_user.employee_id.id,
+                'state': 'valid',
+                'work_id': rec.id,
+                'task_id': rec.task_id.id,
+                'sequence': rec.sequence,
+                'uom_id': 5,
+                'date_start_r': fields.Date.today(),
+                'date_end_r': fields.Date.today(),
+                'categ_id': rec.categ_id.id,
+                'hours_r': total,
+                'color1': 1,
+                'project_id': rec.project_id.id,
+                'gest_id': rec.gest_id.id,
+                'zone': rec.zone,
+                'secteur': rec.secteur,
+            }
+            self.env['base.invoices.merge.automatic.wizard'].create(move_line)
+
+            # if self.mail_send == 'yes':
+            #     if not self.note:
+            #         self.note = ' '
+            #     if not self.employee_ids:
+            #         raise ValidationError(_('Erreur ! Vous devez sélectionner un destinataire.'))
+            #     else:
+            #         kk = ''
+            #         for line in self.employee_ids.ids:
+            #             emp = self.env['hr.employee'].browse(line)
+            #             kk = kk + emp.work_email + ','
+            #         self.to = kk
+            #         if self.employee_ids1:
+            #             ll = ''
+            #             for line in self.employee_ids1.ids:
+            #                 emp = self.env['hr.employee'].browse(line)
+            #                 ll = ll + emp.work_email + ','
+            #             self.cc = ll
+            #         if self.employee_ids2:
+            #             mm = ''
+            #             for line in self.employee_ids2.ids:
+            #                 emp = self.env['hr.employee'].browse(line)
+            #                 mm = mm + emp.work_email + ','
+            #             self.cci = mm
+            #
+            # if self.employee_id2 and self.types_affect == 'intervenant':
+            #     self.env['mail.template'].sudo().browse(25).send_mail(self.id, force_send=True)
+            #     ##Ne pas oublier d'ajouter la condition par bon
+            #     ##Ne pas oublier d'ajouter la condition par bon
+            # elif self.employee_id2 and self.types_affect == 'controle' and self.group_id:
+            #     self.env['mail.template'].sudo().browse(30).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'controle' and not self.group_id:
+            #     self.env['mail.template'].sudo().browse(34).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'correction' and self.group_id:
+            #     self.env['mail.template'].sudo().browse(31).send_mail(self.id, force_send=True)
+            # elif self.employee_id2 and self.types_affect == 'correction' and not self.group_id:
+            #     self.env['mail.template'].sudo().browse(35).send_mail(self.id, force_send=True)
+
+        for rec in self.work_ids:
+            for line in self.link_ids:
+                self.env['link.line'].create({
+                    'ftp': line.ftp,
+                    'name': line.name,
+                    'work_id': rec.id,
+                    'affect_id': line.id,
+                    'source': 'affectation',
+                    'id_record': self.id
+                })
 
 
 class ProjectTaskWorkLine(models.Model):
     _inherit = 'project.task.work.line'
 
     wizard_id = fields.Many2one('base.invoices.merge.automatic.wizard', string='Event')
+    group_id2 = fields.Many2one('base.group.merge.automatic.wizard', string='N.U', select="1", readonly=True,
+                                states={'draft': [('readonly', False)]})
 
 
 class LinkLine(models.Model):
