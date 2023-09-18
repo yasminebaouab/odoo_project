@@ -85,7 +85,7 @@
             <field name="context">{}</field>
         </record>
 
-        <menuitem id="menu_hours_injection" name="Traitement d'heures" parent="project_custom.menu_rh" sequence="30"
+        <menuitem id="menu_hours_injection" name="Traitement d'heures" parent="project_custom.menu_rh" sequence="20"
                   action="action_hours_injection"/>
 
     </data>

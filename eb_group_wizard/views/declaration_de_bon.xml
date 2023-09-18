@@ -49,7 +49,7 @@
                                 <!--                                <field name="sadmin" string="Categ" invisible="1" readonly="1"/>-->
                                 <field name="sadmin" string="super" invisible="1" readonly="1"/>
                                 <field name="categ_id" string="Categ" invisible="1"/>
-                                <field name="id" string="ID" readonly="1" invisible="1"/>
+                                <field name="id" string="ID" readonly="1"/>
                                 <field name="num" string="ID" invisible="1"/>
                                 <field name="type1" string="Type" invisible="1"/>
                                 <field name="done" string="Done" invisible="1" readonly="1"/>
@@ -68,27 +68,22 @@
                                 <field name="bon_id" string="Bon" readonly="1"/>
                             </group>
                             <group string="Informations Mails">
-                                <field name="mail_send" string="Envoi Email?"
-                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)]}"/>
-                                <field name="obj" string="Objet Mail"
-                                       attrs="{'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send1', '=', 'yes')]}"/>
-
+                                <field name="obj" string="Objet Mail"/>
                                 <field name="zo" string="zo" invisible="1"/>
                                 <field name="sect" string="sect" invisible="1"/>
+                                <field name="mail_send" string="Envoi Email?"
+                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)]}"/>
                                 <field name="employee_ids" string="A" widget="many2many_tags"
                                        options="{'no_create': True}"
-                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)],
-                                        'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
+                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)]}"/>
                                 <newline/>
                                 <button name="button_load_mail" type="object" string="" icon="gtk-leave-fullscreen"
                                         class="btn-primary" invisible="0"
-                                       attrs="{'invisible': ['|', ('state1', 'not in', ('draft')), ('mail_send', '=', 'no')],
-                                       'required': [('mail_send', '=', 'yes')]}"/>
+                                        attrs="{'invisible': [('state', 'not in', ['draft'])]}"/>
                                 <newline/>
                                 <field name="employee_ids1" string="CC" widget="many2many_tags"
                                        options="{'no_create': True}"
-                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)],
-                                        'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
+                                       attrs="{'readonly': [('state', 'not in', ['draft']), ('done1', '=', False)]}"/>
                                 <field name="employee_ids2" string="CCi" widget="many2many_tags"
                                        options="{'no_create': True}" invisible="1"/>
                                 <field name="to" string="To" invisible="1"/>
@@ -101,13 +96,11 @@
                             <newline/>
                             <field name="note" string="Commentaire Intervenant"
                                    placeholder="Votre Commentaires/Remarques Ici"
-                                   attrs="{'readonly':[ '|', ('state','not in',('draft')),('done1','=',False)],
-                                    'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
+                                   attrs="{'readonly':[ '|', ('state','not in',('draft')),('done1','=',False)]}"/>
                             <newline/>
                             <field name="note1" string="Commentaire Superviseur"
                                    placeholder="Votre Commentaires/Remarques Ici"
-                                   attrs="{'readonly':[ '|', ('state','not in',('tovalid')),('done','=',False)],
-                                    'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
+                                   attrs="{'readonly':[ '|', ('state','not in',('tovalid')),('done','=',False)]}"/>
                         </group>
 
                         <group string="Travaux Planifiés">

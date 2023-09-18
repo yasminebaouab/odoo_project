@@ -49,13 +49,17 @@
 
     <!--    ********** menu_gest_data_project submenus-->
 
-    <menuitem id="menu_kit" name="Liste des Kits" parent="menu_gest_data_project" sequence="0"
+    <menuitem id="menu_project_template_gest" name="Liste des Templates" parent="menu_gest_data_project" sequence="0"
+              action="project_custom.action_project_template_gest"/>
+    <menuitem id="menu_step" name="Liste des Etapes" parent="menu_gest_data_project" sequence="10"
+              action="product_custom.action_step"/>
+    <menuitem id="menu_kit" name="Liste des Kits" parent="menu_gest_data_project" sequence="20"
               action="product_custom.action_kit"/>
-    <menuitem id="menu_product" name="Liste de services" parent="menu_gest_data_project" sequence="10"
+    <menuitem id="menu_product" name="Liste de services" parent="menu_gest_data_project" sequence="30"
               action="product_custom.action_product"/>
-    <menuitem id="menu_project_type" name="Type de Projet" parent="menu_gest_data_project" sequence="50"
+    <menuitem id="menu_project_type" name="Type de Projet" parent="menu_gest_data_project" sequence="70"
               action="project_custom.action_project_type"/>
-    <menuitem id="menu_project_status" name="Type de Permis" parent="menu_gest_data_project" sequence="60"
+    <menuitem id="menu_project_status" name="Type de Permis" parent="menu_gest_data_project" sequence="80"
               action="task_work.action_project_status"/>
 
     <!--    *************** menu_localisation submenus-->
@@ -79,11 +83,13 @@
 
     <!--    menu_project submenus-->
 
-    <menuitem id="menu_project_cr" name="Projets" parent="menu_project" sequence="0"
+    <menuitem id="menu_project_create" name="Templates" parent="menu_project" sequence="0"
+              action="project_custom.action_project_template"/>
+    <menuitem id="menu_project_consult" name="Projets" parent="menu_project" sequence="10"
               action="project_custom.action_project"/>
-    <menuitem id="menu_task" name="Activités" parent="menu_project" sequence="10"
+    <menuitem id="menu_task" name="Activités" parent="menu_project" sequence="20"
               action="task_custom.action_task"/>
-    <menuitem id="menu_work" name="Tâches" parent="menu_project" sequence="20"
+    <menuitem id="menu_work" name="Tâches" parent="menu_project" sequence="30"
               action="task_work.action_task_work"/>
 
     <!--    menu_sale submenus-->
@@ -94,8 +100,8 @@
 
     <!--    ***** menu_facture_partner submenus-->
 
-<!--    <menuitem id="menu_work_line" name="Bons à Facturer" sequence="0" parent="menu_facture_partner"-->
-<!--              action="task_work.action_work_line"/>-->
+    <menuitem id="menu_work_line" name="Bons à Facturer" sequence="0" parent="menu_facture_partner"
+              action="task_work.action_work_line"/>
 
     <!--    menu_purchase submenus-->
 
@@ -112,10 +118,10 @@
     <!--    ***** menu_gest_cong submenus-->
 
     <menuitem id="menu_sol_employee" name="Solde Employés" parent="menu_gest_cong" sequence="40"/>
-<!--    <menuitem id="menu_sol_holiday" name="Congés" parent="menu_sol_employee" sequence="0"-->
-<!--              action="employee_custom.action_sol_holiday"/>-->
-<!--    <menuitem id="menu_sol_hours" name="Banque d'Heures" parent="menu_sol_employee" sequence="10"-->
-<!--              action="employee_custom.action_sol_hours"/>-->
+    <menuitem id="menu_sol_holiday" name="Congés" parent="menu_sol_employee" sequence="0"
+              action="employee_custom.action_sol_holiday"/>
+    <menuitem id="menu_sol_hours" name="Banque d'Heures" parent="menu_sol_employee" sequence="10"
+              action="employee_custom.action_sol_hours"/>
 
     <!--    menu_stat submenus-->
 

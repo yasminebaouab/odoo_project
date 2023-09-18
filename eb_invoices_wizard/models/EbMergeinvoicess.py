@@ -10,19 +10,6 @@ class EbMergeInvoices(models.Model):
     _name = "base.invoices.merge.automatic.wizard"
     _description = "Merge invoicess"
 
-    # type_affectation_setting = fields.Boolean(string='Type affectation')
-
-    # @api.onchange('type_affectation_setting')
-    # def _compute_type_affectation_setting(self):
-    #     affectation_multiple = self.env['settings.custom'].search([('affectation_multiple', '=', 0)], limit=1)
-    #     if affectation_multiple:
-    #         self.type_affectation_setting = True
-    #
-    #     else:
-    #         self.type_affectation_setting = False
-    #
-    #     print('type_affectation_setting ', self.type_affectation_setting)
-
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         active_ids = self.env.context.get('active_ids')
@@ -72,6 +59,8 @@ class EbMergeInvoices(models.Model):
 
             self.update_result(active_ids, res, active_ids)
         print('res: ', res)
+        print('self: ', self.work_ids)
+
         return res
 
     def update_result(self, active_ids, res, rec_ids):
@@ -307,6 +296,8 @@ class EbMergeInvoices(models.Model):
 
     def _disponible(self):
         print('_disponible')
+        print(self.work_ids)
+
         for book in self:
             if book.gest_id.user_id.id == self.env.user.id:
                 print('self.env.user.id:', self.env.user.id)
@@ -830,7 +821,7 @@ class EbMergeInvoices(models.Model):
             'active': True,
             'sequence': work.sequence,
             'gest_id3': work.gest_id3.id,
-            'state': 'draft',
+            'state': 'affect',
             'work_id': work.id,
             'date_start_r': work.date_start_r,
             'date_end_r': work.date_end_r,
@@ -844,7 +835,7 @@ class EbMergeInvoices(models.Model):
             'create_explicitly': True,
             'work_group_id': new_work_group_id,
             'to_duplicate': to_duplicate,
-
+            'pos': work.pos
         })
         return new_work.id
 
@@ -892,7 +883,8 @@ class EbMergeInvoices(models.Model):
 
     def get_product(self, rec):
 
-        product = 80
+        # TODO : a changer 80
+        product = 47
         if rec.categ_id.id == 3:
             product = 156
         elif rec.categ_id.id == 1:
@@ -1080,15 +1072,15 @@ class EbMergeInvoices(models.Model):
 
         for work_id in this.work_ids:
             line = project_task_work.browse(work_id.id)
-            if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
-                line.write({'state': 'affect'})
+            # if this.employee_id2 and this.types_affect == 'intervenant' and line.state == 'draft':
+            #     line.write({'state': 'affect'})
             for line_id in line.ids:
                 wk = project_task_work.browse(line_id)
                 wk_histo = self.env['work.histo'].search([('work_id', '=', line_id)])
 
-                if this.employee_id2 and this.types_affect == 'intervenant':
+                if this.employee_id2 and this.types_affect == 'intervenant' and this.state == 'draft':
                     if wk.state == 'draft':
-                        wk.write({'state': 'affect'})
+                        wk.write({'state': 'affect', 'state_prod': 'affect'})
                         self.create_histo_affect(this.employee_id2, this.types_affect,
                                                  fields.Date.today(), wk.id)
                     wk.write({

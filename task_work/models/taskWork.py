@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import base64
-from random import random
 
 from odoo import models, fields, api
 from datetime import datetime as dt
@@ -8,34 +7,39 @@ from odoo.exceptions import UserError
 from odoo.tools.translate import _
 import math
 
-STATUS_COLOR = {
-    'affect': 4,  # green / success
-    'to_valid': 2,  # orange
-    'valid_prod': 20,  # light blue
-    # False: 0,  # default grey -- for studio
-    'affect_con': 4,  # red / danger
-    'tovalidcont': 2,  # green / success
-    'validcont': 20,  # green / success
-
-    'affect_corr': 4,  # green / success
-    'tovalidcorrec': 2,  # green / success
-    'validcorrec': 20,  # green / success
-
-    'valid': 20,  # green / success
-    'cancel': 23,  # green / success
-    'pending': 20,  # green / success
-    'draft': 0,
-
-}
-
 
 class TaskWork(models.Model):
     _name = 'project.task.work'
     _description = 'Project Task Work'
-    _rec_name = 'id'
-    # added
-    to_duplicate = fields.Boolean(string='A dupliquer', default=True)
+    _rec_name = 'name'
+
+    state_prod = fields.Selection([('draft', 'T. Planifiées'),
+                                   ('affect', 'T. Affectées'),
+                                   ('started', 'T. Commencées'),
+                                   ('pending', 'T. En cours'),
+                                   ('valid', 'T. Terminées'),
+                                   ('cancel', 'T. Annulées'),
+                                   ('suspended', 'T. Bloqées'),
+                                   ],
+                                  string='Status Prod', copy=False, default='draft')
+    stage = fields.Selection([('prod', 'Production'),
+                              ('ctrl', 'Contrôle'),
+                              ('corr', 'Correction'),
+                              ],
+                             string='Phase', copy=False, default='prod')
+    prod_str = fields.Char('str', default='Production')
+    ctrl_str = fields.Char('str', default='Contrôle')
+    corr_str = fields.Char('str', default='Correction')
+    employee_ids_production2 = fields.Many2many('hr.employee', 'project_task_work_employee_production_rel',
+                                                string='Employés assignés production')
+    employee_ids_controle2 = fields.Many2many('hr.employee', 'project_task_work_employee_controle_rel',
+                                              string='Employés assignés contrôle')
+    employee_ids_correction2 = fields.Many2many('hr.employee', 'project_task_work_employee_correction_rel',
+                                                string='Employés assignés correction')
     work_group_id = fields.Integer(string='Identifiant du groupe de travail', default='0')
+    to_duplicate = fields.Boolean(string='A dupliquer', default=True)
+    pos = fields.Integer(string='position dans le kit')
+    pr_project_id = fields.Many2one('project.project', 'project parent')
     intervenant_affect_ids = fields.One2many('intervenants.affect', 'task_work_id',
                                              'Intervenants Affectés')
     priority = fields.Selection([('0', 'Faible'),
@@ -257,7 +261,7 @@ class TaskWork(models.Model):
                                                string='Employés assignés correction')
 
     employee_ids = fields.Many2many('res.users', string='Employés assignés')
-    state_color = fields.Integer(compute='_compute_color')
+    step_id = fields.Many2one('product.step', string='Etape')
 
     # employee_image_128 = fields.Binary("Employee Image 1920", compute='_compute_employee_image_1920', store=False)
     #
@@ -267,24 +271,8 @@ class TaskWork(models.Model):
     #         employee_images = task_work.employee_ids.mapped('image_1920')
     #         task_work.employee_image_128 = employee_images and employee_images[0] or False
 
-    @api.depends('state')
-    def _compute_color(self):
-        for rec in self:
-            rec.state_color = STATUS_COLOR[rec.state]
-
-    @api.model
-    def generate_random_colors(self):
-        work_records = self.search([])
-
-        for record in work_records:
-            # Générez une couleur aléatoire en format hexadécimal (#RRGGBB)
-            random_color = "#{:02x}{:02x}{:02x}".format(random.randint(0, 255), random.randint(0, 255),
-                                                        random.randint(0, 255))
-
-            # Mettez à jour la couleur (fg_color) pour chaque enregistrement en fonction de work_group_id
-            record.write({'options': {"fg_color": f"{record.work_group_id == 0 and random_color or ''}"}})
-
-        return True
+    def start_work(self):
+        self.state_prod = 'started'
 
     def _default_done(self):
 
@@ -382,6 +370,7 @@ class TaskWork(models.Model):
                     if rec_line.group_id2:
                         rec.done3 = 1
                         break
+
                     else:
                         rec.done3 = 0
             else:
@@ -483,7 +472,7 @@ class TaskWork(models.Model):
                 book.done33 = False
 
     def _isinter(self):
-        # print('_isinter ')
+        print('_isinter ')
         # print('self.employee_ids: ', self.employee_ids.image_1920)
         # print('self.employee_ids: ', self.employee_ids.image_128)
         for book in self:
@@ -509,7 +498,7 @@ class TaskWork(models.Model):
 
     #
     def _iscontrol(self):
-        # print('_iscontrol ')
+        print('_iscontrol ')
         for book in self:
             book.is_control = True
 
@@ -660,7 +649,7 @@ class TaskWork(models.Model):
     def action_permis(self):
 
         return {
-            'name': ('Modification Travaux Permis'),
+            'name': 'Modification Travaux Permis',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -672,10 +661,48 @@ class TaskWork(models.Model):
             'domain': []
         }
 
+    def view_product(self):
+        print('butt_info')
+        tt = []
+        wrk = self.env['project.task.work'].search([('work_group_id', '=', self.project_id.id),
+                                                    ('kit_id', '=', self.kit_id.id)])
+
+        for work in wrk:
+            tt.append(work)
+        print('tt :', tt)
+
+        view_id = self.env.ref('task_work.view_liste_task_work').id
+
+        return {
+            'name': 'Liste des tâches',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'target': 'new',
+            'res_model': 'task.work',
+            'context': {
+            },
+            'views': [(view_id, 'tree')],
+            'view_id': view_id,
+            'domain': [('task_work_id', 'in', tt)]
+        }
+        # return {
+        #     'name': 'Consulter Liste des Services',
+        #     'type': 'ir.actions.act_window',
+        #     'view_type': 'form',
+        #     'view_mode': 'form',
+        #     'target': 'new',
+        #     'res_model': 'product.kit',
+        #     'view_id': self.env.ref('product_custom.view_kit_form_popup').id,
+        #     'res_id': self.kit_id.id,
+        #     'context': {},
+        #     'domain': []
+        # }
+
     def action_duplicate(self):
 
         return {
-            'name': ('Modification Travaux Permis'),
+            'name': 'Modification Travaux Permis',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -690,7 +717,7 @@ class TaskWork(models.Model):
     def action_change_status(self):
 
         return {
-            'name': ('Modification Travaux Permis'),
+            'name': 'Modification Travaux Permis',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -705,7 +732,7 @@ class TaskWork(models.Model):
     def action_change_visibility(self):
 
         return {
-            'name': ('Modification Travaux Permis'),
+            'name': 'Modification Travaux Permis',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
@@ -874,7 +901,7 @@ class TaskWork(models.Model):
                     'domain': [('work_id', 'in', this.id)]
                 }
             else:
-                raise ValueError("Pas d'historique pour cette tâche")
+                raise UserError("Pas d'historique pour cette tâche")
 
     def action_open_task(self):
 
@@ -1345,6 +1372,7 @@ class TaskWorkLine(models.Model):
     total = fields.Integer(string='Total')
     rentability = fields.Float(string='Rentabilité')
     taux_horaire = fields.Float(string='T.H')
+    step_id = fields.Many2one('product.step', string='Etape')
 
     def action_create_facture(self):
 

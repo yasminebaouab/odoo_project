@@ -4,7 +4,7 @@
             <field name="name">custom.project.form</field>
             <field name="model">project.project</field>
             <field name="arch" type="xml">
-                <form string="Projet">
+                <form string="Projet" create="0">
                     <header>
                         <button name="set_open2" string="Modification Projet" type="object" class="oe_highlight"
                                 confirm="Confirmez-Vous la Modification Projet"/>
@@ -52,11 +52,13 @@
                     </div>
                     <group>
                         <group>
+                            <field name="is_template" invisible="1"/>
+                            <field name="is_parent" invisible="1"/>
                             <field name="is_super_admin" string="Super Admin ?" invisible="1"/>
                             <field name="is_admin" string="Admin ?" invisible="1"/>
                             <field name="is_kit" string="Kit ?" invisible="1"/>
-                            <field name="zone" string="Zone" invisible="1"/>
-                            <field name="secteur" string="Secteur" invisible="1"/>
+                            <field name="zone" string="Zone" invisible="0" readonly="1"/>
+                            <field name="secteur" string="Secteur" invisible="0" readonly="1"/>
                             <field name="user_id" string="Project Manager"
                                    attrs="{'readonly':[('state','in',['close', 'cancelled'])]}" invisible="1"
                                    context="{'default_groups_ref': ['base.group_user', 'base.group_partner_manager', 'project.group_project_manager']}"/>
@@ -80,7 +82,8 @@
                                    options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
                                    attrs="{'readonly':[('fees_id','=',False)]}"/>
                             <newline/>
-                            <field name="parent_id1" string="Project Parent" domain="[('partner_id','=',partner_id), ('parent_id1','=',False)]"/>
+                            <field name="parent_id1" string="Project Parent"
+                                   domain="[('partner_id','=',partner_id), ('parent_id1','=',False)]"/>
                             <newline/>
                             <field name="bord" string="N° PO"/>
                             <newline/>
@@ -126,15 +129,16 @@
                                     <!--                                    decoration-bf="product_id[0] ==39 or False"-->
                                     <field name="is_super_admin" string="Super Admin ?" invisible="1"/>
                                     <field name="sequence" string="N°"/>
-                                    <field name="categ_id" string="Département"
-                                           options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
                                     <field name="product_id" domain="[('categ_id','=',categ_id)]" string="Items"
                                            options="{'no_create': True, 'no_create_edit':True,'no_open':True}"
                                            invisible="1"/>
-                                    <field name="kit_id" string="Kit"
-                                           domain="[('categ_id','=',categ_id)]"
+                                    <field name="step_id" string="Etape"
                                            options="{'no_create': True, 'no_create_edit':True}"/>
-                                    <field name="name" string="Nom Kit"/>
+                                    <field name="name" string="Nom Etape" invisible="0"/>
+                                    <field name="kit_id" string="Kit"
+                                           options="{'no_create': True, 'no_create_edit':True}"/>
+                                    <field name="categ_id" string="Département"
+                                           options="{'no_create': True, 'no_create_edit':True,'no_open':True}"/>
                                     <field name="date_start" string="Date Début" widget="date"/>
                                     <field name="date_end" string="Date Fin" widget="date"/>
                                     <field name="color" string="Durée(Jrs)" sum="Total"/>
@@ -354,7 +358,7 @@
             <field name="model">project.project</field>
             <field name="arch" type="xml">
                 <tree decoration-info="state == 'draft'" decoration-success="state == 'close'"
-                      decoration-danger="state == 'cancelled'" string="Projects">
+                      decoration-danger="state == 'cancelled'" string="Projects" create="0">
                     <field name="id" string="ID"/>
                     <field name="task_count"/>
                     <field name="bord" string="Num BC"/>
@@ -366,18 +370,101 @@
                     <field name="progress_amount" string="% Dépense" widget="progressbar"/>
                     <field name="hours_r" string="% Hrs" widget="percentpie"/>
                     <field name="state"/>
+                    <field name="is_parent" invisible="1"/>
                     <button name="action_open_project" string="Consulter Projet" type="object" icon="fa-edit"/>
                 </tree>
             </field>
         </record>
 
+        <record id="view_custom_project_kanban" model="ir.ui.view">
+            <field name="name">custom.project.kanban</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard" default_group_by="state" create="0">
+                    <field name="npc"/>
+                    <field name="is_parent"/>
+                    <field name="priority"/>
+                    <field name="partner_id"/>
+                    <field name="type3"/>
+                    <field name="date_start"/>
+                    <field name="date_end"/>
+                    <field name="parent_id1"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_content oe_kanban_global_click">
+
+                                <div class="text-right">
+                                    <field name="priority" widget="priority"/>
+                                </div>
+
+                                <div>
+                                    <span class="o_text_overflow text-center" style="font-size: 18px;">
+                                        <t t-esc="record.npc.value"/>
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span class="fa fa-user"/>
+                                    <field name="partner_id"/>
+                                </div>
+
+                                <div>
+                                    <span class="fa fa-suitcase"/>
+                                    <field name="type3"/>
+                                </div>
+
+                                <div t-if="record.date_end.raw_value or record.date_start.raw_value"
+                                     class="text-muted o_row">
+                                    <span class="fa fa-clock-o mr-2" title="Dates"/>
+                                    <field name="date_start"/>
+                                    <i t-if="record.date_end.raw_value and record.date_start.raw_value"
+                                       class="fa fa-long-arrow-right mx-2 oe_read_only" aria-label="Arrow icon"
+                                       title="Arrow"/>
+                                    <field name="date_end"/>
+                                </div>
+
+                                <div class="text-right">
+                                    <button name="button_divide" string="Subdiviser" type="object"
+                                            class="fa fa-files-o"
+                                            attrs="{'invisible':['|', ('parent_id1', '!=', False), ('is_parent', '=', True)]}"/>
+                                </div>
+
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="view_custom_project_search" model="ir.ui.view">
+            <field name="name">custom.project.search</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <search string="Tasks">
+                    <field name="npc" string="N Projet Client"/>
+                    <field name="parent_id1" string="Projet Parent" invisible="1"/>
+                    <field name="partner_id" string="Client" invisible="1"/>
+                    <searchpanel view_types="tree,kanban">
+                        <field name="partner_id" icon="fa-user" enable_counters="1" hierarchize="1"/>
+                        <field name="parent_id1" icon="fa-building" enable_counters="1" select="multi"
+                               hierarchize="1"
+                               domain="[('parent_id1', '=', False)]"/>
+                        <field name="state" icon="fa-play" enable_counters="1"/>
+                    </searchpanel>
+                </search>
+            </field>
+        </record>
+
+
         <record id="action_project" model="ir.actions.act_window">
-            <field name="name">Projects</field>
+            <field name="name">Projets</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">project.project</field>
-            <field name="view_mode">tree,form</field>
-            <field name="context">{}</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('is_template', '=', False)]</field>
+            <field name="context">{'default_is_template': False}</field>
             <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('project_custom.view_custom_project_kanban')}),
                 (0, 0, {'view_mode': 'tree', 'view_id': ref('project_custom.view_custom_project_tree')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('project_custom.view_custom_project_form')})]"/>
         </record>

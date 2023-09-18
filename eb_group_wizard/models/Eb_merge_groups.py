@@ -220,35 +220,20 @@ class EbMergegroups(models.Model):
                     res = self.get_default_simple(active_ids, res, affectation_multiple)
 
             self.update_result(res, active_ids, affectation_multiple)
-            print('res :', res)
             return res
 
     def get_default_simple(self, active_ids, res, affectation_multiple):
-        vv = []
+        selected_work_ids = []
         for active_id in active_ids:
             work = self.env['project.task.work'].browse(active_id)
             if 'correction' not in work.product_id.name and u'Contrôle' not in work.product_id.name:
                 if work.kit_id:
-                    kit_list = self.env['project.task.work'].search([
-                        ('project_id', '=', work.project_id.id),
-                        ('zone', '=', work.zone),
-                        ('secteur', '=', work.secteur),
-                        ('kit_id', '=', work.kit_id.id),
-                        ('work_group_id', '=', work.work_group_id),
-                        ('product_id.name', 'not ilike', '%correction%'),
-                        ('product_id.name', 'not ilike', '%cont%'),
-                        ('product_id.name', 'not ilike', '%gestion client%')
-                    ])
-
-                    for kit_list_id in kit_list.ids:
-                        work1 = self.env['project.task.work'].browse(kit_list_id)
-
-                        if not work.is_copy and not work1.is_copy and work1.id not in vv:
-                            vv.append(work1.id)
-                        elif work.is_copy and work1.is_copy and work1.rank == work1.rank and work1.id not in vv:
-                            vv.append(work1.id)
-
-                res['work_ids'] = vv
+                    query = self.set_new_query(work)
+                    distinct = 'work_group_id', '=', work.work_group_id
+                    query.append(distinct)
+                    kit_list = self.env['project.task.work'].search(query)
+                    selected_work_ids = self.get_selected_work(work, kit_list)
+                res['work_ids'] = selected_work_ids
             else:
                 res['work_ids'] = active_ids
 
@@ -256,33 +241,44 @@ class EbMergegroups(models.Model):
             return res
 
     def get_default_multiple(self, active_ids, res, affectation_multiple):
-        vv = []
+        selected_work_ids = []
         for hh in active_ids:
+
             work = self.env['project.task.work'].browse(hh)
-
             if work.kit_id:
-                kit_list = self.env['project.task.work'].search([
-                    ('project_id', '=', work.project_id.id),
-                    ('zone', '=', work.zone),
-                    ('secteur', '=', work.secteur),
-                    ('kit_id', '=', work.kit_id.id),
-                    ('product_id.name', 'not ilike', '%correction%'),
-                    ('product_id.name', 'not ilike', '%cont%'),
-                    ('product_id.name', 'not ilike', '%gestion client%')
-                ])
+                query = self.set_new_query(work)
+                kit_list = self.env['project.task.work'].search(query)
+                selected_work_ids = self.get_selected_work(work, kit_list)
 
-                for kit_list_id in kit_list.ids:
-                    work1 = self.env['project.task.work'].browse(kit_list_id)
-                    if not work.is_copy and not work1.is_copy and work1.id not in vv:
-                        vv.append(work1.id)
-                    elif work.is_copy and work1.is_copy and work1.rank == work1.rank and work1.id not in vv:
-                        vv.append(work1.id)
-                res['work_ids'] = vv
+                res['work_ids'] = selected_work_ids
             else:
                 res['work_ids'] = active_ids
 
             self.update_result(res, active_ids, affectation_multiple)
             return res
+
+    def get_selected_work(self, work, kit_list):
+        selected_work_ids = []
+
+        for kit_list_id in kit_list.ids:
+            work1 = self.env['project.task.work'].browse(kit_list_id)
+            if not work.is_copy and not work1.is_copy and work1.id not in selected_work_ids:
+                selected_work_ids.append(work1.id)
+            elif work.is_copy and work1.is_copy and work1.rank == work1.rank and work1.id not in selected_work_ids:
+                selected_work_ids.append(work1.id)
+        return selected_work_ids
+
+    def set_new_query(self, work):
+        querry = [
+            ('project_id', '=', work.project_id.id),
+            ('zone', '=', work.zone),
+            ('secteur', '=', work.secteur),
+            ('kit_id', '=', work.kit_id.id),
+            ('product_id.name', 'not ilike', '%correction%'),
+            ('product_id.name', 'not ilike', '%cont%'),
+            ('product_id.name', 'not ilike', '%gestion client%'),
+        ]
+        return querry
 
     def update_result(self, res, active_ids, affectation_multiple):
 
@@ -1700,7 +1696,6 @@ class EbMergegroups(models.Model):
                 line_id2_task = line_obj1.browse(task.id)
                 line_id2_task.write({'line_id': one.id})
 
-        # self.state2 = 'tovalid'
         self.write({'state2': 'tovalid'})
 
         return {

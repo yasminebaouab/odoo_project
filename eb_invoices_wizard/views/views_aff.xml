@@ -63,7 +63,7 @@
                                         <field name="objet" string="objet"
                                                attrs="{'invisible': [('mail_send', '=', 'no')], 'required': [('mail_send', '=', 'yes')]}"/>
                                         <field name="mail_send" string="Envoi Email?" required="1"/>
-
+<!-- <i class="o_PartnerImStatusIcon_icon o-online fa fa-circle fa-stack-1x" title="Online" role="img" aria-label="User is online"/>-->
                                         <field name="employee_ids" string="A" widget='many2many_avatar_employee'
                                                options="{'no_create': True}"
                                                attrs="{'invisible': [('mail_send', '=', 'no')]}"/>

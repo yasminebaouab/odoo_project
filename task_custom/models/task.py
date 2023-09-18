@@ -292,6 +292,7 @@ class TaskCustom(models.Model):
     progress_amount = fields.Float(compute='_get_progress_amount', string='% Dépense')
     rank = fields.Char(string='Séq', readonly=True, states={'draft': [('readonly', False)]}, )
     display = fields.Boolean(string='Color Index')
+    step_id = fields.Many2one('product.step', string='Etape')
 
     # 'manager_id': fields.related('project_id', 'analytic_account_id', 'user_id', type='many2one',
     #                              relation='res.users', string='Project Manager')
@@ -300,6 +301,11 @@ class TaskCustom(models.Model):
     # 'delegated_user_id': fields.related('child_ids', 'user_id', type='many2one', relation='res.users',
     #                                     string='Delegated To',
     #                                   , )
+
+    @api.onchange('step_id')
+    def _onchange_step_id(self):
+        for rec in self:
+            rec.name = rec.step_id.name
 
     # To check
     @api.onchange('product_id')

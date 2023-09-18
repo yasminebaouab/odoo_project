@@ -25,7 +25,6 @@
                 'link_line',
                 'risk_management',
                 ],
-
     # always loaded
     'data': [
         'security/ir.model.access.csv',
@@ -33,18 +32,15 @@
         'views/status.xml',
         'views/employes_intervenant.xml',
         'views/work_line.xml',
-
     ],
-
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
     ],
-    'css': ['static/src/css/bg_color.css'],
     'assets': {
         'web.assets_backend': [
             'task_work/static/src/js/custom_task_work_renderer.js',
-            'task_work/static/src/js/task_work_custom.js',
+            'task_work/static/src/css/kanban_task_work.css',
         ],
     },
     'application': True,

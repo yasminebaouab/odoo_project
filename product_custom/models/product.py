@@ -322,6 +322,14 @@ class ProductTemplate(models.Model):
     name = fields.Char(required=False)
 
 
+class ProductStep(models.Model):
+    _name = 'product.step'
+
+    name = fields.Char(string='Nom Etape')
+    kit_ids = fields.Many2many('product.kit', string='Liste des Kits')
+    description = fields.Text(string='Description')
+    is_divide = fields.Boolean(string='Est divisible ?', default=True)
+
 class ProductKit(models.Model):
     _name = "product.kit"
     _description = 'Product kit'
@@ -597,7 +605,6 @@ class ProductProduct(models.Model):
     #     return {}
     #
     def action_open(self):
-
         return {
             'name': ('Modification Travaux Permis'),
             'type': 'ir.actions.act_window',
@@ -612,7 +619,6 @@ class ProductProduct(models.Model):
         }
 
     def button_write(self):
-
         self.write({'is_devide': self.is_devide, 'is_load': self.is_load, 'is_gantt': self.is_gantt,
                     'uom_id': self.uom_id.id, 'uos_id': self.uos_id.id})
         return True

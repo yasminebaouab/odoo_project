@@ -1,42 +1,19 @@
-//odoo.define('task_work.custom_task_work_renderer', function (require) {
-//    console.log("helllo color")
-//    var ListView = require('web.ListView');
+//odoo.define('custom_project.custom_task_work_renderer', function (require) {
+//    "use strict";
+//
 //    var ListRenderer = require('web.ListRenderer');
 //
-//    ListView.include({
-//        render_buttons: function () {
-//            var self = this;
-//            this._super.apply(this, arguments);
-//
-//            // Récupérer tous les enregistrements dans la liste
-//            var records = this.state.data;
-//
-//            // Générer des couleurs aléatoires pour chaque work_group_id
-//            var colorMap = {};
-//            for (var id in records) {
-//                var workGroupId = records[id].data.work_group_id;
-//                if (!(workGroupId in colorMap)) {
-//                    colorMap[workGroupId] = self.generateRandomColor();
-//                }
+//    ListRenderer.include({
+//        _renderBodyCell: function (record, node, colIndex, options) {
+//            var fieldName = node.attrs.name;
+//            if (fieldName === 'employee_ids') {
+//                var employeeImages = record.data[fieldName].data.map(function (employee) {
+//                    return '<img src="data:image/png;base64,' + employee.data.image_128 + '" alt="Employee Image">';
+//                });
+//                var superResult = this._super(record, node, colIndex, _.extend({}, options, { escape: false }));
+//                return superResult + employeeImages.join('');
 //            }
-//
-//            // Appliquer les couleurs aux enregistrements
-//            this.$el.find('.oe_kanban_color').each(function () {
-//                var workGroupId = $(this).data('work_group_id');
-//                if (workGroupId in colorMap) {
-//                    $(this).css('background-color', colorMap[workGroupId]);
-//                }
-//            });
-//        },
-//
-//        // Fonction pour générer une couleur aléatoire
-//        generateRandomColor: function () {
-//            var letters = '0123456789ABCDEF';
-//            var color = '#';
-//            for (var i = 0; i < 6; i++) {
-//                color += letters[Math.floor(Math.random() * 16)];
-//            }
-//            return color;
-//        },
+//            return this._super.apply(this, arguments);
+//        }
 //    });
 //});

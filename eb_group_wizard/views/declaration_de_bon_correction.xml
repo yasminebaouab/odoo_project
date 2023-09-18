@@ -30,7 +30,7 @@
                                 <field name="sadmin" string="Categ" invisible="1"/>
                                 <field name="sadmin" string="super" invisible="1"/>
                                 <field name="categ_id" string="Categ" invisible="1"/>
-                                <field name="id" string="ID" invisible="1"/>
+                                <field name="id" string="ID"/>
                                 <field name="num" string="ID" invisible="1"/>
                                 <field name="type1" string="Type" invisible="1"/>
                                 <field name="donecq" string="Done" invisible="1"/>
@@ -58,26 +58,23 @@
 
                             </group>
                             <group string="Informations Mails">
+                                <field name="obj" string="Objet Mail"/>
+                                <field name="zo" string="zo" invisible="1"/>
+                                <field name="sect" string="sect" invisible="1"/>
                                 <field name="mail_send2" string="Informer le superviseur par Email?"
                                        attrs="{'readonly':[ '|', ('state2','!=','draft'),('done1__','=',False)]}"
                                        on_change="onchange_mail"/>
-                                <field name="obj" string="Objet Mail"  attrs="{'invisible': [('mail_send2', '=', 'no')], 'required': [('mail_send2', '=', 'yes')]}"/>
-                                <field name="zo" string="zo" invisible="1"/>
-                                <field name="sect" string="sect" invisible="1"/>
                                 <field name="employee_ids5" string="A" widget='many2many_tags'
                                        options="{'no_create': True}"
-                                       attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)],
-                                       'invisible': [('mail_send2', '=', 'no')], 'required': [('mail_send2', '=', 'yes')]}"/>
+                                       attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)]}"/>
                                 <newline/>
                                 <button name="button_load_mail2" type="object" string="" icon="gtk-leave-fullscreen"
                                         class="btn-primary"
-                                        attrs="{'invisible':[ '|', ('state2','not in',('draft')),('done1__','=',False), ('mail_send2', '=', 'no')],
-                                       'required': [('mail_send2', '=', 'yes')]}"/>
+                                        attrs="{'invisible':[ '|', ('state2','not in',('draft')),('done1__','=',False)]}"/>
                                 <newline/>
                                 <field name="employee_ids6" string="CC" widget='many2many_tags'
                                        options="{'no_create': True}"
-                                       attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)],
-                                       'invisible': [('mail_send2', '=', 'no')], 'required': [('mail_send2', '=', 'yes')]}"/>
+                                       attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)]}"/>
                                 <field name="to" string="To" invisible="1"/>
                                 <field name="cc" string="cc" invisible="1"/>
                                 <field name="cci" string="cci" invisible="1"/>
@@ -87,13 +84,11 @@
                             <newline/>
                             <field name="note4" string="Commentaire Intervenant(Correction)"
                                    placeholder="Votre Commentaires/Remarques Ici"
-                                   attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)],
-                                   'invisible': [('mail_send2', '=', 'no')], 'required': [('mail_send2', '=', 'yes')]}"/>
+                                   attrs="{'readonly':[ '|', ('state2','not in',('draft')),('done1__','=',False)]}"/>
                             <newline/>
                             <field name="note5" string="Commentaire Superviseur(Correction)"
                                    placeholder="Votre Commentaires/Remarques Ici"
-                                   attrs="{'readonly':[ '|',('state2','not in',('tovalid')),('done__','=',False)],
-                                   'invisible': [('mail_send2', '=', 'no')], 'required': [('mail_send2', '=', 'yes')]}"/>
+                                   attrs="{'readonly':[ '|',('state2','not in',('tovalid')),('done__','=',False)]}"/>
                             <!--                            <field name="dc_" string="CC" invisible="1"/>-->
                             <!--                            <field name="dq_" string="CC" invisible="1"/>-->
                         </group>
