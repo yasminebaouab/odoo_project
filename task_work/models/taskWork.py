@@ -664,11 +664,13 @@ class TaskWork(models.Model):
     def view_product(self):
         print('butt_info')
         tt = []
-        wrk = self.env['project.task.work'].search([('work_group_id', '=', self.project_id.id),
+        print('')
+        wrk = self.env['project.task.work'].search([('work_group_id', '=', self.work_group_id),
                                                     ('kit_id', '=', self.kit_id.id)])
 
         for work in wrk:
-            tt.append(work)
+            print('work:', work)
+            tt.append(work.id)
         print('tt :', tt)
 
         view_id = self.env.ref('task_work.view_liste_task_work').id
@@ -679,13 +681,13 @@ class TaskWork(models.Model):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'target': 'new',
-            'res_model': 'task.work',
-            'context': {
-            },
+            'res_model': 'project.task.work',
+            'context': {},
             'views': [(view_id, 'tree')],
             'view_id': view_id,
-            'domain': [('task_work_id', 'in', tt)]
+            'domain': [('id', 'in', tt)],
         }
+
         # return {
         #     'name': 'Consulter Liste des Services',
         #     'type': 'ir.actions.act_window',
